@@ -52,7 +52,22 @@ pub fn run_app<B: ratatui::backend::Backend>(
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
                     KeyCode::Char('S') => app.trigger_squash_analysis(), // Smart Squash
-                    KeyCode::Char('L') => app.trigger_lazy_squash(),     // Lazy Squash (Major)
+                    KeyCode::Char('L') => app.trigger_lazy_squash(),     // Bulk Squash
+                    KeyCode::Char('B') => {
+                        // Toggle Bulk Squash Minor mode (in Versioning tab)
+                        if app.current_tab == 2 && app.ai_config_sub_tab == 3 {
+                            app.config.bulk_squash_minor = !app.config.bulk_squash_minor;
+                            let _ = app.config.save();
+                            app.events.push(format!(
+                                "⚙️  Bulk Squash: {} bump",
+                                if app.config.bulk_squash_minor {
+                                    "Minor"
+                                } else {
+                                    "Major"
+                                }
+                            ));
+                        }
+                    }
                     KeyCode::Char('D') => {
                         if app.current_tab == 5 {
                             // Deploy Placeholder
