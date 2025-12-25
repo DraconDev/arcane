@@ -669,21 +669,6 @@ impl App {
         }
     }
 
-    pub fn toggle_pattern_mode(&mut self) {
-        use arcane::config::PatternMode;
-        self.pattern_mode = match self.pattern_mode {
-            PatternMode::Append => PatternMode::Override,
-            PatternMode::Override => PatternMode::Append,
-        };
-        self.events
-            .push(format!("📝 Pattern Mode: {:?}", self.pattern_mode));
-
-        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
-            config.pattern_mode = self.pattern_mode.clone();
-            let _ = config.save();
-        }
-    }
-
     pub fn toggle_version_bumping(&mut self) {
         self.version_bumping = !self.version_bumping;
         self.events.push(format!(
