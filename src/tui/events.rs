@@ -26,8 +26,32 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     continue;
                 }
 
+                // Modal Handling (Smart Squash)
+                if app.analyzing_squash {
+                    // Ignore inputs while analyzing
+                    continue;
+                }
+
+                if app.squash_plan.is_some() || app.squash_error.is_some() {
+                    match key.code {
+                        KeyCode::Enter => {
+                            if app.squash_plan.is_some() {
+                                app.execute_squash_plan();
+                            } else {
+                                app.cancel_squash(); // Dismiss error
+                            }
+                        }
+                        KeyCode::Esc | KeyCode::Char('q') => {
+                            app.cancel_squash();
+                        }
+                        _ => {}
+                    }
+                    continue;
+                }
+
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
+                    KeyCode::Char('S') => app.trigger_squash_analysis(), // Smart Squash
                     KeyCode::Char('D') => {
                         if app.current_tab == 5 {
                             // Deploy Placeholder
