@@ -381,18 +381,35 @@ impl App {
                 })
                 .unwrap_or_default();
 
-            // Refresh Git Graph
-            let git_cmd = std::process::Command::new("git")
-                .args(&[
-                    "log",
-                    "--graph",
-                    "--format=%C(auto)%h%d %s %C(white)%C(bold)%cr %C(cyan)<%an>%C(reset)",
-                    "--all",
-                    "--color=always",
-                    "-n",
-                    "100",
-                ])
-                .output();
+            // Refresh Git Graph based on branch mode
+            let branch_arg = match self.graph_branch_mode {
+                0 => "--all".to_string(),
+                1 => "HEAD".to_string(),
+                2 => {
+                    // Try main, fallback to master
+                    let main_exists = std::process::Command::new("git")
+                        .args(&["rev-parse", "--verify", "main"])
+                        .output()
+                        .map(|o| o.status.success())
+                        .unwrap_or(false);
+                    if main_exists {
+                        "main".to_string()
+                    } else {
+                        "master".to_string()
+                    }
+                }
+                _ => "--all".to_string(),
+            };
+
+            let mut git_args = vec![
+                "log",
+                "--graph",
+                "--format=%C(auto)%h%d %s %C(white)%C(bold)%cr %C(cyan)<%an>%C(reset)",
+            ];
+            git_args.push(&branch_arg);
+            git_args.extend(&["--color=always", "-n", "100"]);
+
+            let git_cmd = std::process::Command::new("git").args(&git_args).output();
 
             match git_cmd {
                 Ok(output) if output.status.success() => {
