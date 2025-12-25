@@ -71,77 +71,26 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     // 2. Status Hub (Dashboard only)
     let (main_area, footer_area) = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
-        let status_lines = if let Some(status) = &app.status {
+            let watched_path = app
+                .watch_roots
+                .first()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| "None".to_string());
+
             let pid_span = Span::styled(
                 format!(
-                    " Daemon: RUNNING (PID: {}) | State: {} ",
-                    status.pid, status.state
+                    " Daemon: RUNNING (PID: {}) | State: {} | Watched: {} ",
+                    status.pid, status.state, watched_path
                 ),
                 Style::default().fg(Color::Green),
             );
 
-            let separator = Span::raw("   ");
-
-            let daemon_btn = Span::styled(
-                " [S] Stop Daemon ",
-                Style::default()
-                    .bg(Color::Red)
-                    .fg(Color::Black)
-                    .add_modifier(Modifier::BOLD),
-            );
-
-            let auto_commit_btn = if app.ai_auto_commit {
-                Span::styled(
-                    " [A] Auto-Commit: ON ",
-                    Style::default()
-                        .bg(Color::Green)
-                        .fg(Color::Black)
-                        .add_modifier(Modifier::BOLD),
-                )
-            } else {
-                Span::styled(
-                    " [A] Auto-Commit: OFF ",
-                    Style::default().fg(Color::DarkGray),
-                )
-            };
-
-            let auto_push_btn = if app.ai_auto_push {
-                Span::styled(
-                    " [P] Auto-Push: ON ",
-                    Style::default()
-                        .bg(Color::Green)
-                        .fg(Color::Black)
-                        .add_modifier(Modifier::BOLD),
-                )
-            } else {
-                Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
-            };
-
-            vec![
-                Line::from(pid_span),
-                Line::from(vec![
-                    daemon_btn,
-                    separator.clone(),
-                    auto_commit_btn,
-                    separator,
-                    auto_push_btn,
-                ]),
-            ]
+            vec![Line::from(pid_span)]
         } else {
-            let daemon_btn = Span::styled(
-                " [S] Start Daemon ",
-                Style::default()
-                    .bg(Color::Green)
-                    .fg(Color::Black)
-                    .add_modifier(Modifier::BOLD),
-            );
-            vec![
-                Line::from(Span::styled(
-                    " Daemon: STOPPED ",
-                    Style::default().fg(Color::Red),
-                )),
-                Line::from(daemon_btn),
-            ]
+            vec![Line::from(Span::styled(
+                " Daemon: STOPPED ",
+                Style::default().fg(Color::Red),
+            ))]
         };
 
         let p = Paragraph::new(status_lines).block(status_block);
@@ -265,7 +214,14 @@ fn centered_rect(
 fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(10), Constraint::Min(0)].as_ref())
+        .constraints(
+            [
+                Constraint::Length(8), // Security/Alerts
+                Constraint::Min(0),    // Working Tree
+                Constraint::Length(3), // Controls (New)
+            ]
+            .as_ref(),
+        )
         .split(area);
 
     // Security/Alerts (Top)
@@ -282,7 +238,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let events = Paragraph::new(events_text).block(events_block);
     f.render_widget(events, chunks[0]);
 
-    // Working Tree (Bottom)
+    // Working Tree (Middle)
     let work_block = Block::default()
         .borders(Borders::ALL)
         .title(" Working Tree (i: Ignore) ");
@@ -319,6 +275,73 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
 
     let list = List::new(items).block(work_block);
     f.render_widget(list, chunks[1]);
+
+    // Controls (Bottom)
+    let controls_block = Block::default()
+        .borders(Borders::ALL)
+        .title(" Dashboard Controls ");
+
+    let separator = Span::raw("   ");
+
+    // Daemon Button
+    let daemon_running = app.status.is_some();
+    let daemon_btn = if daemon_running {
+        Span::styled(
+            " [S] Stop Daemon ",
+            Style::default().bg(Color::Red).fg(Color::Black).add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            " [S] Start Daemon ",
+            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+        )
+    };
+
+    // Auto-Commit Button
+    let auto_commit_btn = if app.ai_auto_commit {
+        Span::styled(
+            " [A] Auto-Commit: ON ",
+            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(" [A] Auto-Commit: OFF ", Style::default().fg(Color::DarkGray))
+    };
+
+    // Auto-Push Button
+    let auto_push_btn = if app.ai_auto_push {
+        Span::styled(
+            " [P] Auto-Push: ON ",
+            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
+    };
+
+    // Shadow Branch Button
+    let shadow_btn = if app.shadow_branches {
+        Span::styled(
+            " [B] Shadow Branches: ON ",
+            Style::default().bg(Color::Blue).fg(Color::Black).add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(" [B] Shadow Branches: OFF ", Style::default().fg(Color::DarkGray))
+    };
+
+
+    let controls_line = Line::from(vec![
+        daemon_btn,
+        separator.clone(),
+        auto_commit_btn,
+        separator.clone(),
+        auto_push_btn,
+        separator,
+        shadow_btn,
+    ]);
+
+    let controls = Paragraph::new(controls_line)
+        .block(controls_block)
+        .alignment(ratatui::layout::Alignment::Center);
+    f.render_widget(controls, chunks[2]);
 }
 
 fn render_graph(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
@@ -543,7 +566,7 @@ fn render_ai(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         .split(area);
 
     // Sub-tab bar
-    let sub_tabs = vec!["Overview", "Providers", "Timing", "Versioning"];
+    let sub_tabs = vec!["Overview", "Providers", "Timing", "Versioning", "Prompt"];
     let sub_tab_titles: Vec<Line> = sub_tabs.iter().map(|t| Line::from(*t)).collect();
 
     let sub_tab_title = if app.ai_config_focused {
@@ -578,6 +601,7 @@ fn render_ai(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         1 => render_ai_providers(f, app, chunks[1]),
         2 => render_ai_timing(f, app, chunks[1]),
         3 => render_ai_versioning(f, app, chunks[1]),
+        4 => render_ai_prompt(f, app, chunks[1]),
         _ => {}
     }
 }
@@ -1119,7 +1143,7 @@ fn render_repository(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) 
         .split(area);
 
     // Sub-tab bar
-    let sub_tabs = vec![".gitignore", ".gitattributes", "Commit Prompt"];
+    let sub_tabs = vec![".gitignore", ".gitattributes"];
 
     let sub_tab_titles: Vec<Line> = sub_tabs.iter().map(|t| Line::from(*t)).collect();
 
