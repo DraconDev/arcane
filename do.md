@@ -1,6 +1,8 @@
 <!-- -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA -->
 
-- dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
+-   [x] dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
+
+    -   [x] Security Alerts visible in Dashboard.
 
 -   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
 
