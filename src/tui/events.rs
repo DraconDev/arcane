@@ -28,6 +28,13 @@ pub fn run_app<B: ratatui::backend::Backend>(
 
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
+                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                        if app.current_tab == 5 {
+                            // Deploy Placeholder
+                            app.events
+                                .push("🚀 Deploy Feature Coming Soon...".to_string());
+                        }
+                    }
                     KeyCode::Char('t') | KeyCode::Char('T') => {
                         if app.current_tab == 4 && app.ai_config_sub_tab == 1 {
                             run_connectivity_test(&mut app);
@@ -126,6 +133,11 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             }
                         } else if app.current_tab == 3 && app.sub_tab_focused {
                             app.sub_tab_focused = false;
+                        } else if app.current_tab == 5 {
+                            if app.ops_selected_server_idx > 0 {
+                                app.ops_selected_server_idx -= 1;
+                                app.ops_selected_container_idx = 0;
+                            }
                         } else {
                             app.scroll_up();
                         }
@@ -177,12 +189,33 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.ai_config_focused = true;
                             app.ai_config_focus_level = 0;
                             app.ai_config_row = 0;
+                        } else if app.current_tab == 5 {
+                            if app.ops_selected_server_idx < app.ops_servers.len().saturating_sub(1)
+                            {
+                                app.ops_selected_server_idx += 1;
+                                app.ops_selected_container_idx = 0;
+                            }
                         } else {
                             app.scroll_down();
                         }
                     }
                     KeyCode::Enter => {
-                        if app.input_popup_active {
+                        if app.current_tab == 5 {
+                            app.ops_loading = true;
+                            if !app.ops_servers.is_empty() {
+                                let server = app.ops_servers[app.ops_selected_server_idx].clone();
+                                match crate::ops::monitor::Monitor::list_containers(&server) {
+                                    Ok(c) => {
+                                        app.ops_containers = c;
+                                        app.events.push("✅ Refreshed containers".to_string());
+                                    }
+                                    Err(e) => {
+                                        app.events.push(format!("❌ Connection failed: {}", e))
+                                    }
+                                }
+                            }
+                            app.ops_loading = false;
+                        } else if app.input_popup_active {
                             // Handle popup submission
                             let input = app.input_popup_buffer.clone();
                             let callback = app.input_popup_callback.clone();

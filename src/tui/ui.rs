@@ -1,4 +1,5 @@
 use crate::tui::app::App;
+use crate::tui::ops_view::render_ops;
 use ratatui::{
     backend::Backend,
     layout::{Constraint, Direction, Layout},
@@ -94,6 +95,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
         2 => render_intelligence(f, app, main_area),
         3 => render_identity(f, app, main_area),
         4 => render_settings(f, app, main_area),
+        5 => render_ops(f, app, main_area), // [NEW] Ops Tab
         _ => {}
     }
 

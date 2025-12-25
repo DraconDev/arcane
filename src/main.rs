@@ -110,13 +110,42 @@ async fn main() {
         )
         .subcommand(
             Command::new("deploy")
-                .about("Authorize servers to decrypt secrets")
-                .subcommand(Command::new("gen-key").about("Generate a new Machine Key (Identity)"))
+                .about("Arcane Ops deployment commands")
+                .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
                 .subcommand(
                     Command::new("allow")
-                        .about("Authorize a Machine Key to access this repo")
+                        .about("Whitelist a Machine Key")
                         .arg(Arg::new("pub_key").required(true)),
                 ),
+        )
+        .subcommand(
+            Command::new("push")
+                .about("Push deployment to remote server (Sovereign Cloud)")
+                .arg(
+                    Arg::new("target")
+                        .short('t')
+                        .long("target")
+                        .required(true)
+                        .help("Target server name (from servers.toml)"),
+                )
+                .arg(
+                    Arg::new("app")
+                        .short('a')
+                        .long("app")
+                        .required(true)
+                        .help("App name (e.g. 'chimera')"),
+                )
+                .arg(
+                    Arg::new("tag")
+                        .long("tag")
+                        .default_value("latest")
+                        .help("Image tag to deploy"),
+                ),
+        )
+        .subcommand(
+            Command::new("pull")
+                .about("Pull state or logs from remote server (Placeholder)")
+                .arg(Arg::new("target").short('t').required(true)),
         )
         .subcommand(
             Command::new("identity")
@@ -489,8 +518,25 @@ async fn main() {
                     }
                 }
             }
+            Some(("push", args)) => {
+                let target = args.get_one::<String>("target").unwrap();
+                let app = args.get_one::<String>("app").unwrap();
+                let tag = args.get_one::<String>("tag").unwrap();
+
+                run_push_command(target, app, tag).await;
+            }
             _ => println!("Use 'arcane deploy --help'"),
         },
+        Some(("push", args)) => {
+            let target = args.get_one::<String>("target").unwrap();
+            let app = args.get_one::<String>("app").unwrap();
+            let tag = args.get_one::<String>("tag").unwrap();
+
+            run_push_command(target, app, tag).await;
+        }
+        Some(("pull", _)) => {
+            println!("📥 Arcane Pull: Not implemented yet (Coming soon: Logs/State sync)");
+        }
         Some(("identity", sub_matches)) => match sub_matches.subcommand() {
             Some(("show", _)) => {
                 // Read the master identity and derive public key
@@ -810,6 +856,20 @@ async fn start_arcane_daemon(paths: Vec<&str>) {
         .expect("Failed to listen for Ctrl+C");
     println!("👋 Arcane daemon stopped");
     std::process::exit(0);
+}
+
+async fn run_push_command(target: &str, app: &str, tag: &str) {
+    println!("🚀 Arcane Ops: Deploying {}@{} to {}...", app, tag, target);
+
+    let image = format!("{}:{}", app, tag);
+    // We assume target name matches environment name for now (e.g. "prod")
+    match crate::ops::deploy::ArcaneDeployer::deploy(target, &image, target).await {
+        Ok(_) => println!("✅ Deployment Successful"),
+        Err(e) => {
+            eprintln!("❌ Deployment Failed: {}", e);
+            std::process::exit(1);
+        }
+    }
 }
 
 fn is_git_repository(path: &Path) -> bool {

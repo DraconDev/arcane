@@ -16,9 +16,9 @@
 **The Solution: Arcane Ops**
 A **Rust-native, TUI-first, Agentic** orchestrator baked directly into the `arcane` binary.
 
--   **Zero Overhead**: 10MB binary. 50MB RAM. 0% Idle CPU.
 -   **Agentic**: It doesn't just list containers; it understands _Deployments_.
 -   **Sovereign**: No external SaaS. No telemetry. You own the binary, you own the fleet.
+-   **Secretless Runtime**: The target server is "dumb". It needs NO keys, NO arcane binary, and NO state. Secrets are injected into RAM during deployment.
 
 ---
 
@@ -28,65 +28,77 @@ We avoid creating a separate `arcane-ops` binary. Instead, we use **Cargo Featur
 
 ### Feature Flags
 
-| Feature   | Description              | Dependencies                  | Use Case                  |
-| :-------- | :----------------------- | :---------------------------- | :------------------------ |
-| `default` | Full TUI + Ops + Secrets | `ratatui`, `bollard`, `russh` | Developer Laptop          |
-| `minimal` | CLI Only (Secrets + Git) | `age`, `git2`                 | CI/CD Pipelines & Servers |
+| Feature   | Description              | Dependencies  | Use Case                  |
+| :-------- | :----------------------- | :------------ | :------------------------ |
+| `default` | Full TUI + Ops + Secrets | `ratatui`     | Developer Laptop          |
+| `minimal` | CLI Only (Secrets + Git) | `age`, `git2` | CI/CD Pipelines & Servers |
 
 ### Directory Structure
 
 ```rust
 arcane/
 ├── src/
-│   ├── main.rs          // Entry point.
+│   ├── main.rs          // Entry point (CLI & TUI router)
 │   ├── ops/             // [NEW] The Ops Module
-│   │   ├── mod.rs
-│   │   ├── manager.rs   // Connection Manager (SSH/Docker)
-│   │   ├── ssh.rs       // russh wrapper for remote cleanup
-│   │   ├── docker.rs    // bollard wrapper for container control
-│   │   └── agent.rs     // "Auto-Heal" Logic
+│   │   ├── mod.rs       // Module definition
+│   │   ├── config.rs    // servers.toml parser
+│   │   ├── shell.rs     // Wrapper for local & remote shell commands
+│   │   ├── deploy.rs    // "Direct Push" logic (The Engine)
+│   │   └── monitor.rs   // Docker stats parser
 │   └── ui/
 │       ├── ops_view.rs  // [NEW] The TUI Tab (Key: '4')
 ```
 
+> **Zero Bloat Strategy**:  
+> We will NOT use `russh` or `bollard`.  
+> We will wrap the system `ssh` and `docker` binaries.
+>
+> -   **Why?** SSH configuration is complex (`~/.ssh/config`, ProxyJump, Agents). By using the system binary, we inherit all of that for free.
+> -   **Benefit**: 0 extra dependencies. 100% compatibility with your existing workflow.
+
 ---
 
-## 3. The "True Arcane Deploy" Loop
+## 3. The Deployment Workflow (Hybrid)
 
-Arcane Ops is the missing "Trigger" in our deployment pipeline.
+Arcane Ops supports both **Interactive (Dev)** and **Headless (CI)** deployment modes using the same engine.
 
-### Step 1: The Build (CI/Local)
+### Scenario A: The "Sovereign Dev" (Laptop)
 
--   User pushes code.
--   CI builds Docker Image.
--   CI runs `arcane` (minimal) to encrypt `config/*.env` and push artifacts.
+1.  **Code**: You commit changes locally.
+2.  **Trigger**: You open Arcane TUI (`arcane dashboard`), go to **Ops**, press `[D]eploy`.
+3.  **Action**:
+    -   Your laptop builds the Docker image (or pulls it).
+    -   Your laptop SSHs to the server.
+    -   Your laptop injects secrets + code directly into RAM.
+    -   **Result**: Zero latency loop. Perfect for rapid dev.
 
-### Step 2: The Trigger (Arcane Ops TUI)
+### Scenario B: The "Pusher Server" (CI/CD)
 
--   User opens `arcane` -> **Ops Tab**.
--   User selects **Target**: `Production` (SSH).
--   User selects **Action**: `Deploy Chimera`.
--   **Arcane Ops** connects via SSH and executes:
+1.  **Code**: You merge PR to `main`.
+2.  **Trigger**: GitHub Actions / Jenkins runs `arcane deploy push production`.
+3.  **Action**:
+    -   CI Runner authenticates via SSH.
+    -   CI Runner builds/pulls artifacts.
+    -   CI Runner SSHs to the target server.
+    -   **Result**: Automated, auditable deployments using the exact same logic.
 
-    ```bash
-    # 1. Pull latest image
-    docker pull registry.dracon.uk/chimera:latest
+### Runtime Decryption & The "Secretless Server"
 
-    # 2. Run with Machine Key (The Sovereign Handshake)
-    docker run -d \
-      --name citadel \
-      -e ARCANE_MACHINE_KEY="age1..." \
-      -e ENVIRONMENT="production" \
-      -v citadel_logs:/app/logs \
-      registry.dracon.uk/chimera:latest
-    ```
+In both cases, **The Server is Stateless**.
 
-### Step 3: Runtime Decryption
+1.  **No `arcane` binary** is needed on the remote server.
+2.  **No `~/.arcane/keys`** are needed on the remote server.
+3.  **No `.env` files** exist on the remote server disk.
 
--   Container starts.
--   `deployment_entrypoint.sh` runs.
--   It uses `ARCANE_MACHINE_KEY` to decrypt `config/envs/production.env` into memory.
--   App boots securely.
+Secrets are decrypted locally (by the Laptop or CI Runner) and injected directly into the container's environment variables (RAM) via the SSH process.
+
+> **Benefit**: If your server is compromised, there are no keys to steal from the disk. The secrets exist only inside the running container's memory.
+
+### Runtime Decryption (The Common Denominator)
+
+In both cases, the server receives the `ARCANE_MACHINE_KEY` environment variable purely in memory. The container starts, and `deployment_entrypoint.sh` decrypts the config envs on boot.
+
+> **Note**: The Server is "Dumb". It doesn't know _how_ to deploy. It just receives instructions from an authenticated Pusher (Laptop or CI).
 
 ---
 
@@ -203,7 +215,8 @@ User presses [D]eploy on "citadel"
   └─────────────────────┘
          │
          ▼
-  SSH → docker pull → docker stop → docker run (with ARCANE_MACHINE_KEY)
+         ▼
+  SSH → docker pull → docker stop → docker run (with Environment Variables injected)
          │
          ▼
        SUCCESS ✓

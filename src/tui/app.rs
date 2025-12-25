@@ -100,61 +100,59 @@ pub struct App {
     // Restore Confirmation
     pub restore_confirm_active: bool,
     pub pending_restore_hash: String,
+
+    // Ops State
+    pub ops_servers: Vec<crate::ops::config::ServerConfig>,
+    pub ops_selected_server_idx: usize,
+    pub ops_containers: Vec<crate::ops::monitor::ContainerInfo>,
+    pub ops_selected_container_idx: usize,
+    pub ops_stats: Vec<crate::ops::monitor::ContainerStats>,
+    pub ops_loading: bool,
+    pub ops_action_menu_open: bool,
+    pub ops_action_idx: usize,
 }
 
 impl App {
     pub fn new() -> Self {
         // Load config for AI settings
         let config = arcane::config::ArcaneConfig::load().unwrap_or_default();
-        let (connectivity_tx, connectivity_rx) = std::sync::mpsc::channel();
-        let (version_tx, version_rx) = std::sync::mpsc::channel();
+        let (tx, rx) = std::sync::mpsc::channel();
+        let (v_tx, v_rx) = std::sync::mpsc::channel();
 
-        let ai_provider = config
-            .ai_provider
-            .map(|p| format!("{:?}", p))
-            .unwrap_or("Auto".to_string());
-        let backup1 = config
-            .backup_provider_1
-            .map(|p| format!("{:?}", p))
-            .unwrap_or("None".to_string());
-        let backup2 = config
-            .backup_provider_2
-            .map(|p| format!("{:?}", p))
-            .unwrap_or("None".to_string());
-        let watch_roots: Vec<PathBuf> = config.daemon.watch_roots;
-        let model_overrides: HashMap<String, String> = config.model_overrides;
+        let ops_config = crate::ops::config::OpsConfig::load();
 
-        let mut app = Self {
+        let mut app = App {
             should_quit: false,
             status: None,
             last_tick: std::time::Instant::now(),
-            git_log: Text::default(),
-            events: Vec::new(),
+            git_log: Text::raw("Loading log..."),
+            events: vec![],
             tabs: vec![
                 "Dashboard".to_string(),
-                "Git Graph".to_string(),
+                "Graph".to_string(),
                 "Intelligence".to_string(),
                 "Identity".to_string(),
-                "AI Config".to_string(),
+                "Settings".to_string(),
+                "Ops".to_string(),
             ],
             current_tab: 0,
             scroll: 0,
             selected_row: 0,
-            vp_height: 20,
+            vp_height: 0,
             show_popup: false,
-            popup_content: Text::default(),
-            working_tree: Vec::new(),
-            selected_file_idx: 0,
             popup_scroll: 0,
+            popup_content: Text::default(),
+            working_tree: vec![],
+            selected_file_idx: 0,
             commit_details: Text::default(),
             commit_stats: HashMap::new(),
             ai_auto_commit: false,
             identity_sub_tab: 0,
             master_pubkey: None,
-            team_members: Vec::new(),
-            machine_keys: Vec::new(),
-            scan_results: Vec::new(),
-            snapshots: Vec::new(),
+            team_members: vec![],
+            machine_keys: vec![],
+            scan_results: vec![],
+            snapshots: vec![],
             selected_team_idx: 0,
             sub_tab_focused: false,
             ai_config_sub_tab: 0,
@@ -169,37 +167,40 @@ impl App {
             provider_menu_idx: 0,
             provider_edit_target: String::new(),
             input_mode_key: false,
-            current_ai_provider: ai_provider,
-            primary_model: config.primary_model.unwrap_or_default(),
-            backup_provider_1: backup1,
-            backup1_model: config.backup1_model.unwrap_or_default(),
-            backup_provider_2: backup2,
-            backup2_model: config.backup2_model.unwrap_or_default(),
+            current_ai_provider: config
+                .ai_provider
+                .as_ref()
+                .map(|p| format!("{:?}", p))
+                .unwrap_or_else(|| "None".to_string()),
+            primary_model: config.primary_model.clone().unwrap_or_default(),
+            backup_provider_1: config
+                .backup_provider_1
+                .as_ref()
+                .map(|p| format!("{:?}", p))
+                .unwrap_or_else(|| "None".to_string()),
+            backup1_model: config.backup1_model.clone().unwrap_or_default(),
+            backup_provider_2: config
+                .backup_provider_2
+                .as_ref()
+                .map(|p| format!("{:?}", p))
+                .unwrap_or_else(|| "None".to_string()),
+            backup2_model: config.backup2_model.clone().unwrap_or_default(),
             inactivity_delay: config.timing.inactivity_delay,
             min_commit_delay: config.timing.min_commit_delay,
             version_bumping: config.version_bumping,
-            watch_roots,
-            ignore_patterns: config.ignore_patterns,
-            gitattributes_patterns: config.gitattributes_patterns,
-            system_prompt: config.system_prompt,
-            model_overrides,
-            connectivity_map: std::collections::HashMap::new(),
-            testing_connectivity: false,
-            connectivity_tx,
-            connectivity_rx,
-            version_tx,
-            version_rx,
+            watch_roots: config.daemon.watch_roots.clone(),
+            ignore_patterns: config.ignore_patterns.clone(),
+            gitattributes_patterns: config.gitattributes_patterns.clone(),
+            system_prompt: config.system_prompt.clone(),
+            model_overrides: config.model_overrides.clone(),
             api_key_status: {
                 let mut status = std::collections::HashMap::new();
-                // Check both config and env vars for API keys
                 let has_key = |provider: &str, env_var: &str| -> bool {
-                    // Check config first
                     if let Some(key) = config.api_keys.get(provider) {
                         if !key.is_empty() {
                             return true;
                         }
                     }
-                    // Fallback to env var
                     std::env::var(env_var).is_ok()
                 };
                 status.insert("Gemini".to_string(), has_key("Gemini", "GEMINI_API_KEY"));
@@ -212,9 +213,15 @@ impl App {
                     "Anthropic".to_string(),
                     has_key("Anthropic", "ANTHROPIC_API_KEY"),
                 );
-                status.insert("Ollama".to_string(), true); // Ollama doesn't need a key
+                status.insert("Ollama".to_string(), true);
                 status
             },
+            connectivity_map: std::collections::HashMap::new(),
+            testing_connectivity: false,
+            connectivity_tx: tx,
+            connectivity_rx: rx,
+            version_tx: v_tx,
+            version_rx: v_rx,
             confirmed_bump: None,
             input_popup_active: false,
             input_popup_title: String::new(),
@@ -223,8 +230,17 @@ impl App {
             input_popup_index: 0,
             restore_confirm_active: false,
             pending_restore_hash: String::new(),
-        };
 
+            // Ops Init
+            ops_servers: ops_config.servers,
+            ops_selected_server_idx: 0,
+            ops_containers: vec![],
+            ops_selected_container_idx: 0,
+            ops_stats: vec![],
+            ops_loading: false,
+            ops_action_menu_open: false,
+            ops_action_idx: 0,
+        };
         app.refresh_identity();
         app
     }

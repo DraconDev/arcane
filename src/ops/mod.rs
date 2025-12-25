@@ -1,4 +1,4 @@
-pub mod agent;
-pub mod docker;
-pub mod manager;
-pub mod ssh;
+pub mod config;
+pub mod deploy;
+pub mod monitor;
+pub mod shell;
