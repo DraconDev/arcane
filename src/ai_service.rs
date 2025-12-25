@@ -589,21 +589,26 @@ Commits (Newest First):
 
 Rules:
 1. Contiguous commits that fix the same thing (e.g. "Fix typo", "Fix typo again") should be 1 group.
-2. Distinct features should remain separate groups.
-3. Groups must respect chronological order (you can only squash adjacent commits safely).
-4. Output specific JSON format.
+2. Distinct features MUST remain separate groups. DO NOT SQUASH UNRELATED FEATURES TOGETHER.
+3. Ideally, you should output MULTIPLE small groups rather than one large group, unless every single commit is about the exact same atomic change.
+4. Groups must respect chronological order (you can only squash adjacent commits safely).
+5. If a commit stands alone and is distinct, it is a group of size 1. Keep it separate.
+6. Output specific JSON format.
 
 JSON Format:
-{{
+{
   "groups": [
-    {{
+    {
       "target_message": "feat(auth): implement login flow",
       "commits": ["hash1", "hash2"]
-    }}
+    },
+    {
+      "target_message": "fix(ui): correct padding",
+      "commits": ["hash3"]
+    }
   ]
-}}
+}
 
-If a commit stands alone, it is a group of size 1.
 Response ONLY VALID JSON."#,
             commit_block
         );
