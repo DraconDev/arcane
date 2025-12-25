@@ -41,7 +41,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.identity_sub_tab = (app.identity_sub_tab + 1) % 5;
                         } else if app.current_tab == 4 && app.ai_config_focused {
                             match app.ai_config_focus_level {
-                                0 => {
+                                0 | 2 => {
                                     app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 5;
                                     app.ai_config_row = 0;
                                 }
@@ -66,7 +66,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             }
                         } else if app.current_tab == 4 && app.ai_config_focused {
                             match app.ai_config_focus_level {
-                                0 => {
+                                0 | 2 => {
                                     if app.ai_config_sub_tab > 0 {
                                         app.ai_config_sub_tab -= 1;
                                     } else {
@@ -92,40 +92,37 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     }
                     // Up/Down: Navigate rows when in AI Config Providers or Timing view
                     KeyCode::Up | KeyCode::Char('k') => {
-                        if app.current_tab == 4
-                            && app.ai_config_focused
-                            && app.ai_config_sub_tab == 1
-                        {
-                            // Providers: 3 rows (0-2)
+                        if app.current_tab == 4 && app.ai_config_focused {
                             if app.ai_config_row > 0 {
                                 app.ai_config_row -= 1;
-                            }
-                        } else if app.current_tab == 4
-                            && app.ai_config_focused
-                            && app.ai_config_sub_tab == 2
-                        {
-                            // Timing: 3 rows (0-2)
-                            if app.ai_config_row > 0 {
-                                app.ai_config_row -= 1;
-                            }
-                            // Skip separator row
-                            if app.ai_config_row == 3 {
-                                app.ai_config_row -= 1;
-                            }
-                        } else if app.current_tab == 4 && app.ai_config_focused {
-                            match app.ai_config_focus_level {
-                                1 | 2 => {
-                                    if app.ai_config_focus_level == 2 && app.ai_config_row > 0 {
-                                        app.ai_config_row -= 1;
-                                    } else {
-                                        app.ai_config_focus_level -= 1;
+                                // Skip separator row in Providers
+                                if app.ai_config_sub_tab == 1 && app.ai_config_row == 3 {
+                                    app.ai_config_row -= 1;
+                                }
+                            } else {
+                                // We are at row 0, go back up a level
+                                match app.ai_config_focus_level {
+                                    2 => {
+                                        // If we are in Patterns (sub_tab 4), go back to patterns menu (level 1)
+                                        // Otherwise go directly back to sub-tabs (level 0)
+                                        if app.ai_config_sub_tab == 4 {
+                                            app.ai_config_focus_level = 1;
+                                        } else {
+                                            app.ai_config_focus_level = 0;
+                                        }
                                         app.ai_config_row = 0;
                                     }
+                                    1 => {
+                                        // From patterns menu back to sub-tabs
+                                        app.ai_config_focus_level = 0;
+                                        app.ai_config_row = 0;
+                                    }
+                                    0 => {
+                                        // Already at the top level of this tab, exit tab focus
+                                        app.ai_config_focused = false;
+                                    }
+                                    _ => {}
                                 }
-                                0 => {
-                                    app.ai_config_focused = false;
-                                }
-                                _ => {}
                             }
                         } else if app.current_tab == 3 && app.sub_tab_focused {
                             app.sub_tab_focused = false;
@@ -155,6 +152,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                                     let limit = match app.ai_config_sub_tab {
                                         1 => 9, // Providers
                                         2 => 2, // Timing
+                                        3 => 1, // Versioning
                                         4 => match app.ai_patterns_sub_tab {
                                             0 => app.ignore_patterns.len(),
                                             1 => app.gitattributes_patterns.len(),
