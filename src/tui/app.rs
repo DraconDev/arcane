@@ -50,7 +50,6 @@ pub struct App {
     pub ai_auto_push: bool,
     pub ai_auto_deploy: bool,
     pub shadow_branches: bool,
-    pub pattern_mode: arcane::config::PatternMode,
     // Vault/Identity State
     pub identity_sub_tab: usize,
     pub master_pubkey: Option<String>,
