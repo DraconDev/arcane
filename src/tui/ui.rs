@@ -71,18 +71,80 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     // 2. Status Hub (Dashboard only)
     let (main_area, footer_area) = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
-        let status_text = if let Some(status) = &app.status {
-            format!(
-                " Daemon: RUNNING (PID: {}) | State: {}\n [S] Stop Daemon | [A] Auto-Commit: {} | [P] Auto-Push: {}",
-                status.pid,
-                status.state,
-                if app.ai_auto_commit { "ON" } else { "OFF" },
-                if app.ai_auto_push { "ON" } else { "OFF" }
-            )
+        let status_lines = if let Some(status) = &app.status {
+            let pid_span = Span::styled(
+                format!(
+                    " Daemon: RUNNING (PID: {}) | State: {} ",
+                    status.pid, status.state
+                ),
+                Style::default().fg(Color::Green),
+            );
+
+            let separator = Span::raw("   ");
+
+            let daemon_btn = Span::styled(
+                " [S] Stop Daemon ",
+                Style::default()
+                    .bg(Color::Red)
+                    .fg(Color::Black)
+                    .add_modifier(Modifier::BOLD),
+            );
+
+            let auto_commit_btn = if app.ai_auto_commit {
+                Span::styled(
+                    " [A] Auto-Commit: ON ",
+                    Style::default()
+                        .bg(Color::Green)
+                        .fg(Color::Black)
+                        .add_modifier(Modifier::BOLD),
+                )
+            } else {
+                Span::styled(
+                    " [A] Auto-Commit: OFF ",
+                    Style::default().fg(Color::DarkGray),
+                )
+            };
+
+            let auto_push_btn = if app.ai_auto_push {
+                Span::styled(
+                    " [P] Auto-Push: ON ",
+                    Style::default()
+                        .bg(Color::Green)
+                        .fg(Color::Black)
+                        .add_modifier(Modifier::BOLD),
+                )
+            } else {
+                Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
+            };
+
+            vec![
+                Line::from(pid_span),
+                Line::from(vec![
+                    daemon_btn,
+                    separator.clone(),
+                    auto_commit_btn,
+                    separator,
+                    auto_push_btn,
+                ]),
+            ]
         } else {
-            " Daemon: STOPPED (Waiting for signal...)\n [S] Start Daemon".to_string()
+            let daemon_btn = Span::styled(
+                " [S] Start Daemon ",
+                Style::default()
+                    .bg(Color::Green)
+                    .fg(Color::Black)
+                    .add_modifier(Modifier::BOLD),
+            );
+            vec![
+                Line::from(Span::styled(
+                    " Daemon: STOPPED ",
+                    Style::default().fg(Color::Red),
+                )),
+                Line::from(daemon_btn),
+            ]
         };
-        let p = Paragraph::new(status_text).block(status_block);
+
+        let p = Paragraph::new(status_lines).block(status_block);
         f.render_widget(p, chunks[1]);
         (chunks[2], chunks[3])
     } else {
