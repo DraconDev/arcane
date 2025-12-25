@@ -1,6 +1,6 @@
 -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA
 
-- dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is 
+- dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
 
 -   option to add to or override gitattributes and gitignore
 
