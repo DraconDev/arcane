@@ -228,6 +228,57 @@ impl App {
             squash_tx: sq_tx,
             squash_error: None,
 
+            sub_tab_focused: false,
+
+            // Services logic
+            config: config.clone(),
+            ai_service: {
+                let mut api_map = std::collections::HashMap::new();
+                for (k, v) in &config.api_keys {
+                    match k.to_lowercase().as_str() {
+                        "gemini" => {
+                            api_map.insert(crate::ai_service::AIProvider::Gemini, v.clone());
+                        }
+                        "openai" => {
+                            api_map.insert(crate::ai_service::AIProvider::OpenAI, v.clone());
+                        }
+                        "anthropic" => {
+                            api_map.insert(crate::ai_service::AIProvider::Anthropic, v.clone());
+                        }
+                        "ollama" => {
+                            api_map.insert(crate::ai_service::AIProvider::Ollama, v.clone());
+                        }
+                        "copilot" => {
+                            api_map.insert(crate::ai_service::AIProvider::Copilot, v.clone());
+                        }
+                        "openrouter" => {
+                            api_map.insert(crate::ai_service::AIProvider::OpenRouter, v.clone());
+                        }
+                        _ => {}
+                    }
+                }
+
+                let ai_conf = crate::ai_service::AIConfig {
+                    primary_provider: config
+                        .ai_provider
+                        .clone()
+                        .unwrap_or(crate::ai_service::AIProvider::Gemini),
+                    backup_providers: vec![],
+                    provider_models: std::collections::HashMap::new(),
+                    api_keys: api_map,
+                };
+                Arc::new(crate::ai_service::AIService::new(ai_conf))
+            },
+            git_ops: crate::git_operations::GitOperations::new(),
+            rebase_manager: RebaseManager::new(),
+
+            // Squash
+            squash_plan: None,
+            analyzing_squash: false,
+            squash_rx: sq_rx,
+            squash_tx: sq_tx,
+            squash_error: None,
+
             // Services
             config: config.clone(),
             ai_service: Arc::new(crate::ai_service::AIService::new(config.clone())),
