@@ -113,6 +113,8 @@ pub struct ArcaneConfig {
     #[serde(default)]
     pub auto_commit_enabled: bool,
     #[serde(default)]
+    pub auto_push_enabled: bool,
+    #[serde(default)]
     pub model_overrides: HashMap<String, String>, // per-provider defaults
     #[serde(default = "default_ignore_patterns")]
     pub ignore_patterns: Vec<String>,
