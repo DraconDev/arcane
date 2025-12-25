@@ -1,6 +1,6 @@
 -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA
 
-- dash
+- dashboard contorls buttons should have teh same green red style
 
 -   option to add to or override gitattributes and gitignore
 
