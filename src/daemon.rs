@@ -154,7 +154,7 @@ fn find_git_root(path: &Path) -> Option<PathBuf> {
 }
 
 fn perform_auto_commit(repo_path: &Path) -> Result<()> {
-    use crate::ai_service::{AIConfig, AIService};
+    use crate::ai_service::AIService;
     use crate::git_operations::GitOperations;
 
     let git = GitOperations::new();
