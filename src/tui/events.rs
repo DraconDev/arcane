@@ -340,7 +340,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                                 }
                                 _ => {}
                             }
-                        } else if app.current_tab == 4
+                        } else if app.current_tab == 2
                             && app.ai_config_focused
                             && (app.ai_config_sub_tab == 1
                                 || app.ai_config_sub_tab == 2
