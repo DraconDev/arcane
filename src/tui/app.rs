@@ -925,6 +925,7 @@ impl App {
 
             config.timing.inactivity_delay = self.inactivity_delay;
             config.timing.min_commit_delay = self.min_commit_delay;
+            config.auto_deploy_enabled = self.ai_auto_deploy;
             config.version_bumping = self.version_bumping;
             config.ignore_patterns = self.ignore_patterns.clone();
             config.gitattributes_patterns = self.gitattributes_patterns.clone();
