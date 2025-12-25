@@ -95,7 +95,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             ));
                         }
                     }
-                    KeyCode::Char('D') => {
+                    KeyCode::Char('d') => {
                         if app.current_tab == 5 {
                             let total_groups = app.ops_groups.len();
                             let total_servers = app.ops_servers.len();
