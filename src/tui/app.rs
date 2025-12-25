@@ -1241,4 +1241,37 @@ impl App {
         self.squash_error = None;
         self.analyzing_squash = false;
     }
+
+    pub fn trigger_deploy(&mut self, server_name: String) {
+        // Detect app name from current directory (Cargo.toml or package.json)
+        let cwd = std::env::current_dir().unwrap_or_default();
+        let app_name = cwd
+            .file_name()
+            .map(|n| n.to_string_lossy().to_string())
+            .unwrap_or_else(|| "app".to_string());
+
+        // Use "latest" as default tag
+        let image = format!("{}:latest", app_name);
+        let env_name = server_name.clone(); // Assume env name matches server name (prod, stage, etc.)
+
+        // Spawn async deploy
+        let events_msg = format!(
+            "🚀 Deploying {} to {} (env: {})",
+            image, server_name, env_name
+        );
+        self.events.push(events_msg);
+
+        tokio::spawn(async move {
+            match crate::ops::deploy::ArcaneDeployer::deploy(&server_name, &image, &env_name, None)
+                .await
+            {
+                Ok(_) => {
+                    println!("✅ TUI Deploy Complete: {} -> {}", image, server_name);
+                }
+                Err(e) => {
+                    eprintln!("❌ TUI Deploy Failed: {}", e);
+                }
+            }
+        });
+    }
 }
