@@ -55,9 +55,10 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         if app.current_tab == 1 {
                             // Graph: Smart Squash
                             app.trigger_squash_analysis();
-                        } else if app.current_tab == 3 && app.identity_sub_tab == 3 {
-                            // Identity/Security: Scan Repo
-                            app.scan_repo();
+                        } else if app.current_tab == 5 {
+                            // Ops: Shell (Placeholder for now)
+                            app.events
+                                .push("🐚 Remote Shell coming soon...".to_string());
                         } else {
                             // Default: Toggle Daemon
                             app.toggle_daemon();
@@ -67,6 +68,10 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         if app.current_tab == 1 {
                             // Graph tab only: Bulk Squash
                             app.trigger_lazy_squash();
+                        } else if app.current_tab == 5 {
+                            // Ops: Logs (Placeholder for now)
+                            app.events
+                                .push("📋 Container Logs coming soon...".to_string());
                         }
                     }
                     KeyCode::Char('b') => {
