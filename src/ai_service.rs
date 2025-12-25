@@ -1,0 +1,480 @@
+use anyhow::{anyhow, Context, Result};
+use chrono::Local;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+use std::time::{Duration, Instant};
+
+use crate::version_manager::SemVerBump;
+
+#[derive(Debug, Clone, Serialize, Deserialize, Eq, Hash, PartialEq)]
+pub enum AIProvider {
+    Gemini,
+    OpenRouter,
+    OpenAI,
+    Anthropic,
+    Copilot,
+    Ollama,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct AIConfig {
+    pub primary_provider: AIProvider,
+    pub backup_providers: Vec<AIProvider>,
+    pub provider_models: std::collections::HashMap<AIProvider, String>,
+    pub api_keys: std::collections::HashMap<AIProvider, String>,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct AIAttempt {
+    pub provider: AIProvider,
+    pub model: Option<String>,
+    pub duration: Duration,
+    pub success: bool,
+    pub message: Option<String>,
+    pub error: Option<String>,
+}
+
+#[derive(Clone)]
+#[allow(dead_code)]
+pub struct AIService {
+    config: AIConfig,
+    client: Client,
+    retry_policy: RetryPolicy,
+}
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub struct RetryPolicy {
+    max_retries: usize,
+    base_delay: Duration,
+}
+
+impl RetryPolicy {
+    pub fn exponential_backoff(base_delay: Duration, max_retries: usize) -> Self {
+        Self {
+            max_retries,
+            base_delay,
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl AIService {
+    pub fn new(config: AIConfig) -> Self {
+        Self {
+            config,
+            client: Client::new(),
+            retry_policy: RetryPolicy::exponential_backoff(Duration::from_millis(100), 3),
+        }
+    }
+
+    pub async fn analyze_semver(&self, diff: &str) -> anyhow::Result<SemVerBump> {
+        let prompt = format!(
+            "You are a Release Manager. Analyze the following code changes (git diff) and determine the Semantic Versioning bump required.\n\
+            Return ONLY one of the following words: 'Major', 'Minor', 'Patch', 'None'.\n\
+            \n\
+            Rules:\n\
+            - Major: Breaking API changes (incompatible).\n\
+            - Minor: New features (backward compatible functionality).\n\
+            - Patch: Bug fixes, refactoring, docs, performance, chores (backward compatible).\n\
+            - None: No version bump needed (e.g. CI config only, no code).\n\
+            \n\
+            Diff:\n\
+            {}\n\
+            \n\
+            Response:",
+            diff
+        );
+
+        let result = self
+            .try_providers_for_prompt(&prompt)
+            .await
+            .context("Failed to analyze semver")?;
+        let clean_res = result.trim().to_lowercase();
+
+        if clean_res.contains("major") {
+            Ok(SemVerBump::Major)
+        } else if clean_res.contains("minor") {
+            Ok(SemVerBump::Minor)
+        } else if clean_res.contains("patch") {
+            Ok(SemVerBump::Patch)
+        } else {
+            Ok(SemVerBump::None)
+        }
+    }
+
+    pub async fn generate_commit_message(&self, diff: &str) -> Result<String> {
+        let simplified_diff = self.simplify_diff(diff);
+        let mut attempts = Vec::new();
+
+        // Try providers in order: primary, backup1, backup2
+        let providers = self.get_provider_order();
+
+        for provider in providers {
+            let attempt = self.try_provider(provider, &simplified_diff).await;
+            attempts.push(attempt.clone());
+
+            if let Some(message) = attempt.message {
+                if !message.trim().is_empty() {
+                    return Ok(message);
+                }
+            }
+        }
+
+        // All failed - return fallback
+        Ok(self.generate_fallback_message())
+    }
+
+    fn simplify_diff(&self, diff: &str) -> String {
+        let lines: Vec<&str> = diff.lines().collect();
+        if lines.len() > 200 {
+            let truncated: Vec<&str> = lines.into_iter().take(200).collect();
+            format!("{}\n... (truncated)", truncated.join("\n"))
+        } else {
+            lines.join("\n")
+        }
+    }
+
+    async fn try_providers_for_prompt(&self, prompt: &str) -> Result<String> {
+        let providers = self.get_provider_order();
+
+        for provider in providers {
+            let model = self.config.provider_models.get(&provider);
+
+            let result = match provider {
+                AIProvider::Gemini => self.call_gemini(prompt, model).await,
+                AIProvider::OpenRouter => self.call_openrouter(prompt, model).await,
+                AIProvider::OpenAI => self.call_openai(prompt, model).await,
+                AIProvider::Anthropic => self.call_anthropic(prompt, model).await,
+                AIProvider::Copilot => self.call_copilot(prompt, model).await,
+                AIProvider::Ollama => self.call_ollama(prompt, model).await,
+            };
+
+            if let Ok(msg) = result {
+                return Ok(msg);
+            }
+        }
+        anyhow::bail!("All providers failed")
+    }
+
+    async fn try_provider(&self, provider: AIProvider, diff: &str) -> AIAttempt {
+        let model = self.config.provider_models.get(&provider);
+        let start_time = Instant::now();
+
+        // Construct Commit Prompt
+        // Check for System Prompt
+        let system_instruction = if let Ok(config) = crate::config::ArcaneConfig::load() {
+            config.system_prompt
+        } else {
+            // Default Fallback
+            r#"Generate ONE git commit message. Output ONLY the commit message, nothing else.
+Format: type(scope): short description
+Types: feat fix docs refactor chore
+Max 50 chars. Lowercase. No period. No quotes."#
+                .to_string()
+        };
+
+        let prompt = format!("{}\n\nDiff:\n{}", system_instruction, diff);
+        let result = match provider {
+            AIProvider::Gemini => self.call_gemini(&prompt, model).await,
+            AIProvider::OpenRouter => self.call_openrouter(&prompt, model).await,
+            AIProvider::OpenAI => self.call_openai(&prompt, model).await,
+            AIProvider::Anthropic => self.call_anthropic(&prompt, model).await,
+            AIProvider::Copilot => self.call_copilot(&prompt, model).await,
+            AIProvider::Ollama => self.call_ollama(&prompt, model).await,
+        };
+
+        let (message, error) = match &result {
+            Ok(msg) => (Some(msg.clone()), None),
+            Err(e) => (None, Some(e.to_string())),
+        };
+
+        AIAttempt {
+            provider,
+            model: model.cloned(),
+            duration: start_time.elapsed(),
+            success: result.is_ok(),
+            message,
+            error,
+        }
+    }
+
+    pub async fn check_connectivity(
+        &self,
+        provider: AIProvider,
+        model: Option<String>,
+    ) -> AIAttempt {
+        let start_time = Instant::now();
+        let prompt = "Say 'OK' and nothing else.";
+
+        let result = match provider {
+            AIProvider::Gemini => self.call_gemini(prompt, model.as_ref()).await,
+            AIProvider::OpenRouter => self.call_openrouter(prompt, model.as_ref()).await,
+            AIProvider::OpenAI => self.call_openai(prompt, model.as_ref()).await,
+            AIProvider::Anthropic => self.call_anthropic(prompt, model.as_ref()).await,
+            AIProvider::Copilot => self.call_copilot(prompt, model.as_ref()).await,
+            AIProvider::Ollama => self.call_ollama(prompt, model.as_ref()).await,
+        };
+
+        let (message, error) = match &result {
+            Ok(msg) => (Some(msg.clone()), None),
+            Err(e) => (None, Some(e.to_string())),
+        };
+
+        AIAttempt {
+            provider,
+            model,
+            duration: start_time.elapsed(),
+            success: result.is_ok(),
+            message,
+            error,
+        }
+    }
+
+    fn generate_fallback_message(&self) -> String {
+        format!("arcane: {}", Local::now().format("%Y-%m-%d %H:%M:%S"))
+    }
+
+    fn get_provider_order(&self) -> Vec<AIProvider> {
+        let mut providers = vec![self.config.primary_provider.clone()];
+        providers.extend(self.config.backup_providers.clone());
+        providers
+    }
+
+    async fn call_gemini(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let api_key = self
+            .config
+            .api_keys
+            .get(&AIProvider::Gemini)
+            .ok_or_else(|| anyhow!("Gemini API key not configured"))?;
+
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
+            model.unwrap_or(&"gemini-1.5-flash-latest".to_string()),
+            api_key
+        );
+
+        let body = serde_json::json!({
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        });
+
+        let response = self.client.post(&url).json(&body).send().await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow!("Gemini API error: {}", response.status()));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let text = json["candidates"][0]["content"]["parts"][0]["text"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Invalid Gemini response format"))?
+            .trim()
+            .to_string();
+
+        Ok(text)
+    }
+
+    async fn call_openrouter(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let api_key = self
+            .config
+            .api_keys
+            .get(&AIProvider::OpenRouter)
+            .ok_or_else(|| anyhow!("OpenRouter API key not configured"))?;
+
+        // Model cascade: try primary, then backups (code-focused free models)
+        // Note: xiaomi/mimo-v2-flash is super smart but may not stay free
+        let models = [
+            model
+                .map(|s| s.as_str())
+                .unwrap_or("xiaomi/mimo-v2-flash:free"),
+            "qwen/qwen3-coder:free",
+            "mistralai/devstral-2512:free",
+            "google/gemini-2.0-flash-exp:free",
+        ];
+
+        let mut last_error = anyhow!("No models tried");
+
+        for model_name in models {
+            let body = serde_json::json!({
+                "model": model_name,
+                "messages": [{"role": "user", "content": prompt}]
+            });
+
+            let response = self
+                .client
+                .post("https://openrouter.ai/api/v1/chat/completions")
+                .header("Authorization", format!("Bearer {}", api_key))
+                .json(&body)
+                .send()
+                .await;
+
+            match response {
+                Ok(resp) if resp.status().is_success() => {
+                    if let Ok(json) = resp.json::<serde_json::Value>().await {
+                        if let Some(text) = json["choices"][0]["message"]["content"].as_str() {
+                            // Don't clean message for generic prompts, only generic trim
+                            return Ok(text.trim().to_string());
+                        }
+                    }
+                }
+                Ok(resp) => {
+                    last_error = anyhow!("OpenRouter {} error: {}", model_name, resp.status());
+                }
+                Err(e) => {
+                    last_error = anyhow!("OpenRouter {} request failed: {}", model_name, e);
+                }
+            }
+        }
+
+        Err(last_error)
+    }
+
+    fn clean_commit_message(&self, text: &str) -> String {
+        text.lines()
+            .next()
+            .unwrap_or(text)
+            .trim()
+            .trim_matches('`')
+            .trim_matches('"')
+            .trim_matches('\'')
+            .chars()
+            .take(72)
+            .collect()
+    }
+
+    async fn call_openai(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let api_key = self
+            .config
+            .api_keys
+            .get(&AIProvider::OpenAI)
+            .ok_or_else(|| anyhow!("OpenAI API key not configured"))?;
+
+        let body = serde_json::json!({
+            "model": model.unwrap_or(&"gpt-4o".to_string()),
+            "messages": [{"role": "user", "content": prompt}]
+        });
+
+        let response = self
+            .client
+            .post("https://api.openai.com/v1/chat/completions")
+            .header("Authorization", format!("Bearer {}", api_key))
+            .json(&body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow!("OpenAI API error: {}", response.status()));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let text = json["choices"][0]["message"]["content"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Invalid OpenAI response format"))?
+            .trim()
+            .to_string();
+
+        Ok(text)
+    }
+
+    async fn call_anthropic(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let api_key = self
+            .config
+            .api_keys
+            .get(&AIProvider::Anthropic)
+            .ok_or_else(|| anyhow!("Anthropic API key not configured"))?;
+
+        let body = serde_json::json!({
+            "model": model.unwrap_or(&"claude-3-sonnet-20240229".to_string()),
+            "max_tokens": 1024,
+            "messages": [{"role": "user", "content": prompt}]
+        });
+
+        let response = self
+            .client
+            .post("https://api.anthropic.com/v1/messages")
+            .header("x-api-key", api_key)
+            .header("anthropic-version", "2023-06-01")
+            .json(&body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow!("Anthropic API error: {}", response.status()));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let text = json["content"][0]["text"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Invalid Anthropic response format"))?
+            .trim()
+            .to_string();
+
+        Ok(text)
+    }
+
+    async fn call_copilot(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let api_key = self
+            .config
+            .api_keys
+            .get(&AIProvider::Copilot)
+            .ok_or_else(|| anyhow!("Copilot API key not configured"))?;
+
+        let body = serde_json::json!({
+            "model": model.unwrap_or(&"copilot-gpt-4".to_string()),
+            "messages": [{"role": "user", "content": prompt}]
+        });
+
+        let response = self
+            .client
+            .post("https://api.githubcopilot.com/v1/chat/completions")
+            .header("Authorization", format!("Bearer {}", api_key))
+            .json(&body)
+            .send()
+            .await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow!("Copilot API error: {}", response.status()));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let text = json["choices"][0]["message"]["content"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Invalid Copilot response format"))?
+            .trim()
+            .to_string();
+
+        Ok(text)
+    }
+
+    async fn call_ollama(&self, prompt: &str, model: Option<&String>) -> Result<String> {
+        let base_url = std::env::var("OLLAMA_BASE_URL")
+            .unwrap_or_else(|_| "http://localhost:11434".to_string());
+
+        let url = format!("{}/api/generate", base_url);
+
+        let body = serde_json::json!({
+            "model": model.unwrap_or(&"llama3".to_string()),
+            "prompt": prompt,
+            "stream": false
+        });
+
+        let response = self.client.post(&url).json(&body).send().await?;
+
+        if !response.status().is_success() {
+            return Err(anyhow!("Ollama API error: {}", response.status()));
+        }
+
+        let json: serde_json::Value = response.json().await?;
+        let text = json["response"]
+            .as_str()
+            .ok_or_else(|| anyhow!("Invalid Ollama response format (missing 'response')"))?
+            .trim()
+            .to_string();
+
+        Ok(text)
+    }
+}

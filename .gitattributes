@@ -1,0 +1,11 @@
+
+# Auto-committer gitattributes
+.env filter=git-arcane diff=git-arcane
+.env.* filter=git-arcane diff=git-arcane
+
+# Auto-committer gitattributes
+
+
+# Auto-committer gitattributes
+.env filter=git-seal diff=git-seal
+*.env filter=git-arcane diff=git-arcane

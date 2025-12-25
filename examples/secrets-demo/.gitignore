@@ -1,0 +1,3 @@
+target/
+# Note: We do NOT ignore .env because Arcane encrypts it!
+# .env 
