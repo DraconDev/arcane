@@ -1073,11 +1073,11 @@ fn render_ai_versioning(f: &mut Frame, app: &mut App, area: ratatui::layout::Rec
         format!(""),
         format!("  ─── Squash Strategies ───"),
         format!("  [Auto-Push ON] Each commit = Patch"),
-        format!("  [Shift+S] Smart: AI groups into Minors + Patches"),
-        format!("  [Shift+L] Bulk:  All commits → 1 version bump"),
+        format!("  [s] Smart: AI groups into Minors + Patches"),
+        format!("  [l] Bulk:  All commits → 1 version bump"),
         format!(""),
         format!(
-            "  ⚙️  Bulk Bump Type: {} (B to toggle)",
+            "  ⚙️  Bulk Bump Type: {} (m to toggle)",
             if app.config.bulk_squash_minor {
                 "Minor"
             } else {
