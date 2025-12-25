@@ -24,3 +24,6 @@
     -   When user triggers Sync/Push, AI scans the batch.
     -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
     -   User approves -> Arcane squashes and pushes.
+
+
+- graph 
