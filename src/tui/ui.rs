@@ -321,20 +321,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Push Button
-    let auto_push_btn = if app.ai_auto_push {
-        Span::styled(
-            " [P] Auto-Push: ON ",
-            Style::default()
-                .bg(Color::Green)
-                .fg(Color::Black)
-                .add_modifier(Modifier::BOLD),
-        )
-    } else {
-        Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
-    };
 
-    // Auto-Version Button
-    let version_btn = if app.version_bumping {
     let auto_push_btn = Span::styled(
         if app.ai_auto_push {
             " [P] Auto-Sync: ON "
@@ -360,7 +347,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
             Color::Gray
         }),
     );
-    
+
     let deploy_btn = Span::styled(
         if app.ai_auto_deploy {
             " [D] Auto-Deploy: ON "
