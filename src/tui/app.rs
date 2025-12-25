@@ -47,6 +47,7 @@ pub struct App {
     pub commit_details: Text<'static>,
     pub commit_stats: HashMap<String, CommitStats>,
     pub ai_auto_commit: bool,
+    pub ai_auto_push: bool,
     // Vault/Identity State
     pub identity_sub_tab: usize,
     pub master_pubkey: Option<String>,
