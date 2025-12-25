@@ -4,7 +4,7 @@
 
 -   arcane push can even auto run on commit
 
--  ai scan the diff for vulnerabilities too, when we are making a commit message too
+-  ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets 
 
 - on tweak is that we would also like toggle ai commit and toggle daemon on the dashboard page, proper buttons at the bottom i guess, also status hub should show the daemon watched folder
 
