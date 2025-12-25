@@ -1034,60 +1034,7 @@ impl App {
 
         // Persist to file
         if let Err(e) = self.save_team_members() {
-            self.events.push(format!("❌ Failed to save: {    pub fn trigger_squash_analysis(&mut self) {
-        if self.analyzing_squash { return; }
-        
-        self.analyzing_squash = true;
-        self.squash_plan = None;
-        self.squash_error = None;
-        
-        let ai = self.ai_service.clone();
-        let git = self.git_ops.clone();
-        let tx = self.squash_tx.clone();
-        
-        tokio::spawn(async move {
-            let repo_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-            let res = async move {
-                let commits = git.get_unpushed_commits(&repo_root).await
-                    .context("Failed to fetch unpushed commits")?;
-                
-                if commits.is_empty() {
-                    return Err(anyhow::anyhow!("No unpushed commits found to squash."));
-                }
-                
-                let plan = ai.analyze_commits_for_squash(&commits).await
-                    .context("AI analysis failed")?;
-                    
-                Ok(plan)
-            }.await;
-            
-            let _ = tx.send(res);
-        });
-    }
-
-    pub fn execute_squash_plan(&mut self) {
-        if let Some(plan) = &self.squash_plan {
-            let plan = plan.clone();
-            let repo_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
-            let git = self.git_ops.clone();
-            let manager = RebaseManager::new();
-            
-            self.events.push("🚀 Starting Smart Squash...".to_string());
-            self.squash_plan = None;
-            
-            tokio::spawn(async move {
-                 let _ = git.create_backup_branch(&repo_root, "before-squash").await;
-                 let _ = manager.execute_plan(&repo_root, &plan, "@{u}").await;
-            });
-        }
-    }
-
-    pub fn cancel_squash(&mut self) {
-        self.squash_plan = None;
-        self.squash_error = None;
-        self.analyzing_squash = false;
-    }
-}", e));
+            self.events.push(format!("❌ Failed to save: {}", e));
         } else {
             self.events.push(format!(
                 "✅ Added: {}...",
