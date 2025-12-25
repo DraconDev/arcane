@@ -49,11 +49,11 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.identity_sub_tab = (app.identity_sub_tab + 1) % 5;
                         } else if app.current_tab == 2 && app.ai_config_focused {
                             // AI (was 4)
-                            app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 4; // Removed patterns (was 5 tabs)
+                            app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 5; 
                             app.ai_config_row = 0;
                         } else if app.current_tab == 3 && app.ai_config_focused {
                             // Repo (was 4/patterns)
-                            app.ai_patterns_sub_tab = (app.ai_patterns_sub_tab + 1) % 3;
+                            app.ai_patterns_sub_tab = (app.ai_patterns_sub_tab + 1) % 2;
                             app.ai_config_row = 0;
                         } else {
                             app.next_tab();
@@ -72,7 +72,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             if app.ai_config_sub_tab > 0 {
                                 app.ai_config_sub_tab -= 1;
                             } else {
-                                app.ai_config_sub_tab = 3; // 4 tabs (0-3)
+                                app.ai_config_sub_tab = 4; // 5 tabs (0-4)
                             }
                             app.ai_config_row = 0;
                         } else if app.current_tab == 3 && app.ai_config_focused {
@@ -80,7 +80,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             if app.ai_patterns_sub_tab > 0 {
                                 app.ai_patterns_sub_tab -= 1;
                             } else {
-                                app.ai_patterns_sub_tab = 2;
+                                app.ai_patterns_sub_tab = 1;
                             }
                             app.ai_config_row = 0;
                         } else {
@@ -320,9 +320,8 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Char('x') if !app.input_popup_active => {
-                        if app.current_tab == 4
+                        if app.current_tab == 3
                             && app.ai_config_focused
-                            && app.ai_config_sub_tab == 4
                         {
                             match app.ai_patterns_sub_tab {
                                 0 => {
@@ -376,14 +375,18 @@ pub fn run_app<B: ratatui::backend::Backend>(
                                     }
                                 }
                             }
-                        } else if app.current_tab == 4
+                            }
+                        } else if app.current_tab == 2 // AI Tab
                             && app.ai_config_focused
-                            && app.ai_config_sub_tab == 4
+                            && app.ai_config_sub_tab == 4 // Prompt
                         {
-                            let section = match app.ai_patterns_sub_tab {
+                            app.reset_config_section("prompt");
+                        } else if app.current_tab == 3 // Repo Tab
+                            && app.ai_config_focused
+                        {
+                             let section = match app.ai_patterns_sub_tab {
                                 0 => "gitignore",
                                 1 => "gitattributes",
-                                2 => "prompt",
                                 _ => "",
                             };
                             if !section.is_empty() {
@@ -442,10 +445,9 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         app.events.push("⏸️ Restore cancelled".to_string());
                     }
                     KeyCode::Char('e') if !app.input_popup_active => {
-                        if app.current_tab == 4
+                        if app.current_tab == 2
                             && app.ai_config_focused
                             && app.ai_config_sub_tab == 4
-                            && app.ai_patterns_sub_tab == 2
                         {
                             app.input_popup_active = true;
                             app.input_popup_title = "Edit AI Commit Prompt".to_string();
@@ -454,18 +456,8 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Char('a') if !app.input_popup_active => {
-                        if app.current_tab == 4 // Actually this tab index is likely shifted now...
-                             // Tab 4 used to be Settings. Now:
-                             // 0: Dashboard
-                             // 1: Graph
-                             // 2: AI
-                             // 3: Repository
-                             // 4: Identity
-                             // 5: Ops
-                             // The previous code had 4 as Settings.
-                             // I must update the logic for tab indices in this file too!
+                        if app.current_tab == 3 // Repo Config
                              && app.ai_config_focused
-                             && app.ai_config_sub_tab == 4
                         {
                             match app.ai_patterns_sub_tab {
                                 0 => {
@@ -573,37 +565,10 @@ fn start_ai_config_edit(app: &mut App) {
             app.save_ai_config();
         }
     } else if app.ai_config_sub_tab == 4 {
-        // Patterns sub-tab
-        match app.ai_patterns_sub_tab {
-            0 => {
-                // Edit .gitignore row
-                if app.ai_config_row < app.ignore_patterns.len() {
-                    app.input_popup_active = true;
-                    app.input_popup_title = "Edit .gitignore Pattern".to_string();
-                    app.input_popup_buffer = app.ignore_patterns[app.ai_config_row].clone();
-                    app.input_popup_callback = "edit_ignore".to_string();
-                    app.input_popup_index = app.ai_config_row;
-                }
-            }
-            1 => {
-                // Edit .gitattributes row
-                if app.ai_config_row < app.gitattributes_patterns.len() {
-                    app.input_popup_active = true;
-                    app.input_popup_title = "Edit .gitattributes Pattern".to_string();
-                    app.input_popup_buffer = app.gitattributes_patterns[app.ai_config_row].clone();
-                    app.input_popup_callback = "edit_attr".to_string();
-                    app.input_popup_index = app.ai_config_row;
-                }
-            }
-            2 => {
-                // Edit prompt
-                app.input_popup_active = true;
-                app.input_popup_title = "Edit AI Commit Prompt".to_string();
-                app.input_popup_buffer = app.system_prompt.clone();
-                app.input_popup_callback = "edit_prompt".to_string();
-            }
-            _ => {}
-        }
+        app.input_popup_active = true;
+        app.input_popup_title = "Edit AI Commit Prompt".to_string();
+        app.input_popup_buffer = app.system_prompt.clone();
+        app.input_popup_callback = "edit_prompt".to_string();
     }
 }
 
