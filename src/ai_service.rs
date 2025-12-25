@@ -624,6 +624,7 @@ Response ONLY VALID JSON."#,
     pub async fn analyze_commits_for_lazy_squash(
         &self,
         commits: &[crate::git_operations::CommitInfo],
+        use_minor: bool,
     ) -> Result<SquashPlan> {
         let commit_list: Vec<String> = commits
             .iter()
