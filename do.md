@@ -23,4 +23,4 @@
     -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
     -   User approves -> Arcane squashes and pushes.
 
--   graph screen could use submenus to switch between main/master , current , and all branches, maybe if there are a ton of branch it would be broken, so just let us select up to like 5?
+-   graph screen could use submenus to switch between main/master , current , and all branches, maybe if there are a ton of branch it would be broken, so just let us select up to like 5?b
