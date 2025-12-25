@@ -26,4 +26,4 @@
     -   User approves -> Arcane squashes and pushes.
 
 
-- graph scren could use 
+- graph scren could use submenus to switch between
