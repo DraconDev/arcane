@@ -219,4 +219,86 @@ impl GitOperations {
         }
         Ok(())
     }
+    pub async fn get_unpushed_commits(&self, repo_path: &Path) -> Result<Vec<CommitInfo>> {
+        // Try @{u} (upstream) first
+        let has_upstream = self.has_upstream(repo_path).await;
+        let range = if has_upstream {
+            "@{u}..HEAD"
+        } else {
+            // If no upstream, we might be on a local branch.
+            // Try "master..HEAD" or "main..HEAD"? Or just return all?
+            // Safer: assume everything is unpushed if no upstream?
+            // Or maybe we just return an error asking to push first?
+            // Let's assume generic "HEAD" for now (all history) if no upstream, but that's too much.
+            // Let's try to find the "fork point" from main/master.
+            "origin/master..HEAD"
+        };
+
+        let output = Command::new("git")
+            .current_dir(repo_path)
+            .args(&["log", range, "--pretty=format:%H|%an|%ad|%s"])
+            .output()
+            .await;
+
+        let stdout = match output {
+            Ok(o) if o.status.success() => String::from_utf8_lossy(&o.stdout).to_string(),
+            _ => {
+                // Formatting might fail if range is invalid.
+                // Fallback: just 50 recent commits?
+                let output = Command::new("git")
+                    .current_dir(repo_path)
+                    .args(&["log", "-n", "20", "--pretty=format:%H|%an|%ad|%s"])
+                    .output()
+                    .await?;
+                String::from_utf8_lossy(&output.stdout).to_string()
+            }
+        };
+
+        let mut commits = Vec::new();
+        for line in stdout.lines() {
+            let parts: Vec<&str> = line.split('|').collect();
+            if parts.len() >= 4 {
+                commits.push(CommitInfo {
+                    hash: parts[0].to_string(),
+                    author: parts[1].to_string(),
+                    date: parts[2].to_string(),
+                    message: parts[3..].join("|"),
+                });
+            }
+        }
+        Ok(commits)
+    }
+
+    pub async fn create_backup_branch(&self, repo_path: &Path, prefix: &str) -> Result<String> {
+        let timestamp = chrono::Local::now().format("%Y%m%d-%H%M%S");
+        let branch_name = format!("{}-backup-{}", prefix, timestamp);
+
+        let output = Command::new("git")
+            .current_dir(repo_path)
+            .args(&["branch", &branch_name])
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            return Err(anyhow::anyhow!("Failed to create backup branch"));
+        }
+        Ok(branch_name)
+    }
+
+    async fn has_upstream(&self, repo_path: &Path) -> bool {
+        let output = Command::new("git")
+            .current_dir(repo_path)
+            .args(&["rev-parse", "--abbrev-ref", "@{u}"])
+            .output()
+            .await;
+        matches!(output, Ok(out) if out.status.success())
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CommitInfo {
+    pub hash: String,
+    pub author: String,
+    pub date: String,
+    pub message: String,
 }

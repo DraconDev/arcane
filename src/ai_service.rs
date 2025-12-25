@@ -564,4 +564,79 @@ Max 50 chars. Lowercase. No period."#
 
         Ok(text)
     }
+    pub async fn analyze_commits_for_squash(
+        &self,
+        commits: &[crate::git_operations::CommitInfo],
+    ) -> Result<SquashPlan> {
+        let commit_list: Vec<String> = commits
+            .iter()
+            .map(|c| {
+                format!(
+                    "{} {}",
+                    c.hash.chars().take(7).collect::<String>(),
+                    c.message
+                )
+            })
+            .collect();
+        let commit_block = commit_list.join("\n");
+
+        let prompt = format!(
+            r#"You are a Git Historian. I have a list of unpushed commits.
+Please group them into LOGICAL ATOMIC SETS to be squashed together.
+
+Commits (Newest First):
+{}
+
+Rules:
+1. Contiguous commits that fix the same thing (e.g. "Fix typo", "Fix typo again") should be 1 group.
+2. Distinct features should remain separate groups.
+3. Groups must respect chronological order (you can only squash adjacent commits safely).
+4. Output specific JSON format.
+
+JSON Format:
+{{
+  "groups": [
+    {{
+      "target_message": "feat(auth): implement login flow",
+      "commits": ["hash1", "hash2"]
+    }}
+  ]
+}}
+
+If a commit stands alone, it is a group of size 1.
+Response ONLY VALID JSON."#,
+            commit_block
+        );
+
+        let response = self.try_providers_for_prompt(&prompt).await?;
+        let json_str = self.clean_json_response(&response);
+        let plan: SquashPlan =
+            serde_json::from_str(&json_str).context("Failed to parse AI Squash Plan JSON")?;
+
+        Ok(plan)
+    }
+
+    fn clean_json_response(&self, raw: &str) -> String {
+        let mut text = raw.trim();
+        if text.starts_with("```json") {
+            text = text.trim_start_matches("```json");
+        } else if text.starts_with("```") {
+            text = text.trim_start_matches("```");
+        }
+        if text.ends_with("```") {
+            text = text.trim_end_matches("```");
+        }
+        text.trim().to_string()
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SquashPlan {
+    pub groups: Vec<SquashGroup>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SquashGroup {
+    pub target_message: String,
+    pub commits: Vec<String>, // Hashes
 }
