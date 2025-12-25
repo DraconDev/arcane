@@ -1,5 +1,5 @@
 pub mod ai_service;
-pub mod ai_service;
+
 pub mod auto_gitattributes;
 pub mod auto_gitignore;
 pub mod config;
