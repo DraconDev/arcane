@@ -25,7 +25,7 @@ pub fn render_ops(f: &mut Frame, app: &mut App, area: Rect) {
         fleet_targets.push((format!("🖥️  {}", s.name), false));
     }
 
-    let items: Vec<ListItem> = fleet_targets
+    let fleet_items: Vec<ListItem> = fleet_targets
         .iter()
         .enumerate()
         .map(|(i, (name, is_group))| {
@@ -52,7 +52,7 @@ pub fn render_ops(f: &mut Frame, app: &mut App, area: Rect) {
         .title(" Fleet ")
         .border_style(Style::default().fg(Color::Cyan));
 
-    let servers_list = List::new(servers)
+    let servers_list = List::new(fleet_items)
         .block(servers_block)
         .highlight_style(Style::default().add_modifier(Modifier::BOLD));
 
