@@ -48,6 +48,8 @@ pub struct App {
     pub commit_stats: HashMap<String, CommitStats>,
     pub ai_auto_commit: bool,
     pub ai_auto_push: bool,
+    pub shadow_branches: bool,
+    pub pattern_mode: arcane::config::PatternMode,
     // Vault/Identity State
     pub identity_sub_tab: usize,
     pub master_pubkey: Option<String>,
@@ -149,6 +151,8 @@ impl App {
             commit_stats: HashMap::new(),
             ai_auto_commit: false,
             ai_auto_push: config.auto_push_enabled,
+            shadow_branches: config.shadow_branches,
+            pattern_mode: config.pattern_mode,
             identity_sub_tab: 0,
             master_pubkey: None,
             team_members: vec![],
@@ -475,15 +479,37 @@ impl App {
 
         let file = &self.working_tree[self.selected_file_idx];
 
-        let file_obj = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(".gitignore");
+        // Check Mode
+        match self.pattern_mode {
+            arcane::config::PatternMode::Append => {
+                // Append (Default behavior)
+                let file_obj = OpenOptions::new()
+                    .create(true)
+                    .append(true)
+                    .open(".gitignore");
 
-        if let Ok(mut f) = file_obj {
-            if let Err(e) = writeln!(f, "{}", file.path) {
-                // Ideally show error in UI
-                eprintln!("Failed to write to .gitignore: {}", e);
+                if let Ok(mut f) = file_obj {
+                    if let Err(e) = writeln!(f, "{}", file.path) {
+                        eprintln!("Failed to write to .gitignore: {}", e);
+                    }
+                }
+            }
+            arcane::config::PatternMode::Override => {
+                // Override: Add to memory, then rewrite entire file from memory
+                if !self.ignore_patterns.contains(&file.path) {
+                    self.ignore_patterns.push(file.path.clone());
+                    // Sync to disk
+                    if let Ok(mut f) = std::fs::File::create(".gitignore") {
+                        for pat in &self.ignore_patterns {
+                            let _ = writeln!(f, "{}", pat);
+                        }
+                    }
+                    // Also save to config to persist the "managed set"
+                    if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+                        config.ignore_patterns = self.ignore_patterns.clone();
+                        let _ = config.save();
+                    }
+                }
             }
         }
 
@@ -622,6 +648,38 @@ impl App {
         // Save to config
         if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
             config.auto_push_enabled = self.ai_auto_push;
+            let _ = config.save();
+        }
+    }
+
+    pub fn toggle_shadow_branches(&mut self) {
+        self.shadow_branches = !self.shadow_branches;
+        self.events.push(format!(
+            "🌑 Shadow Branches: {}",
+            if self.shadow_branches {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        ));
+
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.shadow_branches = self.shadow_branches;
+            let _ = config.save();
+        }
+    }
+
+    pub fn toggle_pattern_mode(&mut self) {
+        use arcane::config::PatternMode;
+        self.pattern_mode = match self.pattern_mode {
+            PatternMode::Append => PatternMode::Override,
+            PatternMode::Override => PatternMode::Append,
+        };
+        self.events
+            .push(format!("📝 Pattern Mode: {:?}", self.pattern_mode));
+
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.pattern_mode = self.pattern_mode.clone();
             let _ = config.save();
         }
     }
