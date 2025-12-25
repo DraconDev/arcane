@@ -160,7 +160,6 @@ impl AIService {
             "revert",
         ];
         let lines: Vec<&str> = text.lines().collect();
-        let mut start_idx = 0;
 
         for (i, line) in lines.iter().enumerate() {
             let lower = line.trim().to_lowercase();
@@ -168,9 +167,7 @@ impl AIService {
             for t in common_types {
                 // e.g. "feat:" or "feat("
                 if lower.starts_with(&format!("{}:", t)) || lower.starts_with(&format!("{}(", t)) {
-                    start_idx = i;
-                    goto_extraction(start_idx, &lines);
-                    return lines[start_idx..].join("\n").trim().to_string();
+                    return lines[i..].join("\n").trim().to_string();
                 }
             }
         }
