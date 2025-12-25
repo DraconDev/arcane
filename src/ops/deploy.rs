@@ -7,8 +7,43 @@ use std::path::Path;
 pub struct ArcaneDeployer;
 
 impl ArcaneDeployer {
-    /// Deploy an image to a specific server with secrets injected from a local environment.
+    /// Deploy an image to a target (server or group) with secrets injected from a local environment.
     pub async fn deploy(
+        target_name: &str,
+        image: &str,
+        env_name: &str,
+        ports: Option<Vec<u16>>,
+    ) -> Result<()> {
+        let config = OpsConfig::load();
+
+        // 1. Check if target is a group
+        if let Some(group) = config.groups.iter().find(|g| g.name == target_name) {
+            println!(
+                "🌐 Target is a Group: {}. Deploying to {} servers...",
+                group.name,
+                group.servers.len()
+            );
+            for server_name in &group.servers {
+                println!("\n--- Deploying to member: {} ---", server_name);
+                if let Err(e) =
+                    Self::deploy_single(server_name, image, env_name, ports.clone()).await
+                {
+                    eprintln!("❌ Failed to deploy to {}: {}", server_name, e);
+                    // Continue to next server? Or stop?
+                    // In a sovereign system, maybe we stop if it's a critical failure, but for "push to many",
+                    // we usually want to try all. For now, let's stop on first error to be safe (Atomic mentality).
+                    return Err(e);
+                }
+            }
+            return Ok(());
+        }
+
+        // 2. Otherwise assume it's a single server
+        Self::deploy_single(target_name, image, env_name, ports).await
+    }
+
+    /// Internal helper for deploying to a single server.
+    pub async fn deploy_single(
         server_name: &str,
         image: &str,
         env_name: &str,
