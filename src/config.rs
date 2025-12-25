@@ -90,6 +90,12 @@ fn default_min_commit_delay() -> u32 {
     15
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub enum PatternMode {
+    Append,
+    Override,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArcaneConfig {
     #[serde(default)]
@@ -123,9 +129,15 @@ pub struct ArcaneConfig {
     #[serde(default = "default_system_prompt")]
     pub system_prompt: String,
     #[serde(default)]
-    pub shadow_mode: bool, // true = commit to shadow branch, false = commit to HEAD
+    pub shadow_branches: bool, // true = push to shadow/<branch>, false = push to origin/<branch>
+    #[serde(default = "default_pattern_mode")]
+    pub pattern_mode: PatternMode,
     #[serde(default)]
     pub api_keys: HashMap<String, String>, // Provider name -> API key (stored in ~/.arcane/)
+}
+
+fn default_pattern_mode() -> PatternMode {
+    PatternMode::Append
 }
 
 fn default_ignore_patterns() -> Vec<String> {
@@ -160,7 +172,8 @@ impl Default for ArcaneConfig {
             ignore_patterns: default_ignore_patterns(),
             gitattributes_patterns: default_gitattributes_patterns(),
             system_prompt: default_system_prompt(),
-            shadow_mode: false, // Default to direct commits
+            shadow_branches: false,
+            pattern_mode: PatternMode::Append,
             api_keys: HashMap::new(),
         }
     }
