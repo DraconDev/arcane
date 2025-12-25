@@ -136,7 +136,7 @@ impl App {
         let config = arcane::config::ArcaneConfig::load().unwrap_or_default();
         let (tx, rx) = std::sync::mpsc::channel();
         let (v_tx, v_rx) = std::sync::mpsc::channel();
-        let (sq_tx, sq_rx) = mpsc::unbounded_channel();
+        let (sq_tx, sq_rx) = mpsc::unbounded_channel::<Result<SquashPlan>>();
         let (sq_tx, sq_rx) = mpsc::unbounded_channel();
 
         let ops_config = crate::ops::config::OpsConfig::load();
