@@ -22,29 +22,243 @@ pub struct SecretScanner {
 
 impl SecretScanner {
     pub fn new() -> Self {
-        let mut patterns = Vec::new();
-        // AWS Access Key ID
-        patterns.push((
-            "AWS Access Key".to_string(),
-            Regex::new(r"AKIA[0-9A-Z]{16}").unwrap(),
-        ));
-        // Stripe Live Key
-        patterns.push((
-            "Stripe Live Key".to_string(),
-            Regex::new(r"sk_live_[0-9a-zA-Z]{24}").unwrap(),
-        ));
-        // Generic Private Key
-        patterns.push((
-            "Private Key".to_string(),
-            Regex::new(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----").unwrap(),
-        ));
-        // Google API Key
-        patterns.push((
-            "Google API Key".to_string(),
-            Regex::new(r"AIza[0-9A-Za-z-_]{35}").unwrap(),
-        ));
+        let patterns = vec![
+            // ============================================================
+            // AWS
+            // ============================================================
+            ("AWS Access Key ID", r"AKIA[0-9A-Z]{16}"),
+            (
+                "AWS Secret Access Key",
+                r#"(?i)aws(.{0,20})?["'][0-9a-zA-Z/+]{40}["']"#,
+            ),
+            (
+                "AWS Session Token",
+                r#"(?i)aws_session_token.{0,20}["'][A-Za-z0-9/+=]{100,}["']"#,
+            ),
+            (
+                "AWS MWS Key",
+                r"amzn\.mws\.[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            ),
+            // ============================================================
+            // Google / GCP
+            // ============================================================
+            ("Google API Key", r"AIza[0-9A-Za-z\-_]{35}"),
+            (
+                "Google OAuth ID",
+                r"[0-9]+-[0-9A-Za-z_]{32}\.apps\.googleusercontent\.com",
+            ),
+            ("Google Service Account", r#""type": "service_account""#),
+            (
+                "Firebase Database URL",
+                r"https://[a-z0-9-]+\.firebaseio\.com",
+            ),
+            (
+                "Firebase API Key",
+                r#"(?i)firebase.{0,20}["'][A-Za-z0-9_]{30,}["']"#,
+            ),
+            // ============================================================
+            // Azure / Microsoft
+            // ============================================================
+            (
+                "Azure Storage Key",
+                r"DefaultEndpointsProtocol=https;AccountName=[^;]+;AccountKey=[A-Za-z0-9+/=]{88}",
+            ),
+            ("Azure SAS Token", r"sig=[A-Za-z0-9%]+&se=[0-9]+"),
+            (
+                "Azure AD Client Secret",
+                r#"(?i)azure.{0,20}client.{0,20}secret.{0,20}["'][A-Za-z0-9~_.-]{34,}["']"#,
+            ),
+            // ============================================================
+            // GitHub / GitLab / Bitbucket
+            // ============================================================
+            ("GitHub Token (ghp)", r"ghp_[A-Za-z0-9_]{36}"),
+            ("GitHub Token (gho)", r"gho_[A-Za-z0-9_]{36}"),
+            ("GitHub Token (ghu)", r"ghu_[A-Za-z0-9_]{36}"),
+            ("GitHub Token (ghs)", r"ghs_[A-Za-z0-9_]{36}"),
+            ("GitHub Token (ghr)", r"ghr_[A-Za-z0-9_]{36}"),
+            (
+                "GitHub App Token",
+                r#"(?i)github.{0,20}["'][A-Za-z0-9_]{35,40}["']"#,
+            ),
+            ("GitLab Token", r"glpat-[A-Za-z0-9\-_]{20,}"),
+            ("GitLab Runner Token", r"GR1348941[A-Za-z0-9\-_]{20,}"),
+            (
+                "Bitbucket Token",
+                r#"(?i)bitbucket.{0,20}["'][A-Za-z0-9_]{30,}["']"#,
+            ),
+            // ============================================================
+            // Stripe (ONLY LIVE KEYS - test keys are safe for development)
+            // ============================================================
+            ("Stripe Live Secret Key", r"sk_live_[0-9a-zA-Z]{24,}"),
+            ("Stripe Live Restricted Key", r"rk_live_[0-9a-zA-Z]{24,}"),
+            // Note: Webhook secrets are environment-specific, keeping for now
+            ("Stripe Webhook Secret", r"whsec_[0-9a-zA-Z]{24,}"),
+            // ============================================================
+            // Slack
+            // ============================================================
+            (
+                "Slack Token",
+                r"xox[baprs]-[0-9]{10,13}-[0-9]{10,13}[a-zA-Z0-9-]*",
+            ),
+            (
+                "Slack Webhook",
+                r"https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+",
+            ),
+            (
+                "Slack Bot Token",
+                r"xoxb-[0-9]{11}-[0-9]{11}-[a-zA-Z0-9]{24}",
+            ),
+            // ============================================================
+            // Discord
+            // ============================================================
+            ("Discord Token", r"[MN][A-Za-z\d]{23,}\.[\w-]{6}\.[\w-]{27}"),
+            (
+                "Discord Webhook",
+                r"https://discord(?:app)?\.com/api/webhooks/[0-9]+/[A-Za-z0-9_-]+",
+            ),
+            // ============================================================
+            // Twilio / SendGrid / Mailgun
+            // ============================================================
+            ("Twilio API Key", r"SK[a-f0-9]{32}"),
+            ("Twilio Account SID", r"AC[a-f0-9]{32}"),
+            (
+                "SendGrid API Key",
+                r"SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}",
+            ),
+            ("Mailgun API Key", r"key-[0-9a-zA-Z]{32}"),
+            ("Mailchimp API Key", r"[0-9a-f]{32}-us[0-9]{1,2}"),
+            // ============================================================
+            // Database / Connection Strings
+            // ============================================================
+            ("PostgreSQL URL", r"postgres(?:ql)?://[^:]+:[^@]+@[^/]+"),
+            ("MySQL URL", r"mysql://[^:]+:[^@]+@[^/]+"),
+            ("MongoDB URL", r"mongodb(?:\+srv)?://[^:]+:[^@]+@[^/]+"),
+            ("Redis URL", r"redis://[^:]+:[^@]+@[^/]+"),
+            (
+                "Database Password",
+                r#"(?i)(?:db|database)(?:_)?(?:pass|password|pwd).{0,10}[=:].{0,5}["'][^"']{8,}["']"#,
+            ),
+            // ============================================================
+            // Auth / Tokens / JWT
+            // ============================================================
+            (
+                "JWT Token",
+                r"eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}",
+            ),
+            ("Bearer Token", r"(?i)bearer\s+[A-Za-z0-9_\-\.=]{20,}"),
+            ("Basic Auth Header", r"(?i)basic\s+[A-Za-z0-9+/=]{20,}"),
+            (
+                "OAuth Token",
+                r#"(?i)oauth.{0,20}["'][A-Za-z0-9_-]{20,}["']"#,
+            ),
+            // ============================================================
+            // SSH / Private Keys
+            // ============================================================
+            ("RSA Private Key", r"-----BEGIN RSA PRIVATE KEY-----"),
+            ("DSA Private Key", r"-----BEGIN DSA PRIVATE KEY-----"),
+            ("EC Private Key", r"-----BEGIN EC PRIVATE KEY-----"),
+            (
+                "OpenSSH Private Key",
+                r"-----BEGIN OPENSSH PRIVATE KEY-----",
+            ),
+            ("PGP Private Key", r"-----BEGIN PGP PRIVATE KEY BLOCK-----"),
+            (
+                "SSH Private Key (generic)",
+                r"-----BEGIN [A-Z ]+ PRIVATE KEY-----",
+            ),
+            // ============================================================
+            // NPM / PyPI / Package Managers
+            // ============================================================
+            (
+                "NPM Token",
+                r"//registry\.npmjs\.org/:_authToken=[A-Za-z0-9_-]+",
+            ),
+            ("NPM Access Token", r"npm_[A-Za-z0-9]{36}"),
+            ("PyPI Token", r"pypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}"),
+            ("NuGet API Key", r"oy2[a-z0-9]{43}"),
+            // ============================================================
+            // Heroku / Vercel / Netlify
+            // ============================================================
+            (
+                "Heroku API Key",
+                r#"(?i)heroku.{0,20}["'][0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}["']"#,
+            ),
+            (
+                "Vercel Token",
+                r#"(?i)vercel.{0,20}["'][A-Za-z0-9]{24}["']"#,
+            ),
+            (
+                "Netlify Token",
+                r#"(?i)netlify.{0,20}["'][A-Za-z0-9_-]{40,}["']"#,
+            ),
+            // ============================================================
+            // OpenAI / Anthropic / AI APIs
+            // ============================================================
+            ("OpenAI API Key", r"sk-[A-Za-z0-9]{48}"),
+            ("OpenAI Project Key", r"sk-proj-[A-Za-z0-9_-]{48,}"),
+            ("Anthropic API Key", r"sk-ant-[A-Za-z0-9_-]{40,}"),
+            (
+                "Cohere API Key",
+                r#"(?i)cohere.{0,20}["'][A-Za-z0-9]{40}["']"#,
+            ),
+            // ============================================================
+            // DigitalOcean / Linode / Vultr
+            // ============================================================
+            ("DigitalOcean Token", r"dop_v1_[a-f0-9]{64}"),
+            (
+                "DigitalOcean Spaces Key",
+                r#"(?i)digitalocean.{0,20}spaces.{0,20}["'][A-Z0-9]{20}["']"#,
+            ),
+            ("Linode Token", r#"(?i)linode.{0,20}["'][a-f0-9]{64}["']"#),
+            // ============================================================
+            // Shopify / Square / Payment
+            // ============================================================
+            ("Shopify Token", r"shpat_[a-fA-F0-9]{32}"),
+            ("Shopify Secret", r"shpss_[a-fA-F0-9]{32}"),
+            ("Square Access Token", r"sq0atp-[A-Za-z0-9_-]{22}"),
+            ("Square OAuth Secret", r"sq0csp-[A-Za-z0-9_-]{43}"),
+            (
+                "PayPal Client ID",
+                r#"(?i)paypal.{0,20}client.{0,20}id.{0,10}["'][A-Za-z0-9_-]{80}["']"#,
+            ),
+            // ============================================================
+            // HashiCorp / Vault
+            // ============================================================
+            ("HashiCorp Vault Token", r"hvs\.[A-Za-z0-9_-]{24,}"),
+            (
+                "HashiCorp Terraform Token",
+                r#"(?i)terraform.{0,20}["'][A-Za-z0-9]{14}\.[A-Za-z0-9]{24}\.[A-Za-z0-9]{67}["']"#,
+            ),
+            // ============================================================
+            // Age Encryption (Arcane uses this!)
+            // ============================================================
+            (
+                "Age Secret Key",
+                r"AGE-SECRET-KEY-1[QPZRY9X8GF2TVDW0S3JN54KHCE6MUA7L]{58}",
+            ),
+            // ============================================================
+            // Generic High-Entropy / Passwords
+            // ============================================================
+            (
+                "Generic API Key",
+                r#"(?i)(?:api[_-]?key|apikey).{0,10}[=:].{0,5}["'][A-Za-z0-9_-]{20,}["']"#,
+            ),
+            (
+                "Generic Secret",
+                r#"(?i)(?:secret|token|password|passwd|pwd|credential).{0,10}[=:].{0,5}["'][^\s"']{16,}["']"#,
+            ),
+            (
+                "Private Token Pattern",
+                r#"(?i)private[_-]?(?:key|token).{0,10}[=:].{0,5}["'][A-Za-z0-9_-]{20,}["']"#,
+            ),
+        ];
 
-        Self { patterns }
+        let compiled: Vec<(String, Regex)> = patterns
+            .into_iter()
+            .filter_map(|(name, pattern)| Regex::new(pattern).map(|re| (name.to_string(), re)).ok())
+            .collect();
+
+        Self { patterns: compiled }
     }
 
     pub fn scan(&self, content: &str) -> Vec<String> {
@@ -55,6 +269,11 @@ impl SecretScanner {
             }
         }
         found
+    }
+
+    /// Returns the number of patterns loaded
+    pub fn pattern_count(&self) -> usize {
+        self.patterns.len()
     }
 }
 

@@ -263,7 +263,11 @@ mod tests {
     #[test]
     fn test_always_ignore_patterns() {
         // Ensure we have reasonable defaults
-        assert!(ALWAYS_IGNORE.contains(&".env"));
+        // Note: .env is NOT ignored because Arcane encrypts it instead
+        assert!(
+            !ALWAYS_IGNORE.contains(&".env"),
+            ".env should NOT be in ALWAYS_IGNORE - Arcane encrypts it"
+        );
         assert!(ALWAYS_IGNORE.contains(&"node_modules/"));
         assert!(ALWAYS_IGNORE.contains(&"target/"));
     }

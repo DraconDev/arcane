@@ -1,17 +1,26 @@
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ai_service::{AIService, AIConfig, AIProvider};
+    use crate::ai_service::{AIConfig, AIProvider, AIService};
     use std::collections::HashMap;
 
     #[tokio::test]
     async fn test_ai_commit_message() {
-        // Create a test configuration with the Gemini API key
+        // Get API key from environment - skip test if not available
+        let api_key = match std::env::var("GEMINI_API_KEY") {
+            Ok(key) if !key.is_empty() => key,
+            _ => {
+                println!("⏭️ Skipping AI test - GEMINI_API_KEY not set");
+                return;
+            }
+        };
+
+        // Create a test configuration with the Gemini API key from env
         let mut provider_models = HashMap::new();
         provider_models.insert(AIProvider::Gemini, "gemini-1.5-flash-latest".to_string());
 
         let mut api_keys = HashMap::new();
-        api_keys.insert(AIProvider::Gemini, "REDACTED_USE_ENV_VAR".to_string());
+        api_keys.insert(AIProvider::Gemini, api_key);
 
         let config = AIConfig {
             primary_provider: AIProvider::Gemini,
