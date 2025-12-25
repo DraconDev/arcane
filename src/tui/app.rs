@@ -1,4 +1,4 @@
-use crate::ai_service::{AIProvider, SquashPlan};
+use crate::ai_service::SquashPlan;
 use ansi_to_tui::IntoText;
 use anyhow::{Context, Result};
 use arcane::rebase_manager::RebaseManager;
@@ -6,7 +6,7 @@ use arcane::DaemonStatus;
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::Arc;
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 #[derive(Debug, Clone)]
@@ -141,7 +141,6 @@ impl App {
         let (tx, rx) = std::sync::mpsc::channel();
         let (v_tx, v_rx) = std::sync::mpsc::channel();
         let (sq_tx, sq_rx) = mpsc::unbounded_channel::<Result<SquashPlan>>();
-        let (sq_tx, sq_rx) = mpsc::unbounded_channel();
 
         let ops_config = crate::ops::config::OpsConfig::load();
 
