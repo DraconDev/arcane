@@ -9,8 +9,8 @@
 ### ✅ Stable
 
 -   **Security Layer**: Envelope encryption, team keys, machine keys, secrets scanning
--   -   **Git Integration**: Transparent encrypt/decrypt, git filters, shadow branches
--   -   **TUI Dashboard**: Tabs, graph, settings, identity vault
+-   **Git Integration**: Transparent encrypt/decrypt, git filters, shadow branches
+-   **TUI Dashboard**: Tabs, graph, settings, identity vault
 
 ### ✅ Beta
 
