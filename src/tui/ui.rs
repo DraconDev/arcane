@@ -324,9 +324,9 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
 
     let auto_push_btn = Span::styled(
         if app.ai_auto_push {
-            " [P] Auto-Sync: ON "
+            " [P] Auto-Push: ON "
         } else {
-            " [P] Auto-Sync: OFF "
+            " [P] Auto-Push: OFF "
         },
         Style::default().fg(if app.ai_auto_push {
             Color::Green
