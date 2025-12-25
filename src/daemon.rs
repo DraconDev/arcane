@@ -180,20 +180,54 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         let ai = AIService::new(ai_config);
         let diff = git.get_diff(repo_path).await?;
 
-        let message = if diff.trim().is_empty() {
-            format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S"))
+        if diff.trim().is_empty() {
+            return Ok(());
+        }
+
+        // 1. FAST REGEX SCAN (Local)
+        // We scan the diff content to catch secrets *before* sending to AI (privacy + speed)
+        let scanner = crate::security::SecretScanner::new();
+        let matches = scanner.scan(&diff);
+        if !matches.is_empty() {
+            crate::daemon::log_event(&format!(
+                "🛑 SECURITY ALERT: Blocked commit for {:?}. Found secrets: {:?}",
+                repo_path.file_name().unwrap_or_default(),
+                matches
+            ));
+            return Ok(());
+        }
+
+        // 2. AI ANALYSIS (Smart)
+        let response = ai
+            .generate_commit_message(&diff)
+            .await
+            .unwrap_or_else(|_| format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S")));
+
+        // 3. CHECK AI VERDICT
+        let final_message = if response.starts_with("SECURITY_ALERT:") {
+            crate::daemon::log_event(&format!(
+                "🛑 AI SECURITY ALERT: Blocked commit for {:?}. Reason: {}",
+                repo_path.file_name().unwrap_or_default(),
+                response.replace("SECURITY_ALERT:", "").trim()
+            ));
+            return Ok(());
+        } else if let Some(stripped) = response.strip_prefix("COMMIT_MESSAGE:") {
+            stripped.trim().to_string()
         } else {
-            ai.generate_commit_message(&diff).await.unwrap_or_else(|_| {
-                format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S"))
-            })
+            // Fallback for models that ignore instructions or old prompts
+            response
         };
 
-        git.commit(repo_path, &message).await?;
+        if final_message.is_empty() {
+            return Ok(());
+        }
+
+        git.commit(repo_path, &final_message).await?;
 
         let mut action_msg = format!(
             "🤖 Auto-committed in {:?}: {}",
             repo_path.file_name().unwrap_or_default(),
-            message
+            final_message
         );
 
         if auto_push {
