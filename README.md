@@ -1,4 +1,4 @@
-# Git Arcane 🔮 !!!
+# Git Arcane 🔮
 
 > **Encrypted Secrets in Git. Zero Cloud Required.**
 
