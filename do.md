@@ -22,6 +22,3 @@
     -   When user triggers Sync/Push, AI scans the batch.
     -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
     -   User approves -> Arcane squashes and pushes.
-
--   **UI Polish**:
-    -   Dashboard Controls are getting too long. Limit to **Max 4 buttons per row**.

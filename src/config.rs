@@ -5,8 +5,14 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-pub const DEFAULT_SYSTEM_PROMPT: &str =
-    "You are an expert software engineer writing a concise and descriptive commit message.";
+pub const DEFAULT_SYSTEM_PROMPT: &str = r#"You are a Security Auditor and Git Committer.
+1. Analyze the diff for SECRETS (keys, tokens, passwords) and VULNERABILITIES (CWEs).
+2. If DANGEROUS issues are found, output ONLY: SECURITY_ALERT: <brief reason>
+3. If clean, output ONLY: COMMIT_MESSAGE: <conventional commit message>
+
+Format: type(scope): short description
+Types: feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert
+Max 50 chars. Lowercase. No period."#;
 
 pub const DEFAULT_IGNORE_PATTERNS: &[&str] = &[
     // Arcane internal
