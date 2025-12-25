@@ -705,18 +705,36 @@ fn handle_ai_config_editing(app: &mut App, key: KeyCode) {
                 } else {
                     // Text Input (Key or Model)
                     if app.input_mode_key {
-                        // Set Env Var (Runtime only for now, per plan)
-                        let key_name = match app.provider_edit_target.as_str() {
+                        // Save API key to config AND set env var for this session
+                        let provider_name = app.provider_edit_target.clone();
+                        let key_name = match provider_name.as_str() {
                             "Gemini" => "GEMINI_API_KEY",
                             "OpenRouter" => "OPENROUTER_API_KEY",
                             "OpenAI" => "OPENAI_API_KEY",
                             "Anthropic" => "ANTHROPIC_API_KEY",
                             _ => "",
                         };
-                        if !key_name.is_empty() {
+                        if !key_name.is_empty() && !app.ai_config_input.is_empty() {
+                            // Set env var for immediate use
                             std::env::set_var(key_name, &app.ai_config_input);
-                            app.api_key_status
-                                .insert(app.provider_edit_target.clone(), true);
+
+                            // Save to config file for persistence
+                            if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+                                config
+                                    .api_keys
+                                    .insert(provider_name.clone(), app.ai_config_input.clone());
+                                if config.save().is_ok() {
+                                    app.events
+                                        .push(format!("✅ {} API key saved!", provider_name));
+                                } else {
+                                    app.events.push(format!(
+                                        "⚠️ {} key set for session only",
+                                        provider_name
+                                    ));
+                                }
+                            }
+
+                            app.api_key_status.insert(provider_name, true);
                         }
                     } else {
                         // Set Model Override

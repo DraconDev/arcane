@@ -120,6 +120,8 @@ pub struct ArcaneConfig {
     pub system_prompt: String,
     #[serde(default)]
     pub shadow_mode: bool, // true = commit to shadow branch, false = commit to HEAD
+    #[serde(default)]
+    pub api_keys: HashMap<String, String>, // Provider name -> API key (stored in ~/.arcane/)
 }
 
 fn default_ignore_patterns() -> Vec<String> {
@@ -153,6 +155,7 @@ impl Default for ArcaneConfig {
             gitattributes_patterns: default_gitattributes_patterns(),
             system_prompt: default_system_prompt(),
             shadow_mode: false, // Default to direct commits
+            api_keys: HashMap::new(),
         }
     }
 }
@@ -271,18 +274,34 @@ impl ConfigManager {
         // Local fallback (for offline/privacy)
         provider_models.insert(AIProvider::Ollama, "qwen2.5:7b".to_string());
 
-        // Load API keys from environment variables
+        // Load API keys: Config takes priority, then environment variables
         let mut api_keys = HashMap::new();
-        if let Ok(key) = std::env::var("GEMINI_API_KEY") {
+
+        // Helper to get key from config or env
+        let get_key = |provider: &str,
+                       env_var: &str,
+                       config_keys: &HashMap<String, String>|
+         -> Option<String> {
+            // Check config first
+            if let Some(key) = config_keys.get(provider) {
+                if !key.is_empty() {
+                    return Some(key.clone());
+                }
+            }
+            // Fallback to env var
+            std::env::var(env_var).ok()
+        };
+
+        if let Some(key) = get_key("Gemini", "GEMINI_API_KEY", &self.config.api_keys) {
             api_keys.insert(AIProvider::Gemini, key);
         }
-        if let Ok(key) = std::env::var("OPENROUTER_API_KEY") {
+        if let Some(key) = get_key("OpenRouter", "OPENROUTER_API_KEY", &self.config.api_keys) {
             api_keys.insert(AIProvider::OpenRouter, key);
         }
-        if let Ok(key) = std::env::var("OPENAI_API_KEY") {
+        if let Some(key) = get_key("OpenAI", "OPENAI_API_KEY", &self.config.api_keys) {
             api_keys.insert(AIProvider::OpenAI, key);
         }
-        if let Ok(key) = std::env::var("ANTHROPIC_API_KEY") {
+        if let Some(key) = get_key("Anthropic", "ANTHROPIC_API_KEY", &self.config.api_keys) {
             api_keys.insert(AIProvider::Anthropic, key);
         }
 
