@@ -230,6 +230,9 @@ impl App {
             squash_tx: sq_tx,
             squash_error: None,
 
+            // Graph
+            graph_branch_mode: 0, // Default: All branches
+
             sub_tab_focused: false,
             ai_config_sub_tab: 0,
             ai_patterns_sub_tab: 0,
