@@ -121,6 +121,8 @@ pub struct ArcaneConfig {
     #[serde(default)]
     pub auto_push_enabled: bool,
     #[serde(default)]
+    pub auto_deploy_enabled: bool,
+    #[serde(default)]
     pub model_overrides: HashMap<String, String>, // per-provider defaults
     #[serde(default = "default_ignore_patterns")]
     pub ignore_patterns: Vec<String>,
@@ -168,6 +170,7 @@ impl Default for ArcaneConfig {
             version_bumping: false,
             auto_commit_enabled: false,
             auto_push_enabled: true,
+            auto_deploy_enabled: false,
             model_overrides: HashMap::new(),
             ignore_patterns: default_ignore_patterns(),
             gitattributes_patterns: default_gitattributes_patterns(),
