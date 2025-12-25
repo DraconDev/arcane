@@ -339,6 +339,23 @@ impl App {
             self.confirmed_bump = Some(bump);
         }
 
+        // Poll Smart Squash Results
+        if self.analyzing_squash {
+            if let Ok(result) = self.squash_rx.try_recv() {
+                self.analyzing_squash = false;
+                match result {
+                    Ok(plan) => {
+                        self.squash_plan = Some(plan);
+                        self.squash_error = None;
+                    }
+                    Err(e) => {
+                        self.squash_error = Some(e.to_string());
+                        self.squash_plan = None;
+                    }
+                }
+            }
+        }
+
         // Poll status every 1 second
         if self.last_tick.elapsed().as_secs() >= 1 {
             self.status = DaemonStatus::load();
