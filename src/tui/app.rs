@@ -153,7 +153,6 @@ impl App {
             ai_auto_push: config.auto_push_enabled,
             ai_auto_deploy: config.auto_deploy_enabled,
             shadow_branches: config.shadow_branches,
-            pattern_mode: config.pattern_mode,
             identity_sub_tab: 0,
             master_pubkey: None,
             team_members: vec![],
