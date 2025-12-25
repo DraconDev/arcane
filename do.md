@@ -2,8 +2,6 @@
 
 - dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
 
--   option to add to or override gitattributes and gitignore
-
 -   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
 
 -   on tweak is that we would also like toggle ai commit and toggle daemon on the dashboard page, proper buttons at the bottom i guess, also status hub should show the daemon watched folder
