@@ -114,7 +114,14 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
 
     // 4. Footer - Context-sensitive help
     let footer_text = match app.current_tab {
-        1 => "←/→: Nav | S: Smart Squash | L: Bulk Squash | q: Quit".to_string(),
+        1 => {
+            let mode = match app.graph_branch_mode {
+                0 => "All",
+                1 => "Current",
+                _ => "Main",
+            };
+            format!("S: Smart | L: Bulk | b: Branch ({}) | q: Quit", mode)
+        }
         _ => "←/→: Nav | q: Quit".to_string(),
     };
     let help = Paragraph::new(footer_text).block(Block::default().borders(Borders::ALL));
