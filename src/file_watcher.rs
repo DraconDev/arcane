@@ -25,7 +25,7 @@ pub struct FileWatcher {
     #[allow(dead_code)]
     security: ArcaneSecurity,
     shadow_manager: ShadowManager,
-    shadow_mode: bool,
+    shadow_branches: bool,
     change_queue: Arc<Mutex<Vec<PathBuf>>>,
     last_commit_time: Arc<Mutex<chrono::DateTime<Local>>>,
     last_commit_message: Arc<Mutex<Option<String>>>,
@@ -59,8 +59,10 @@ impl FileWatcher {
 
         let gitignore = builder.build().unwrap_or_else(|_| Gitignore::empty());
 
-        // Load shadow_mode from config
-        let shadow_mode = ArcaneConfig::load().map(|c| c.shadow_mode).unwrap_or(false);
+        // Load shadow_branches from config
+        let shadow_branches = ArcaneConfig::load()
+            .map(|c| c.shadow_branches)
+            .unwrap_or(false);
 
         Self {
             root_path,
@@ -68,7 +70,7 @@ impl FileWatcher {
             ai_service,
             security,
             shadow_manager,
-            shadow_mode,
+            shadow_branches,
             change_queue: Arc::new(Mutex::new(Vec::new())),
             last_commit_time: Arc::new(Mutex::new(Local::now())),
             last_commit_message: Arc::new(Mutex::new(None)),
@@ -375,7 +377,7 @@ impl FileWatcher {
             .await
             .unwrap_or_else(|_| "unknown".to_string());
 
-        let (commit_sha, is_shadow) = if self.shadow_mode {
+        let (commit_sha, is_shadow) = if self.shadow_branches {
             // Shadow mode: commit to shadow branch
             match self.shadow_manager.commit_to_shadow(&commit_message) {
                 Ok(sha) => {
