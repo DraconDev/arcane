@@ -44,62 +44,53 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     KeyCode::BackTab => app.previous_tab(),
                     // Left/Right: Navigate sub-tabs or main tabs
                     KeyCode::Right => {
-                        if app.current_tab == 3 && app.sub_tab_focused {
+                        if app.current_tab == 4 && app.sub_tab_focused {
+                            // Identity (was 3)
                             app.identity_sub_tab = (app.identity_sub_tab + 1) % 5;
-                        } else if app.current_tab == 4 && app.ai_config_focused {
-                            match app.ai_config_focus_level {
-                                0 | 2 => {
-                                    app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 5;
-                                    app.ai_config_row = 0;
-                                }
-                                1 => {
-                                    if app.ai_config_sub_tab == 4 {
-                                        app.ai_patterns_sub_tab = (app.ai_patterns_sub_tab + 1) % 3;
-                                        app.ai_config_row = 0;
-                                    }
-                                }
-                                _ => {}
-                            }
+                        } else if app.current_tab == 2 && app.ai_config_focused {
+                            // AI (was 4)
+                            app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 4; // Removed patterns (was 5 tabs)
+                            app.ai_config_row = 0;
+                        } else if app.current_tab == 3 && app.ai_config_focused {
+                            // Repo (was 4/patterns)
+                            app.ai_patterns_sub_tab = (app.ai_patterns_sub_tab + 1) % 3;
+                            app.ai_config_row = 0;
                         } else {
                             app.next_tab();
                         }
                     }
                     KeyCode::Left => {
-                        if app.current_tab == 3 && app.sub_tab_focused {
+                        if app.current_tab == 4 && app.sub_tab_focused {
+                            // Identity
                             if app.identity_sub_tab > 0 {
                                 app.identity_sub_tab -= 1;
                             } else {
                                 app.identity_sub_tab = 4;
                             }
-                        } else if app.current_tab == 4 && app.ai_config_focused {
-                            match app.ai_config_focus_level {
-                                0 | 2 => {
-                                    if app.ai_config_sub_tab > 0 {
-                                        app.ai_config_sub_tab -= 1;
-                                    } else {
-                                        app.ai_config_sub_tab = 4;
-                                    }
-                                    app.ai_config_row = 0;
-                                }
-                                1 => {
-                                    if app.ai_config_sub_tab == 4 {
-                                        if app.ai_patterns_sub_tab > 0 {
-                                            app.ai_patterns_sub_tab -= 1;
-                                        } else {
-                                            app.ai_patterns_sub_tab = 2;
-                                        }
-                                        app.ai_config_row = 0;
-                                    }
-                                }
-                                _ => {}
+                        } else if app.current_tab == 2 && app.ai_config_focused {
+                            // AI
+                            if app.ai_config_sub_tab > 0 {
+                                app.ai_config_sub_tab -= 1;
+                            } else {
+                                app.ai_config_sub_tab = 3; // 4 tabs (0-3)
                             }
+                            app.ai_config_row = 0;
+                        } else if app.current_tab == 3 && app.ai_config_focused {
+                            // Repo
+                            if app.ai_patterns_sub_tab > 0 {
+                                app.ai_patterns_sub_tab -= 1;
+                            } else {
+                                app.ai_patterns_sub_tab = 2;
+                            }
+                            app.ai_config_row = 0;
                         } else {
                             app.previous_tab();
                         }
                     }
-                    // Up/Down: Navigate rows when in AI Config Providers or Timing view
+                    // Up/Down: Navigate rows
                     KeyCode::Up | KeyCode::Char('k') => {
-                        if app.current_tab == 4 && app.ai_config_focused {
+                        if app.current_tab == 2 && app.ai_config_focused {
+                            // AI Tab
                             if app.ai_config_row > 0 {
                                 app.ai_config_row -= 1;
                                 // Skip separator row in Providers
@@ -107,31 +98,17 @@ pub fn run_app<B: ratatui::backend::Backend>(
                                     app.ai_config_row -= 1;
                                 }
                             } else {
-                                // We are at row 0, go back up a level
-                                match app.ai_config_focus_level {
-                                    2 => {
-                                        // If we are in Patterns (sub_tab 4), go back to patterns menu (level 1)
-                                        // Otherwise go directly back to sub-tabs (level 0)
-                                        if app.ai_config_sub_tab == 4 {
-                                            app.ai_config_focus_level = 1;
-                                        } else {
-                                            app.ai_config_focus_level = 0;
-                                        }
-                                        app.ai_config_row = 0;
-                                    }
-                                    1 => {
-                                        // From patterns menu back to sub-tabs
-                                        app.ai_config_focus_level = 0;
-                                        app.ai_config_row = 0;
-                                    }
-                                    0 => {
-                                        // Already at the top level of this tab, exit tab focus
-                                        app.ai_config_focused = false;
-                                    }
-                                    _ => {}
-                                }
+                                app.ai_config_focused = false; // Exit focus
                             }
-                        } else if app.current_tab == 3 && app.sub_tab_focused {
+                        } else if app.current_tab == 3 && app.ai_config_focused {
+                            // Repo Tab
+                            if app.ai_config_row > 0 {
+                                app.ai_config_row -= 1;
+                            } else {
+                                app.ai_config_focused = false;
+                            }
+                        } else if app.current_tab == 4 && app.sub_tab_focused {
+                            // Identity (was 3)
                             app.sub_tab_focused = false;
                         } else if app.current_tab == 5 {
                             if app.ops_selected_server_idx > 0 {
@@ -143,51 +120,43 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Down | KeyCode::Char('j') => {
-                        if app.current_tab == 4 && app.ai_config_focused {
-                            match app.ai_config_focus_level {
-                                0 => {
-                                    // Enter 3rd level Patterns menu OR items directly
-                                    if app.ai_config_sub_tab == 4 {
-                                        app.ai_config_focus_level = 1;
-                                    } else {
-                                        app.ai_config_focus_level = 2;
-                                    }
-                                    app.ai_config_row = 0;
+                        if app.current_tab == 2 && app.ai_config_focused {
+                            // AI
+                            // Navigate rows
+                            let limit = match app.ai_config_sub_tab {
+                                1 => 9, // Providers
+                                2 => 2, // Timing
+                                3 => 1, // Versioning
+                                _ => 0,
+                            };
+                            if app.ai_config_row < limit.saturating_sub(1) {
+                                app.ai_config_row += 1;
+                                // Skip separator in Providers
+                                if app.ai_config_sub_tab == 1 && app.ai_config_row == 3 {
+                                    app.ai_config_row += 1;
                                 }
-                                1 => {
-                                    // Enter items from 3rd level menu
-                                    app.ai_config_focus_level = 2;
-                                    app.ai_config_row = 0;
-                                }
-                                2 => {
-                                    // Navigate rows
-                                    let limit = match app.ai_config_sub_tab {
-                                        1 => 9, // Providers
-                                        2 => 2, // Timing
-                                        3 => 1, // Versioning
-                                        4 => match app.ai_patterns_sub_tab {
-                                            0 => app.ignore_patterns.len(),
-                                            1 => app.gitattributes_patterns.len(),
-                                            2 => 1, // Prompt
-                                            _ => 0,
-                                        },
-                                        _ => 0,
-                                    };
-                                    if app.ai_config_row < limit.saturating_sub(1) {
-                                        app.ai_config_row += 1;
-                                        // Skip separator in Providers
-                                        if app.ai_config_sub_tab == 1 && app.ai_config_row == 3 {
-                                            app.ai_config_row += 1;
-                                        }
-                                    }
-                                }
-                                _ => {}
                             }
-                        } else if app.current_tab == 3 && !app.sub_tab_focused {
+                        } else if app.current_tab == 3 && app.ai_config_focused {
+                            // Repo
+                            let limit = match app.ai_patterns_sub_tab {
+                                0 => app.ignore_patterns.len(),
+                                1 => app.gitattributes_patterns.len(),
+                                2 => 1, // Prompt
+                                _ => 0,
+                            };
+                            if app.ai_config_row < limit.saturating_sub(1) {
+                                app.ai_config_row += 1;
+                            }
+                        } else if app.current_tab == 4 && !app.sub_tab_focused {
+                            // Identity
                             app.sub_tab_focused = true;
-                        } else if app.current_tab == 4 && !app.ai_config_focused {
+                        } else if app.current_tab == 2 && !app.ai_config_focused {
+                            // Enter AI Focus
                             app.ai_config_focused = true;
-                            app.ai_config_focus_level = 0;
+                            app.ai_config_row = 0;
+                        } else if app.current_tab == 3 && !app.ai_config_focused {
+                            // Enter Repo Focus
+                            app.ai_config_focused = true;
                             app.ai_config_row = 0;
                         } else if app.current_tab == 5 {
                             if app.ops_selected_server_idx < app.ops_servers.len().saturating_sub(1)
