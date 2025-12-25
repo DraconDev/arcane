@@ -473,35 +473,26 @@ fn render_snapshots(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     f.render_widget(list, area);
 }
 
-fn render_settings(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
-    let show_patterns_sub = app.ai_config_sub_tab == 4;
-
-    let constraints = if show_patterns_sub {
-        vec![
-            Constraint::Length(3), // Main sub-tabs
-            Constraint::Length(3), // Patterns sub-sub-tabs
-            Constraint::Min(0),    // Content
-        ]
-    } else {
-        vec![
-            Constraint::Length(3), // Main sub-tabs
-            Constraint::Min(0),    // Content
-        ]
-    };
-
+fn render_ai(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints(constraints)
+        .constraints(
+            [
+                Constraint::Length(3), // Sub-tab bar
+                Constraint::Min(0),    // Content
+            ]
+            .as_ref(),
+        )
         .split(area);
 
     // Sub-tab bar
-    let sub_tabs = vec!["Overview", "Providers", "Timing", "Versioning", "Patterns"];
+    let sub_tabs = vec!["Overview", "Providers", "Timing", "Versioning"];
     let sub_tab_titles: Vec<Line> = sub_tabs.iter().map(|t| Line::from(*t)).collect();
 
     let sub_tab_title = if app.ai_config_focused {
-        " AI Config (←/→ navigate, ↑ exit) "
+        " AI Configuration (←/→ navigate, ↑ exit) "
     } else {
-        " AI Config (↓ to enter) "
+        " AI Configuration (↓ to enter) "
     };
 
     let sub_tab_widget = Tabs::new(sub_tab_titles)
@@ -525,44 +516,11 @@ fn render_settings(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
 
     f.render_widget(sub_tab_widget, chunks[0]);
 
-    let (content_area, final_sub_tab) = if show_patterns_sub {
-        // Render 3rd level menu
-        let p_tabs = vec![".gitignore", ".gitattributes", "Commit Prompt"];
-        let p_tab_titles: Vec<Line> = p_tabs.iter().map(|t| Line::from(*t)).collect();
-
-        // Highlighting for 3rd level Patterns bar
-        let patterns_bar_focused = app.ai_config_focused && app.ai_config_focus_level == 1;
-
-        let p_tab_titles_widget = Tabs::new(p_tab_titles)
-            .block(
-                Block::default()
-                    .borders(Borders::ALL)
-                    .title(" Patterns Layout (←/→ switch) ")
-                    .border_style(if patterns_bar_focused {
-                        Style::default().fg(Color::Magenta)
-                    } else {
-                        Style::default()
-                    }),
-            )
-            .select(app.ai_patterns_sub_tab)
-            .style(Style::default().fg(Color::White))
-            .highlight_style(
-                Style::default()
-                    .fg(Color::Magenta)
-                    .add_modifier(Modifier::BOLD),
-            );
-        f.render_widget(p_tab_titles_widget, chunks[1]);
-        (chunks[2], 4)
-    } else {
-        (chunks[1], app.ai_config_sub_tab)
-    };
-
-    match final_sub_tab {
-        0 => render_ai_overview(f, app, content_area),
-        1 => render_ai_providers(f, app, content_area),
-        2 => render_ai_timing(f, app, content_area),
-        3 => render_ai_versioning(f, app, content_area),
-        4 => render_ai_patterns(f, app, content_area),
+    match app.ai_config_sub_tab {
+        0 => render_ai_overview(f, app, chunks[1]),
+        1 => render_ai_providers(f, app, chunks[1]),
+        2 => render_ai_timing(f, app, chunks[1]),
+        3 => render_ai_versioning(f, app, chunks[1]),
         _ => {}
     }
 }
