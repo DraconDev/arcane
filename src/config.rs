@@ -126,7 +126,9 @@ pub struct ArcaneConfig {
     pub system_prompt: String,
     #[serde(default)]
     pub shadow_branches: bool, // true = push to shadow/<branch>, false = push to origin/<branch>
-
+    #[serde(default)]
+    pub api_keys: HashMap<String, String>, // Provider name -> API key (stored in ~/.arcane/)
+}
 
 fn default_ignore_patterns() -> Vec<String> {
     DEFAULT_IGNORE_PATTERNS
