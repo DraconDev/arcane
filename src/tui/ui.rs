@@ -292,7 +292,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Daemon Button
     let daemon_btn = if app.status.is_some() {
         Span::styled(
-            " [S] Stop Daemon ",
+            " [s] Stop Daemon ",
             Style::default()
                 .bg(Color::Red)
                 .fg(Color::Black)
@@ -300,7 +300,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     } else {
         Span::styled(
-            " [S] Start Daemon ",
+            " [s] Start Daemon ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -311,7 +311,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Auto-Commit Button
     let auto_commit_btn = if app.ai_auto_commit {
         Span::styled(
-            " [A] Auto-Commit: ON ",
+            " [a] Auto-Commit: ON ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -319,7 +319,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     } else {
         Span::styled(
-            " [A] Auto-Commit: OFF ",
+            " [a] Auto-Commit: OFF ",
             Style::default().fg(Color::DarkGray),
         )
     };
@@ -327,7 +327,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Auto-Push Button
     let auto_push_btn = if app.ai_auto_push {
         Span::styled(
-            " [P] Auto-Push: ON ",
+            " [p] Auto-Push: ON ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -349,7 +349,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Auto-Version
     let version_btn = if app.version_bumping {
         Span::styled(
-            " [V] Auto-Version: ON ",
+            " [v] Auto-Version: ON ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -357,7 +357,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     } else {
         Span::styled(
-            " [V] Auto-Version: OFF ",
+            " [v] Auto-Version: OFF ",
             Style::default().fg(Color::DarkGray),
         )
     };
@@ -365,7 +365,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Auto-Deploy
     let deploy_btn = if app.ai_auto_deploy {
         Span::styled(
-            " [D] Auto-Deploy: ON ",
+            " [d] Auto-Deploy: ON ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -373,7 +373,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     } else {
         Span::styled(
-            " [D] Auto-Deploy: OFF ",
+            " [d] Auto-Deploy: OFF ",
             Style::default().fg(Color::DarkGray),
         )
     };
@@ -381,7 +381,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     // Shadow Branches
     let shadow_btn = if app.shadow_branches {
         Span::styled(
-            " [B] Shadow Branches: ON ",
+            " [b] Shadow Branches: ON ",
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -389,7 +389,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     } else {
         Span::styled(
-            " [B] Shadow Branches: OFF ",
+            " [b] Shadow Branches: OFF ",
             Style::default().fg(Color::DarkGray),
         )
     };
