@@ -201,12 +201,15 @@ impl GitOperations {
         let sha = String::from_utf8(output.stdout)?;
         Ok(sha.trim().to_string())
     }
-    pub async fn push(&self, repo_path: &Path) -> Result<()> {
-        let output = Command::new("git")
-            .current_dir(repo_path)
-            .arg("push")
-            .output()
-            .await?;
+    pub async fn push(&self, repo_path: &Path, refspec: Option<&str>) -> Result<()> {
+        let mut command = Command::new("git");
+        command.current_dir(repo_path).arg("push");
+
+        if let Some(r) = refspec {
+            command.arg("origin").arg(r);
+        }
+
+        let output = command.output().await?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
