@@ -63,6 +63,12 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.trigger_lazy_squash();
                         }
                     }
+                    KeyCode::Char('b') => {
+                        if app.current_tab == 1 {
+                            // Cycle branch mode: All -> Current -> Main -> All
+                            app.graph_branch_mode = (app.graph_branch_mode + 1) % 3;
+                        }
+                    }
                     KeyCode::Char('B') => {
                         // Toggle Bulk Squash Minor mode (in Versioning tab)
                         if app.current_tab == 2 && app.ai_config_sub_tab == 3 {
