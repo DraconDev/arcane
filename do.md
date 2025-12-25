@@ -1,10 +1,8 @@
 <!-- -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA -->
 
--   [x] dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
+-   dashboard contorls buttons should have teh same green red style, its clean, so they all lok like the auto commit button, except the daemon that needs to be red, cause that is pretty much the power button
 
-    -   [x] Security Alerts visible in Dashboard.
-
--   [x] ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
+-   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
 
 -   I also had an idea as an alternative to the signup to git on your vps, a webhook listens for push, then the server downloads it, and they build it slowlsy, then you setup carefully, likley causing a discord between server and local state, i think you cna see my strategy too, what if we before even along with pushing to git also pushed to the server with secrets baked in? that is the plan isn't it? of course would be fast too
 
@@ -25,5 +23,4 @@
     -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
     -   User approves -> Arcane squashes and pushes.
 
-
-- graph scren could use submenus to switch between main/master 
+-   graph scren could use submenus to switch between main/master , current , and all the brnaches
