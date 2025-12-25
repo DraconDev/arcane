@@ -123,7 +123,7 @@ pub fn render_ops(f: &mut Frame, app: &mut App, area: Rect) {
     }
 
     // Help Footer for Ops
-    let help_text = "[Enter]Refresh  [D]eploy  [L]ogs  [S]hell  [↑/↓]Nav";
+    let help_text = " [Enter] Refresh  [d] Deploy  [l] Logs  [s] Shell  [↑/↓] Nav";
     let help = Paragraph::new(help_text)
         .block(Block::default().borders(Borders::ALL))
         .style(Style::default().fg(Color::DarkGray));
