@@ -1137,6 +1137,44 @@ impl App {
         }
     }
 
+    pub fn trigger_lazy_squash(&mut self) {
+        if self.analyzing_squash {
+            return;
+        }
+
+        self.analyzing_squash = true;
+        self.squash_plan = None;
+        self.squash_error = None;
+
+        let ai = self.ai_service.clone();
+        let git = self.git_ops.clone();
+        let tx = self.squash_tx.clone();
+
+        tokio::spawn(async move {
+            let repo_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+            let res = async move {
+                let commits = git
+                    .get_unpushed_commits(&repo_root)
+                    .await
+                    .context("Failed to fetch unpushed commits")?;
+
+                if commits.is_empty() {
+                    return Err(anyhow::anyhow!("No unpushed commits found to squash."));
+                }
+
+                let plan = ai
+                    .analyze_commits_for_lazy_squash(&commits)
+                    .await
+                    .context("AI Lazy Analysis failed")?;
+
+                Ok(plan)
+            }
+            .await;
+
+            let _ = tx.send(res);
+        });
+    }
+
     pub fn cancel_squash(&mut self) {
         self.squash_plan = None;
         self.squash_error = None;
