@@ -51,8 +51,18 @@ pub fn run_app<B: ratatui::backend::Backend>(
 
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
-                    KeyCode::Char('S') => app.trigger_squash_analysis(), // Smart Squash
-                    KeyCode::Char('L') => app.trigger_lazy_squash(),     // Bulk Squash
+                    KeyCode::Char('S') => {
+                        if app.current_tab == 1 {
+                            // Graph tab only
+                            app.trigger_squash_analysis();
+                        }
+                    }
+                    KeyCode::Char('L') => {
+                        if app.current_tab == 1 {
+                            // Graph tab only
+                            app.trigger_lazy_squash();
+                        }
+                    }
                     KeyCode::Char('B') => {
                         // Toggle Bulk Squash Minor mode (in Versioning tab)
                         if app.current_tab == 2 && app.ai_config_sub_tab == 3 {

@@ -112,13 +112,12 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
         _ => {}
     }
 
-    // 4. Footer
-    let help = Paragraph::new(format!(
-        "←/→: Nav | S: Smart Squash | L: Bulk Squash | q: Quit | Scrl: {}/{}",
-        app.scroll,
-        app.git_log.lines.len(),
-    ))
-    .block(Block::default().borders(Borders::ALL));
+    // 4. Footer - Context-sensitive help
+    let footer_text = match app.current_tab {
+        1 => "←/→: Nav | S: Smart Squash | L: Bulk Squash | q: Quit".to_string(),
+        _ => "←/→: Nav | q: Quit".to_string(),
+    };
+    let help = Paragraph::new(footer_text).block(Block::default().borders(Borders::ALL));
     f.render_widget(help, footer_area);
 
     if app.show_popup {
