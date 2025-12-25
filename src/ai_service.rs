@@ -123,7 +123,6 @@ impl AIService {
                 }
             }
         }
-        }
 
         // All failed - return fallback
         Ok(self.generate_fallback_message())
@@ -139,13 +138,13 @@ impl AIService {
                 // Remove language identifier if present (e.g. ```gitcommit)
                 let lines: Vec<&str> = content.lines().collect();
                 if lines.len() > 1 && !lines[0].contains(' ') {
-                     text = lines[1..].join("\n");
+                    text = lines[1..].join("\n");
                 } else {
-                     text = content.to_string();
+                    text = content.to_string();
                 }
             } else {
-                 // Open block but no close? Just strip the backticks
-                 text = text.replace("```", "");
+                // Open block but no close? Just strip the backticks
+                text = text.replace("```", "");
             }
         }
 
