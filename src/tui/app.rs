@@ -148,6 +148,7 @@ impl App {
             commit_details: Text::default(),
             commit_stats: HashMap::new(),
             ai_auto_commit: false,
+            ai_auto_push: config.auto_push_enabled,
             identity_sub_tab: 0,
             master_pubkey: None,
             team_members: vec![],
