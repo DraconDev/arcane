@@ -1199,15 +1199,10 @@ fn render_repository(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) 
 
     let sub_tab_titles: Vec<Line> = sub_tabs.iter().map(|t| Line::from(*t)).collect();
 
-    let mode_str = match app.pattern_mode {
-        arcane::config::PatternMode::Append => "APPEND",
-        arcane::config::PatternMode::Override => "OVERRIDE",
-    };
-
     let sub_tab_title = if app.ai_config_focused {
-        format!(" Repository Config (Mode: {} [m], ←/→/↑) ", mode_str)
+        " Repository Config (←/→/↑) ".to_string()
     } else {
-        format!(" Repository Config (Mode: {} [m], ↓ enter) ", mode_str)
+        " Repository Config (↓ enter) ".to_string()
     };
 
     let sub_tab_widget = Tabs::new(sub_tab_titles)

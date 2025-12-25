@@ -480,37 +480,24 @@ impl App {
         let file = &self.working_tree[self.selected_file_idx];
 
         // Check Mode
-        match self.pattern_mode {
-            arcane::config::PatternMode::Append => {
-                // Append (Default behavior)
-                let file_obj = OpenOptions::new()
-                    .create(true)
-                    .append(true)
-                    .open(".gitignore");
+        // Smart Enforce: Always use Managed Block
+        let repo_root = std::path::Path::new(".");
+        let auto_ignore = arcane::auto_gitignore::AutoGitIgnore::new(repo_root);
 
-                if let Ok(mut f) = file_obj {
-                    if let Err(e) = writeln!(f, "{}", file.path) {
-                        eprintln!("Failed to write to .gitignore: {}", e);
-                    }
-                }
-            }
-            arcane::config::PatternMode::Override => {
-                // Override: Add to memory, then rewrite entire file from memory
-                if !self.ignore_patterns.contains(&file.path) {
-                    self.ignore_patterns.push(file.path.clone());
-                    // Sync to disk
-                    if let Ok(mut f) = std::fs::File::create(".gitignore") {
-                        for pat in &self.ignore_patterns {
-                            let _ = writeln!(f, "{}", pat);
-                        }
-                    }
-                    // Also save to config to persist the "managed set"
-                    if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
-                        config.ignore_patterns = self.ignore_patterns.clone();
-                        let _ = config.save();
-                    }
-                }
-            }
+        // Add to managed block (ensure_managed_block handles reading/updating)
+        // We pass it as a slice
+        if let Err(e) = auto_ignore.ensure_managed_block(&[&file.path]) {
+            self.events.push(format!("❌ Failed to ignore: {}", e));
+        } else {
+            self.events.push(format!("🙈 Ignored: {}", file.path));
+        }
+
+        // Refresh ignore patterns in memory (optional but good for UI)
+        self.ignore_patterns = auto_ignore.read_gitignore().into_iter().collect();
+        // Also save to config to persist the "managed set"
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.ignore_patterns = self.ignore_patterns.clone();
+            let _ = config.save();
         }
 
         // Refresh immediately
