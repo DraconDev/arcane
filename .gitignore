@@ -1,5 +1,3 @@
-
-
 # Auto-committer ignored files
 .vscode
 .idea/**
@@ -42,3 +40,47 @@ venv/
 *.p12
 .arcane/shadow/
 .arcane/keys/
+
+# --- BEGIN ARCANE MANAGED BLOCK ---
+# DANGER: Content inside this block is managed by Arcane.
+# Manual changes may be overwritten. Add custom rules ABOVE this block.
+.vscode
+.idea/**
+.vs/**
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+node_modules/
+node_modules/**
+.npm/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+target/
+dist/
+dist/**
+build/
+build/**
+.next/
+.nuxt/
+.wxt
+*.tmp
+*.temp
+*.log
+*.cache
+*.dll
+*.exe
+__pycache__/
+*.pyc
+.venv/
+venv/
+reference/**
+*.kilocode
+*.pem
+*.key
+*.p12
+.arcane/shadow/
+.arcane/keys/
+# --- END ARCANE MANAGED BLOCK ---

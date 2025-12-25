@@ -114,10 +114,9 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
 
     // 4. Footer
     let help = Paragraph::new(format!(
-        "Tab: Switch View | 's': Daemon | Enter: Inspect | Scrl: {}/{} | Sel: {}",
+        "←/→: Nav | S: Smart Squash | L: Bulk Squash | q: Quit | Scrl: {}/{}",
         app.scroll,
         app.git_log.lines.len(),
-        app.selected_row
     ))
     .block(Block::default().borders(Borders::ALL));
     f.render_widget(help, footer_area);
