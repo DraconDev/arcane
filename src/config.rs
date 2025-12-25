@@ -153,6 +153,7 @@ impl Default for ArcaneConfig {
             timing: TimingConfig::default(),
             version_bumping: false,
             auto_commit_enabled: false,
+            auto_push_enabled: true,
             model_overrides: HashMap::new(),
             ignore_patterns: default_ignore_patterns(),
             gitattributes_patterns: default_gitattributes_patterns(),
