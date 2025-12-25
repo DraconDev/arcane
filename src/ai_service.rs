@@ -117,11 +117,42 @@ impl AIService {
             attempts.push(attempt.clone());
 
             if let Some(message) = attempt.message {
-                if !message.trim().is_empty() {
-                    return Ok(message);
+                let cleaned = self.clean_response(&message);
+                if !cleaned.is_empty() {
+                    return Ok(cleaned);
                 }
             }
         }
+    }
+
+    fn clean_response(&self, raw: &str) -> String {
+        // 1. Remove Markdown code blocks if present
+        let mut text = raw.to_string();
+        if let Some(start) = text.find("```") {
+            if let Some(end) = text[start + 3..].find("```") {
+                // Extract content between backticks
+                let content = &text[start + 3..start + 3 + end];
+                // Remove language identifier if present (e.g. ```gitcommit)
+                let lines: Vec<&str> = content.lines().collect();
+                if lines.len() > 1 && !lines[0].contains(' ') {
+                     text = lines[1..].join("\n");
+                } else {
+                     text = content.to_string();
+                }
+            } else {
+                 // Open block but no close? Just strip the backticks
+                 text = text.replace("```", "");
+            }
+        }
+
+        // 2. Strip conversational trash (Simple Heuristics)
+        // Many models say "Here is the commit message:"
+        if let Some(idx) = text.to_lowercase().find("commit message:") {
+            text = text[idx + 15..].to_string();
+        }
+
+        text.trim().to_string()
+    }
 
         // All failed - return fallback
         Ok(self.generate_fallback_message())
