@@ -123,6 +123,10 @@ impl AIService {
                 }
             }
         }
+        }
+
+        // All failed - return fallback
+        Ok(self.generate_fallback_message())
     }
 
     fn clean_response(&self, raw: &str) -> String {
@@ -152,10 +156,6 @@ impl AIService {
         }
 
         text.trim().to_string()
-    }
-
-        // All failed - return fallback
-        Ok(self.generate_fallback_message())
     }
 
     fn simplify_diff(&self, diff: &str) -> String {
