@@ -71,6 +71,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     // 2. Status Hub (Dashboard only)
     let (main_area, footer_area) = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
+        let status_lines = if let Some(status) = &app.status {
             let watched_path = app
                 .watch_roots
                 .first()
@@ -288,12 +289,18 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let daemon_btn = if daemon_running {
         Span::styled(
             " [S] Stop Daemon ",
-            Style::default().bg(Color::Red).fg(Color::Black).add_modifier(Modifier::BOLD),
+            Style::default()
+                .bg(Color::Red)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
         )
     } else {
         Span::styled(
             " [S] Start Daemon ",
-            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
         )
     };
 
@@ -301,17 +308,26 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let auto_commit_btn = if app.ai_auto_commit {
         Span::styled(
             " [A] Auto-Commit: ON ",
-            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(" [A] Auto-Commit: OFF ", Style::default().fg(Color::DarkGray))
+        Span::styled(
+            " [A] Auto-Commit: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     // Auto-Push Button
     let auto_push_btn = if app.ai_auto_push {
         Span::styled(
             " [P] Auto-Push: ON ",
-            Style::default().bg(Color::Green).fg(Color::Black).add_modifier(Modifier::BOLD),
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
         )
     } else {
         Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
@@ -321,12 +337,17 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let shadow_btn = if app.shadow_branches {
         Span::styled(
             " [B] Shadow Branches: ON ",
-            Style::default().bg(Color::Blue).fg(Color::Black).add_modifier(Modifier::BOLD),
+            Style::default()
+                .bg(Color::Blue)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(" [B] Shadow Branches: OFF ", Style::default().fg(Color::DarkGray))
+        Span::styled(
+            " [B] Shadow Branches: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
     };
-
 
     let controls_line = Line::from(vec![
         daemon_btn,
