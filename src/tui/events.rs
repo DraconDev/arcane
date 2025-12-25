@@ -499,6 +499,17 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.close_popup();
                         }
                     }
+                    KeyCode::Char('m') if !app.input_popup_active => {
+                        if app.current_tab == 3 {
+                            app.toggle_pattern_mode();
+                        }
+                    }
+                    KeyCode::Char('b') if !app.input_popup_active => {
+                        // Toggle Shadow Branches in AI Tab (Overview) or Dashboard
+                        if app.current_tab == 2 && app.ai_config_sub_tab == 0 {
+                            app.toggle_shadow_branches();
+                        }
+                    }
                     _ => {}
                 }
             }
