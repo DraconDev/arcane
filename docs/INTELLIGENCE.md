@@ -10,8 +10,9 @@ When you run `arcane start`, Arcane acts as an intelligent daemon:
 1.  **Watches** for file changes.
 2.  **Waits** for a "quiet period" (5 seconds).
 3.  **Analyzes** the `git diff`.
-4.  **Generates** a concise commit message using your local AI.
-5.  **Commits** the changes automatically.
+4.  **Generates** a concise commit message using the "Senior Engineer" persona.
+5.  **Extracts** the message using Zero-Tolerance logic (no chatter, no preambles).
+6.  **Commits** the changes automatically.
 
 ## Prerequisites
 
@@ -49,20 +50,21 @@ When you've accumulated many small auto-commits, use **Smart Squash** to clean y
 
 ### Strategies
 
-| Mode             | Trigger   | Result                          |
-| ---------------- | --------- | ------------------------------- |
-| **Auto-Push ON** | Toggle    | Each commit = Patch             |
-| **Smart Squash** | `Shift+S` | AI groups into Minors + Patches |
-| **Bulk Squash**  | `Shift+L` | All → 1 Major/Minor bump        |
+| Mode             | Trigger | Result                                  |
+| ---------------- | ------- | --------------------------------------- |
+| **Auto-Push ON** | Toggle  | Each commit = Patch                     |
+| **Smart Squash** | `s`     | AI groups into Minors + Patches         |
+| **Bulk Squash**  | `l`     | All → 1 Major/Minor bump                |
+| **Auto-Deploy**  | `d`     | Toggle Deployment to Authorized Servers |
 
 ### Usage
 
 1. Accumulate commits with Auto-Commit (keep Auto-Push OFF)
 2. Open Dashboard: `arcane dashboard`
-3. Press `Shift+S` (Smart) or `Shift+L` (Bulk)
+3. Press `s` (Smart) or `l` (Bulk)
 4. Review the plan → `Enter` to execute, `Esc` to cancel
 
 ### Configuration
 
--   **Bulk Squash Mode**: Defaults to Major bump. Press `B` in AI → Versioning tab to toggle to Minor.
+-   **Bulk Squash Mode**: Defaults to Major bump. Press `m` in Versioning tab to toggle to Minor.
 -   A backup branch (`before-squash`) is created automatically.
