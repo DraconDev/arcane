@@ -334,7 +334,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
+        Span::styled(" [p] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
     };
 
     let controls_line_1 = Line::from(vec![
