@@ -1,7 +1,7 @@
 use crate::ai_service::{AIProvider, SquashPlan};
-use crate::rebase_manager::RebaseManager;
 use ansi_to_tui::IntoText;
 use anyhow::{Context, Result};
+use arcane::rebase_manager::RebaseManager;
 use arcane::DaemonStatus;
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
