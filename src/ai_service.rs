@@ -207,7 +207,7 @@ impl AIService {
 
         if starts_garbage {
             // Re-scan lines for first conventional commit
-            for line in text.lines() {
+            for (i, line) in text.lines().enumerate() {
                 let trimmed = line.trim();
                 let lower_line = trimmed.to_lowercase();
                 for t in common_types {
