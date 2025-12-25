@@ -1066,13 +1066,21 @@ fn render_ai_versioning(f: &mut Frame, app: &mut App, area: ratatui::layout::Rec
         format!("  📂 Detected File:   {}", ver_file),
         format!("  🏷️  Current Version: {}", ver_num),
         format!(""),
-        format!("  AI Strategy (if enabled):"),
-        format!("    • Patch: Bug fixes, refactors"),
-        format!("    • Minor: New features"),
-        format!("    • Major: Breaking changes"),
+        format!("  ─── Squash Strategies ───"),
+        format!("  [Auto-Push ON] Each commit = Patch"),
+        format!("  [Shift+S] Smart: AI groups into Minors + Patches"),
+        format!("  [Shift+L] Bulk:  All commits → 1 version bump"),
         format!(""),
-        format!("  Manual Override:"),
-        format!("    • Press 'c' to check/simulate bump"),
+        format!(
+            "  ⚙️  Bulk Bump Type: {} (B to toggle)",
+            if app.config.bulk_squash_minor {
+                "Minor"
+            } else {
+                "Major"
+            }
+        ),
+        format!(""),
+        format!("  Manual: 'c' to simulate bump"),
     ];
 
     let items: Vec<ListItem> = settings
