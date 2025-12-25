@@ -28,7 +28,10 @@ pub fn run_app<B: ratatui::backend::Backend>(
 
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
-                    KeyCode::Char('d') | KeyCode::Char('D') => {
+                    KeyCode::Char('d') => {
+                        app.toggle_auto_deploy();
+                    }
+                    KeyCode::Char('D') => {
                         if app.current_tab == 5 {
                             // Deploy Placeholder
                             app.events
