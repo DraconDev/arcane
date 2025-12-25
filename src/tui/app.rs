@@ -608,6 +608,20 @@ impl App {
         ));
     }
 
+    pub fn toggle_auto_push(&mut self) {
+        self.ai_auto_push = !self.ai_auto_push;
+        if self.ai_auto_push {
+            self.events.push("🚀 Auto-Push ENABLED".to_string());
+        } else {
+            self.events.push("🚫 Auto-Push DISABLED".to_string());
+        }
+        // Save to config
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.auto_push_enabled = self.ai_auto_push;
+            let _ = config.save();
+        }
+    }
+
     pub fn inspect_commit(&mut self) {
         if self.current_tab != 1 {
             return;
