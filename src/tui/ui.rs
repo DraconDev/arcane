@@ -1048,3 +1048,51 @@ fn render_ai_prompt(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
 
     f.render_widget(paragraph, area);
 }
+
+fn render_repository(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints(
+            [
+                Constraint::Length(3), // Sub-tab bar
+                Constraint::Min(0),    // Content
+            ]
+            .as_ref(),
+        )
+        .split(area);
+
+    // Sub-tab bar
+    let sub_tabs = vec![".gitignore", ".gitattributes", "Commit Prompt"];
+
+    let sub_tab_titles: Vec<Line> = sub_tabs.iter().map(|t| Line::from(*t)).collect();
+
+    let sub_tab_title = if app.ai_config_focused {
+        " Repository Config (←/→ navigate, ↑ exit) "
+    } else {
+        " Repository Config (↓ to enter) "
+    };
+
+    let sub_tab_widget = Tabs::new(sub_tab_titles)
+        .block(
+            Block::default()
+                .borders(Borders::ALL)
+                .title(sub_tab_title)
+                .border_style(if app.ai_config_focused {
+                    Style::default().fg(Color::Magenta)
+                } else {
+                    Style::default()
+                }),
+        )
+        .select(app.ai_patterns_sub_tab)
+        .style(Style::default().fg(Color::White))
+        .highlight_style(
+            Style::default()
+                .fg(Color::Magenta)
+                .add_modifier(Modifier::BOLD),
+        );
+
+    f.render_widget(sub_tab_widget, chunks[0]);
+
+    // Use existing render_ai_patterns function
+    render_ai_patterns(f, app, chunks[1]);
+}
