@@ -22,9 +22,12 @@
 
     -   _Reason_: Git reads `gitattributes` from top to bottom, but the **LAST MATCH WINS**. So by appending our rules to the bottom, we _effectively override_ any previous user rules for those specific files.
     -   _Idempotency_: To prevent bloat, use **Managed Blocks** (e.g. `# BEGIN ARCANE BLOCK` ... `# END`).
-        -   If block exists: Update strict rules _inside_ it.
-        -   If missing: Append block to bottom.
-        -   This avoids "endless appending" while ensuring our rules stay active/updated.
+        -   **Decision**: Remove the "Append vs Override" toggle.
+        -   **Strategy**: "Smart Enforce".
+            -   Always read the file.
+            -   Find/Create the "Arcane Block" at the bottom.
+            -   Update the rules _inside_ that block.
+        -   _Result_: We strictly enforcing our security rules (Last Match Wins) WITHOUT wiping the user's other settings. Best of both worlds.
 
 -   **Smart Squash & Versioning**:
 
