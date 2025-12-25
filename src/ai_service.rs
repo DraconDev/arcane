@@ -133,9 +133,7 @@ impl AIService {
         let mut text = raw.to_string();
         if let Some(start) = text.find("```") {
             if let Some(end) = text[start + 3..].find("```") {
-                // Extract content between backticks
                 let content = &text[start + 3..start + 3 + end];
-                // Remove language identifier if present (e.g. ```gitcommit)
                 let lines: Vec<&str> = content.lines().collect();
                 if lines.len() > 1 && !lines[0].contains(' ') {
                     text = lines[1..].join("\n");
@@ -143,18 +141,64 @@ impl AIService {
                     text = content.to_string();
                 }
             } else {
-                // Open block but no close? Just strip the backticks
                 text = text.replace("```", "");
             }
         }
 
-        // 2. Strip conversational trash (Simple Heuristics)
-        // Many models say "Here is the commit message:"
-        if let Some(idx) = text.to_lowercase().find("commit message:") {
-            text = text[idx + 15..].to_string();
+        // 2. Strip "COMMIT_MESSAGE:" prefix (from our system prompt)
+        if let Some(stripped) = text.strip_prefix("COMMIT_MESSAGE:") {
+            text = stripped.to_string();
         }
 
-        text.trim().to_string()
+        // 3. Scan for Conventional Commit Header (Strong Heuristic)
+        // Regex: ^[a-z]+(\([a-z0-9-]+\))?: .+$
+        // If we find a line matching this, we discard everything before it.
+        // We use a simplified check to avoid heavy regex if possible, but regex is safer.
+        // Let's use basic string matching for common types.
+        let common_types = [
+            "feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "build", "ci",
+            "revert",
+        ];
+        let lines: Vec<&str> = text.lines().collect();
+        let mut start_idx = 0;
+
+        for (i, line) in lines.iter().enumerate() {
+            let lower = line.trim().to_lowercase();
+            // Check if line starts with specific type
+            for t in common_types {
+                // e.g. "feat:" or "feat("
+                if lower.starts_with(&format!("{}:", t)) || lower.starts_with(&format!("{}(", t)) {
+                    start_idx = i;
+                    goto_extraction(start_idx, &lines);
+                    return lines[start_idx..].join("\n").trim().to_string();
+                }
+            }
+        }
+
+        fn goto_extraction(idx: usize, lines: &[&str]) {} // dummy closure to break simple loops
+
+        // 4. Fallback: Strip conversational trash
+        let lower = text.to_lowercase();
+        if let Some(idx) = lower.find("commit message:") {
+            text = text[idx + 15..].to_string();
+        } else if let Some(idx) = lower.find("message is:") {
+            text = text[idx + 11..].to_string();
+        } else if lower.starts_with("here")
+            || lower.starts_with("sure")
+            || lower.starts_with("okay")
+        {
+            // Find the first colon and take after it? Risky.
+            // Just take the first line that looks like a commit?
+            // Let's just strip known prefixes line by line
+            if let Some(first_colon) = text.find(':') {
+                // "Here is the message: feat: foo" -> " feat: foo"
+                // "Here's a message for you:" (newline) "feat: foo"
+                // If the colon is early in the text, maybe splitting there helps?
+                // But safer to rely on the Loop above.
+            }
+        }
+
+        text.trim().trim_matches('"').trim_matches('\'').to_string()
     }
 
     fn simplify_diff(&self, diff: &str) -> String {
