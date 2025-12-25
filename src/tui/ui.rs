@@ -95,10 +95,10 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     match app.current_tab {
         0 => render_dashboard(f, app, main_area),
         1 => render_graph(f, app, main_area),
-        2 => render_intelligence(f, app, main_area),
-        3 => render_identity(f, app, main_area),
-        4 => render_settings(f, app, main_area),
-        5 => render_ops(f, app, main_area), // [NEW] Ops Tab
+        2 => render_ai(f, app, main_area),         // New AI Tab
+        3 => render_repository(f, app, main_area), // New Repo Tab
+        4 => render_identity(f, app, main_area),
+        5 => render_ops(f, app, main_area),
         _ => {}
     }
 
@@ -289,103 +289,6 @@ fn render_graph(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         .block(graph_block)
         .scroll((app.scroll, 0));
     f.render_widget(graph, area);
-}
-
-fn render_intelligence(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints(
-            [
-                Constraint::Length(3), // Daemon Status
-                Constraint::Min(0),    // Log Stream
-                Constraint::Length(3), // Controls
-            ]
-            .as_ref(),
-        )
-        .split(area);
-
-    // 1. Daemon Status
-    let status_color = if let Some(s) = &app.status {
-        if s.state == "Running" {
-            Color::Green
-        } else {
-            Color::Red
-        }
-    } else {
-        Color::Red
-    };
-
-    let status_text = if let Some(s) = &app.status {
-        format!("● Daemon Active (PID: {})", s.pid)
-    } else {
-        "● Daemon Stopped".to_string()
-    };
-
-    let status_block = Block::default()
-        .borders(Borders::ALL)
-        .border_style(Style::default().fg(status_color))
-        .title(" Intelligence Core Status ");
-
-    let status_p = Paragraph::new(status_text).block(status_block).style(
-        Style::default()
-            .fg(status_color)
-            .add_modifier(Modifier::BOLD),
-    );
-
-    f.render_widget(status_p, chunks[0]);
-
-    // 2. Log Stream
-    let logs_block = Block::default()
-        .borders(Borders::ALL)
-        .title(" Neural Stream (Daemon Logs) ");
-
-    let log_items: Vec<ListItem> = app
-        .events
-        .iter()
-        .map(|e| ListItem::new(format!("> {}", e)))
-        .collect();
-
-    let logs = List::new(log_items).block(logs_block);
-    f.render_widget(logs, chunks[1]);
-
-    // 3. Controls
-    let controls_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-        .split(chunks[2]);
-
-    // Daemon Control Button
-    let daemon_btn_text = if app.status.is_some() {
-        "STOP DAEMON [S]"
-    } else {
-        "START DAEMON [S]"
-    };
-    let daemon_btn = Paragraph::new(daemon_btn_text)
-        .block(Block::default().borders(Borders::ALL))
-        .style(Style::default().fg(if app.status.is_some() {
-            Color::Red
-        } else {
-            Color::Green
-        }))
-        .alignment(ratatui::layout::Alignment::Center);
-    f.render_widget(daemon_btn, controls_layout[0]);
-
-    // AI Auto-Commit Button
-    let ai_btn_text = if app.ai_auto_commit {
-        "AI AUTO-COMMIT: ON [A]"
-    } else {
-        "AI AUTO-COMMIT: OFF [A]"
-    };
-    let ai_btn = Paragraph::new(ai_btn_text)
-        .block(Block::default().borders(Borders::ALL))
-        .style(Style::default().fg(if app.ai_auto_commit {
-            Color::Cyan
-        } else {
-            Color::Gray
-        }))
-        .alignment(ratatui::layout::Alignment::Center);
-
-    f.render_widget(ai_btn, controls_layout[1]);
 }
 
 fn render_identity(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
