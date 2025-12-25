@@ -129,9 +129,6 @@ impl AIService {
     }
 
     fn clean_response(&self, raw: &str) -> String {
-        // DEBUG: Log raw response to file for diagnosis
-        let _ = std::fs::write("/tmp/arcane_last_ai_raw.log", raw);
-
         let mut text = raw.trim().to_string();
 
         // 1. Hunt for Explicit Delimiters (Highest Priority)
