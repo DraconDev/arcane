@@ -219,7 +219,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
             [
                 Constraint::Length(8), // Security/Alerts
                 Constraint::Min(0),    // Working Tree
-                Constraint::Length(3), // Controls (New)
+                Constraint::Length(4), // Controls (2 Rows)
             ]
             .as_ref(),
         )
