@@ -112,36 +112,70 @@ impl AutoGitIgnore {
         self.read_gitignore().contains(pattern)
     }
 
-    /// Add patterns to .gitignore
-    pub fn add_patterns(&self, patterns: &[&str]) -> Result<Vec<String>> {
-        let existing = self.read_gitignore();
-        let mut added = Vec::new();
-
+    /// Add patterns to .gitignore using a Managed Block (Smart Enforce)
+    /// This ensures our rules are always at the bottom (Last Match Wins)
+    /// without duplicating them or deleting user rules.
+    pub fn ensure_managed_block(&self, patterns: &[&str]) -> Result<()> {
         let path = self.gitignore_path();
-        let mut content = if path.exists() {
+        let current_content = if path.exists() {
             fs::read_to_string(&path)?
         } else {
             String::new()
         };
 
-        // Ensure file ends with newline
-        if !content.is_empty() && !content.ends_with('\n') {
-            content.push('\n');
-        }
+        const BLOCK_START: &str = "# --- BEGIN ARCANE MANAGED BLOCK ---";
+        const BLOCK_END: &str = "# --- END ARCANE MANAGED BLOCK ---";
 
-        for pattern in patterns {
-            if !existing.contains(*pattern) {
-                content.push_str(pattern);
-                content.push('\n');
-                added.push(pattern.to_string());
+        let mut lines: Vec<String> = current_content.lines().map(|s| s.to_string()).collect();
+
+        // 1. Remove existing block if present
+        let mut in_block = false;
+        lines.retain(|line| {
+            if line.trim() == BLOCK_START {
+                in_block = true;
+                return false;
+            }
+            if line.trim() == BLOCK_END {
+                in_block = false;
+                return false; // Remove the end marker too
+            }
+            !in_block
+        });
+
+        // Trim trailing newlines to keep it clean
+        while let Some(last) = lines.last() {
+            if last.trim().is_empty() {
+                lines.pop();
+            } else {
+                break;
             }
         }
 
-        if !added.is_empty() {
-            fs::write(&path, content)?;
+        // 2. Append new block
+        lines.push("".to_string()); // Spacer
+        lines.push(BLOCK_START.to_string());
+        lines.push("# DANGER: Content inside this block is managed by Arcane.".to_string());
+        lines.push(
+            "# Manual changes may be overwritten. Add custom rules ABOVE this block.".to_string(),
+        );
+        for pattern in patterns {
+            lines.push(pattern.to_string());
         }
+        lines.push(BLOCK_END.to_string());
 
-        Ok(added)
+        // 3. Write back
+        let new_content = lines.join("\n");
+        // Ensure single trailing newline
+        let final_content = format!("{}\n", new_content.trim());
+
+        fs::write(&path, final_content)?;
+        Ok(())
+    }
+
+    /// Add patterns to .gitignore (Legacy - use ensure_managed_block)
+    pub fn add_patterns(&self, patterns: &[&str]) -> Result<Vec<String>> {
+        self.ensure_managed_block(patterns)?;
+        Ok(Vec::new()) // Return empty as we fully managed it
     }
 
     /// Ensure patterns are NOT in .gitignore (i.e. force tracking)
@@ -179,8 +213,8 @@ impl AutoGitIgnore {
     }
 
     /// Ensure all default patterns are in .gitignore
-    pub fn ensure_defaults(&self) -> Result<Vec<String>> {
-        self.add_patterns(ALWAYS_IGNORE)
+    pub fn ensure_defaults(&self) -> Result<()> {
+        self.ensure_managed_block(ALWAYS_IGNORE)
     }
 
     /// Check if a file path looks sensitive
