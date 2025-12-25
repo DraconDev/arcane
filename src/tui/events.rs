@@ -138,7 +138,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             }
                         } else if app.current_tab == 3 && app.ai_config_focused {
                             // Repo
-                            let limit = match app.ai_patterns_sub_tab {
+                            let limit: usize = match app.ai_patterns_sub_tab {
                                 0 => app.ignore_patterns.len(),
                                 1 => app.gitattributes_patterns.len(),
                                 2 => 1, // Prompt
