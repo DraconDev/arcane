@@ -36,7 +36,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Char('t') | KeyCode::Char('T') => {
-                        if app.current_tab == 4 && app.ai_config_sub_tab == 1 {
+                        if app.current_tab == 2 && app.ai_config_sub_tab == 1 {
                             run_connectivity_test(&mut app);
                         }
                     }
