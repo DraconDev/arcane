@@ -8,6 +8,7 @@ pub mod doctor;
 pub mod file_watcher;
 pub mod git_operations;
 pub mod history;
+pub mod rebase_manager;
 pub mod repo_manager;
 pub mod security;
 pub mod shadow;
