@@ -1,6 +1,9 @@
 use crate::ai_service::{AIProvider, SquashPlan};
+use crate::ai_service::{AIProvider, SquashPlan};
+use crate::rebase_manager::RebaseManager;
 use crate::rebase_manager::RebaseManager;
 use ansi_to_tui::IntoText;
+use anyhow::{Context, Result};
 use anyhow::{Context, Result};
 use arcane::DaemonStatus;
 use ratatui::style::{Color, Style};
@@ -8,6 +11,8 @@ use ratatui::text::Text;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::sync::Arc;
+use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 use tokio::sync::mpsc::{self, UnboundedReceiver, UnboundedSender};
 
 #[derive(Debug, Clone)]
