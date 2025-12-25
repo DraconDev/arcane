@@ -78,11 +78,11 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                 status.watching.join(", ")
             };
             format!(
-                "Daemon: RUNNING (PID: {}) | State: {} | Watching: {}",
+                " Daemon: RUNNING (PID: {}) | State: {} | Watching: {}",
                 status.pid, status.state, watching_str
             )
         } else {
-            "Daemon: STOPPED (Waiting for signal...)".to_string()
+            " Daemon: STOPPED (Waiting for signal...)".to_string()
         };
         let p = Paragraph::new(status_text).block(status_block);
         f.render_widget(p, chunks[1]);
