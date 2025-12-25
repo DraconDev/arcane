@@ -197,9 +197,25 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         );
 
         if auto_push {
-            match git.push(repo_path).await {
-                Ok(_) => {
-                    action_msg.push_str(" (Pushed 🚀)");
+            let push_result = if config_manager.config.shadow_branches {
+                // Shadow Mode: Push to shadow/<branch>
+                if let Ok(current_branch) = git.get_current_branch(repo_path).await {
+                    let refspec = format!("HEAD:refs/heads/shadow/{}", current_branch);
+                    git.push(repo_path, Some(&refspec)).await.map(|_| "Shadow")
+                } else {
+                    // Fallback to normal if can't get branch? Or error?
+                    Err(anyhow::anyhow!(
+                        "Could not determine branch for shadow push"
+                    ))
+                }
+            } else {
+                // Normal Mode: Push current branch to upstream
+                git.push(repo_path, None).await.map(|_| "Upstream")
+            };
+
+            match push_result {
+                Ok(target) => {
+                    action_msg.push_str(&format!(" (Pushed {} 🚀)", target));
                 }
                 Err(e) => {
                     action_msg.push_str(&format!(" (Push Failed: {})", e));
