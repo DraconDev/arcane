@@ -134,6 +134,8 @@ pub struct ArcaneConfig {
     pub shadow_branches: bool, // true = push to shadow/<branch>, false = push to origin/<branch>
     #[serde(default)]
     pub api_keys: HashMap<String, String>, // Provider name -> API key (stored in ~/.arcane/)
+    #[serde(default)]
+    pub bulk_squash_minor: bool, // true = Bulk Squash uses Minor bump, false = Major bump
 }
 
 fn default_ignore_patterns() -> Vec<String> {
