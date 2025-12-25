@@ -374,13 +374,15 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         }),
     );
 
-    let controls_line = Line::from(vec![
+    let controls_line_1 = Line::from(vec![
         daemon_btn,
         separator.clone(),
         auto_commit_btn,
         separator.clone(),
         auto_push_btn,
-        separator.clone(),
+    ]);
+
+    let controls_line_2 = Line::from(vec![
         version_btn,
         separator.clone(),
         deploy_btn,
@@ -388,7 +390,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         shadow_btn,
     ]);
 
-    let controls = Paragraph::new(controls_line)
+    let controls = Paragraph::new(vec![controls_line_1, controls_line_2])
         .block(controls_block)
         .alignment(ratatui::layout::Alignment::Center);
     f.render_widget(controls, chunks[2]);
