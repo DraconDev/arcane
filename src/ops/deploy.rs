@@ -186,6 +186,15 @@ impl ArcaneDeployer {
             );
 
             if matches!(check, Ok(ref s) if s.trim() == "true") {
+                // Secondary HTTP Check
+                let _ = Shell::exec_remote(
+                    server,
+                    &format!(
+                        "docker exec {} sh -c \"curl -f http://localhost:3000/health || curl -f http://localhost:3000/ || wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/\"",
+                        target_name
+                    ),
+                ).map(|_| println!("   ❇️  HTTP Health Check: PASS"));
+
                 println!("   ✅ {} is HEALTHY.", target_name);
 
                 // Swap Caddy
@@ -281,6 +290,15 @@ impl ArcaneDeployer {
 
                     match check {
                         Ok(output) if output.trim() == "true" => {
+                            // Secondary HTTP Check
+                            let _ = Shell::exec_remote(
+                                server,
+                                &format!(
+                                    "docker exec {} sh -c \"curl -f http://localhost:3000/health || curl -f http://localhost:3000/ || wget -qO- http://localhost:3000/health || wget -qO- http://localhost:3000/\"",
+                                    container_name
+                                ),
+                            ).map(|_| println!("   ❇️  HTTP Health Check: PASS"));
+
                             println!("   ✅ Container is HEALTHY.");
                             if has_existing {
                                 println!("   🗑️  Removing backup '{}'...", backup_name);
