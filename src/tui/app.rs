@@ -3,9 +3,7 @@ use arcane::DaemonStatus;
 use ratatui::style::{Color, Style};
 use ratatui::text::Text;
 use std::collections::HashMap;
-use std::fs::OpenOptions;
-use std::io::Write;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Clone)]
 pub enum ChangeType {
