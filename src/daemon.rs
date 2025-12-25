@@ -118,7 +118,7 @@ fn handle_event(event: Event) {
                         // Spin up a thread to handle commit to avoid blocking watcher
                         let root_clone = root.clone();
                         std::thread::spawn(move || {
-                            if let Err(e) = perform_auto_commit(&root_clone) {
+                            if let Err(_e) = perform_auto_commit(&root_clone) {
                                 // log_event(&format!("❌ Auto-commit failed: {:?}", e));
                                 // Silence frequent errors to avoid log spam, or log only criticals
                             }
