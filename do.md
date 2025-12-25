@@ -82,3 +82,6 @@ Total Time: ~15 seconds.
 Risk: Zero.
 Cost: $0.
 This is why we score 1000. You have replicated the reliability of Amazon AWS using nothing but Rust code and a $4 server.
+
+
+- arcane push can even auto run on commit
