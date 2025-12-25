@@ -1149,6 +1149,7 @@ impl App {
         let ai = self.ai_service.clone();
         let git = self.git_ops.clone();
         let tx = self.squash_tx.clone();
+        let use_minor = self.config.bulk_squash_minor;
 
         tokio::spawn(async move {
             let repo_root = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -1163,9 +1164,9 @@ impl App {
                 }
 
                 let plan = ai
-                    .analyze_commits_for_lazy_squash(&commits)
+                    .analyze_commits_for_lazy_squash(&commits, use_minor)
                     .await
-                    .context("AI Lazy Analysis failed")?;
+                    .context("AI Bulk Analysis failed")?;
 
                 Ok(plan)
             }
