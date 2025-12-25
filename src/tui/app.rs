@@ -128,6 +128,9 @@ pub struct App {
     pub squash_rx: UnboundedReceiver<Result<SquashPlan>>,
     pub squash_tx: UnboundedSender<Result<SquashPlan>>,
     pub squash_error: Option<String>,
+
+    // Graph State
+    pub graph_branch_mode: u8, // 0=All, 1=Current, 2=Main/Master
 }
 
 impl App {
