@@ -120,7 +120,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                 1 => "Current",
                 _ => "Main",
             };
-            format!("S: Smart | L: Bulk | b: Branch ({}) | q: Quit", mode)
+            format!("s: Smart | l: Bulk | b: Branch ({}) | q: Quit", mode)
         }
         _ => "←/→: Nav | q: Quit".to_string(),
     };
