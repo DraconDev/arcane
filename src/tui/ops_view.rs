@@ -16,23 +16,31 @@ pub fn render_ops(f: &mut Frame, app: &mut App, area: Rect) {
     let left_area = chunks[0];
     let right_area = chunks[1];
 
-    // --- Left Panel: Fleet (Servers) ---
-    let servers: Vec<ListItem> = app
-        .ops_servers
+    // --- Left Panel: Fleet (Groups + Servers) ---
+    let mut fleet_targets = Vec::new();
+    for g in &app.ops_groups {
+        fleet_targets.push((format!("🌐 Group: {}", g.name), true));
+    }
+    for s in &app.ops_servers {
+        fleet_targets.push((format!("🖥️  {}", s.name), false));
+    }
+
+    let items: Vec<ListItem> = fleet_targets
         .iter()
         .enumerate()
-        .map(|(i, s)| {
+        .map(|(i, (name, is_group))| {
             let style = if i == app.ops_selected_server_idx {
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(if *is_group {
+                        Color::Yellow
+                    } else {
+                        Color::Cyan
+                    })
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default().fg(Color::White)
             };
-            ListItem::new(Line::from(vec![Span::styled(
-                format!("🖥️  {}", s.name),
-                style,
-            )]))
+            ListItem::new(Line::from(vec![Span::styled(name, style)]))
         })
         .collect();
 
