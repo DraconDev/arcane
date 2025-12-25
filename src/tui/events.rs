@@ -49,7 +49,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.identity_sub_tab = (app.identity_sub_tab + 1) % 5;
                         } else if app.current_tab == 2 && app.ai_config_focused {
                             // AI (was 4)
-                            app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 5; 
+                            app.ai_config_sub_tab = (app.ai_config_sub_tab + 1) % 5;
                             app.ai_config_row = 0;
                         } else if app.current_tab == 3 && app.ai_config_focused {
                             // Repo (was 4/patterns)
@@ -320,9 +320,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Char('x') if !app.input_popup_active => {
-                        if app.current_tab == 3
-                            && app.ai_config_focused
-                        {
+                        if app.current_tab == 3 && app.ai_config_focused {
                             match app.ai_patterns_sub_tab {
                                 0 => {
                                     if app.ai_config_row < app.ignore_patterns.len() {
@@ -375,16 +373,16 @@ pub fn run_app<B: ratatui::backend::Backend>(
                                     }
                                 }
                             }
-                            }
                         } else if app.current_tab == 2 // AI Tab
                             && app.ai_config_focused
-                            && app.ai_config_sub_tab == 4 // Prompt
+                            && app.ai_config_sub_tab == 4
+                        // Prompt
                         {
                             app.reset_config_section("prompt");
                         } else if app.current_tab == 3 // Repo Tab
                             && app.ai_config_focused
                         {
-                             let section = match app.ai_patterns_sub_tab {
+                            let section = match app.ai_patterns_sub_tab {
                                 0 => "gitignore",
                                 1 => "gitattributes",
                                 _ => "",
