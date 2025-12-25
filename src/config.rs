@@ -90,12 +90,6 @@ fn default_min_commit_delay() -> u32 {
     15
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum PatternMode {
-    Append,
-    Override,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ArcaneConfig {
     #[serde(default)]
