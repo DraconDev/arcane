@@ -816,21 +816,32 @@ fn parse_provider(s: &str) -> AIProvider {
 fn run_version_check(app: &mut App) {
     let tx = app.version_tx.clone();
 
-    // Config gather
+    // Load API keys from config first, then env vars as fallback
+    let config = arcane::config::ArcaneConfig::load().unwrap_or_default();
     let mut api_keys = std::collections::HashMap::new();
-    if let Ok(k) = std::env::var("GEMINI_API_KEY") {
+
+    let get_key = |provider: &str, env_var: &str| -> Option<String> {
+        if let Some(key) = config.api_keys.get(provider) {
+            if !key.is_empty() {
+                return Some(key.clone());
+            }
+        }
+        std::env::var(env_var).ok()
+    };
+
+    if let Some(k) = get_key("Gemini", "GEMINI_API_KEY") {
         api_keys.insert(AIProvider::Gemini, k);
     }
-    if let Ok(k) = std::env::var("OPENROUTER_API_KEY") {
+    if let Some(k) = get_key("OpenRouter", "OPENROUTER_API_KEY") {
         api_keys.insert(AIProvider::OpenRouter, k);
     }
-    if let Ok(k) = std::env::var("OPENAI_API_KEY") {
+    if let Some(k) = get_key("OpenAI", "OPENAI_API_KEY") {
         api_keys.insert(AIProvider::OpenAI, k);
     }
-    if let Ok(k) = std::env::var("ANTHROPIC_API_KEY") {
+    if let Some(k) = get_key("Anthropic", "ANTHROPIC_API_KEY") {
         api_keys.insert(AIProvider::Anthropic, k);
     }
-    if let Ok(k) = std::env::var("COPILOT_API_KEY") {
+    if let Some(k) = get_key("Copilot", "COPILOT_API_KEY") {
         api_keys.insert(AIProvider::Copilot, k);
     }
     // Ollama has no key
@@ -923,21 +934,33 @@ fn run_connectivity_test(app: &mut App) {
     app.connectivity_map.clear();
     let tx = app.connectivity_tx.clone();
 
-    // Collect Config
+    // Load API keys from config first, then env vars as fallback
+    let config = arcane::config::ArcaneConfig::load().unwrap_or_default();
     let mut api_keys = std::collections::HashMap::new();
-    if let Ok(k) = std::env::var("GEMINI_API_KEY") {
+
+    // Helper to get key from config or env
+    let get_key = |provider: &str, env_var: &str| -> Option<String> {
+        if let Some(key) = config.api_keys.get(provider) {
+            if !key.is_empty() {
+                return Some(key.clone());
+            }
+        }
+        std::env::var(env_var).ok()
+    };
+
+    if let Some(k) = get_key("Gemini", "GEMINI_API_KEY") {
         api_keys.insert(AIProvider::Gemini, k);
     }
-    if let Ok(k) = std::env::var("OPENROUTER_API_KEY") {
+    if let Some(k) = get_key("OpenRouter", "OPENROUTER_API_KEY") {
         api_keys.insert(AIProvider::OpenRouter, k);
     }
-    if let Ok(k) = std::env::var("OPENAI_API_KEY") {
+    if let Some(k) = get_key("OpenAI", "OPENAI_API_KEY") {
         api_keys.insert(AIProvider::OpenAI, k);
     }
-    if let Ok(k) = std::env::var("ANTHROPIC_API_KEY") {
+    if let Some(k) = get_key("Anthropic", "ANTHROPIC_API_KEY") {
         api_keys.insert(AIProvider::Anthropic, k);
     }
-    if let Ok(k) = std::env::var("COPILOT_API_KEY") {
+    if let Some(k) = get_key("Copilot", "COPILOT_API_KEY") {
         api_keys.insert(AIProvider::Copilot, k);
     }
 
