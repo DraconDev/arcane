@@ -17,3 +17,16 @@
 -   but many crap we don't need like github login on the servers, who cares, we cna just push there, and looking at coolifies feature set but its most tied to tring to be on the server
 
 -   we can have arcane auto or arcane spark, that actually does listen to github and webhooks if we must, but this doesn't make sense for a solo guy, but lets say you had a build server, and no one builds ever, only this server, so you don't have individuals pushing when they feel like it, but literally this server has the keys it can even push to itself i suppose, and listen to commits and do so, this way we don't need a super complex who is pushing and how we lock it, if you are solo you live the easy life, if you are team, you should have a build server, it can still be your laptop, and you push when you make a change, and you pull it when others then arcane push it
+-   **Gitignore/Attributes Strategy**: We should default to **APPEND** (Add).
+
+    -   _Reason_: Git reads `gitattributes` from top to bottom, but the **LAST MATCH WINS**. So by appending our rules to the bottom, we _effectively override_ any previous user rules for those specific files, while ensuring we don't accidentally wipe out unrelated user configs. This achieves "Opinionated Security" without "Destructive Overwrite".
+
+-   **Smart Squash & Versioning**:
+
+    -   If `Auto-Push` is OFF, allow Arcane to accumulate local commits.
+    -   When user triggers Sync/Push, AI scans the batch.
+    -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
+    -   User approves -> Arcane squashes and pushes.
+
+-   **UI Polish**:
+    -   Dashboard Controls are getting too long. Limit to **Max 4 buttons per row**.
