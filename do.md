@@ -1,6 +1,6 @@
 <!-- -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA -->
 
--   test commit !!!
+-   test commit
 
 -   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
 
