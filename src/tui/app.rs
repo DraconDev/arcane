@@ -191,23 +191,28 @@ impl App {
             version_rx,
             api_key_status: {
                 let mut status = std::collections::HashMap::new();
-                status.insert(
-                    "Gemini".to_string(),
-                    std::env::var("GEMINI_API_KEY").is_ok(),
-                );
+                // Check both config and env vars for API keys
+                let has_key = |provider: &str, env_var: &str| -> bool {
+                    // Check config first
+                    if let Some(key) = config.api_keys.get(provider) {
+                        if !key.is_empty() {
+                            return true;
+                        }
+                    }
+                    // Fallback to env var
+                    std::env::var(env_var).is_ok()
+                };
+                status.insert("Gemini".to_string(), has_key("Gemini", "GEMINI_API_KEY"));
                 status.insert(
                     "OpenRouter".to_string(),
-                    std::env::var("OPENROUTER_API_KEY").is_ok(),
+                    has_key("OpenRouter", "OPENROUTER_API_KEY"),
                 );
-                status.insert(
-                    "OpenAI".to_string(),
-                    std::env::var("OPENAI_API_KEY").is_ok(),
-                );
+                status.insert("OpenAI".to_string(), has_key("OpenAI", "OPENAI_API_KEY"));
                 status.insert(
                     "Anthropic".to_string(),
-                    std::env::var("ANTHROPIC_API_KEY").is_ok(),
+                    has_key("Anthropic", "ANTHROPIC_API_KEY"),
                 );
-                status.insert("Ollama".to_string(), true);
+                status.insert("Ollama".to_string(), true); // Ollama doesn't need a key
                 status
             },
             confirmed_bump: None,
@@ -794,6 +799,9 @@ impl App {
             config.ignore_patterns = self.ignore_patterns.clone();
             config.gitattributes_patterns = self.gitattributes_patterns.clone();
             config.system_prompt = self.system_prompt.clone();
+
+            // Save per-provider model overrides
+            config.model_overrides = self.model_overrides.clone();
 
             match config.save() {
                 Ok(_) => self.events.push("✅ Config saved!".to_string()),
