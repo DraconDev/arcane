@@ -335,35 +335,57 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
 
     // Auto-Version Button
     let version_btn = if app.version_bumping {
-        Span::styled(
-            " [V] Auto-Version: ON ",
-            Style::default()
-                .bg(Color::Green)
-                .fg(Color::Black)
-                .add_modifier(Modifier::BOLD),
-        )
-    } else {
-        Span::styled(
-            " [V] Auto-Version: OFF ",
-            Style::default().fg(Color::DarkGray),
-        )
-    };
+    let auto_push_btn = Span::styled(
+        if app.ai_auto_push {
+            " [P] Auto-Sync: ON "
+        } else {
+            " [P] Auto-Sync: OFF "
+        },
+        Style::default().fg(if app.ai_auto_push {
+            Color::Green
+        } else {
+            Color::Gray
+        }),
+    );
 
-    // Shadow Branch Button
-    let shadow_btn = if app.shadow_branches {
-        Span::styled(
-            " [B] Shadow Branches: ON ",
-            Style::default()
-                .bg(Color::Green)
-                .fg(Color::Black)
-                .add_modifier(Modifier::BOLD),
-        )
-    } else {
-        Span::styled(
-            " [B] Shadow Branches: OFF ",
-            Style::default().fg(Color::DarkGray),
-        )
-    };
+    let version_btn = Span::styled(
+        if app.version_bumping {
+            " [V] Auto-Version: ON "
+        } else {
+            " [V] Auto-Version: OFF "
+        },
+        Style::default().fg(if app.version_bumping {
+            Color::Yellow
+        } else {
+            Color::Gray
+        }),
+    );
+    
+    let deploy_btn = Span::styled(
+        if app.ai_auto_deploy {
+            " [D] Auto-Deploy: ON "
+        } else {
+            " [D] Auto-Deploy: OFF "
+        },
+        Style::default().fg(if app.ai_auto_deploy {
+            Color::Magenta
+        } else {
+            Color::Gray
+        }),
+    );
+
+    let shadow_btn = Span::styled(
+        if app.shadow_branches {
+            " [B] Shadow Branches: ON "
+        } else {
+            " [B] Shadow Branches: OFF "
+        },
+        Style::default().fg(if app.shadow_branches {
+            Color::Magenta
+        } else {
+            Color::Gray
+        }),
+    );
 
     let controls_line = Line::from(vec![
         daemon_btn,
@@ -373,6 +395,8 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         auto_push_btn,
         separator.clone(),
         version_btn,
+        separator.clone(),
+        deploy_btn,
         separator,
         shadow_btn,
     ]);
