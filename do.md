@@ -1,4 +1,4 @@
-- STRIPE_PRIVATE_KEY=
+-   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311BA
 
 -   option to add to or override gitattributes and gitignore
 
@@ -6,9 +6,9 @@
 
 -   arcane push can even auto run on commit
 
--  ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets 
+-   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
 
-- on tweak is that we would also like toggle ai commit and toggle daemon on the dashboard page, proper buttons at the bottom i guess, also status hub should show the daemon watched folder
+-   on tweak is that we would also like toggle ai commit and toggle daemon on the dashboard page, proper buttons at the bottom i guess, also status hub should show the daemon watched folder
 
 -   I also had an idea as an alternative to the signup to git on your vps, a webhook listens for push, then the server downloads it, and they build it slowlsy, then you setup carefully, likley causing a discord between server and local state, i think you cna see my strategy too, what if we before even along with pushing to git also pushed to the server with secrets baked in? that is the plan isn't it? of course would be fast too
 
@@ -21,4 +21,3 @@
 -   but many crap we don't need like github login on the servers, who cares, we cna just push there, and looking at coolifies feature set but its most tied to tring to be on the server
 
 -   we can have arcane auto or arcane spark, that actually does listen to github and webhooks if we must, but this doesn't make sense for a solo guy, but lets say you had a build server, and no one builds ever, only this server, so you don't have individuals pushing when they feel like it, but literally this server has the keys it can even push to itself i suppose, and listen to commits and do so, this way we don't need a super complex who is pushing and how we lock it, if you are solo you live the easy life, if you are team, you should have a build server, it can still be your laptop, and you push when you make a change, and you pull it when others then arcane push it
-
