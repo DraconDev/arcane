@@ -285,8 +285,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let separator = Span::raw("   ");
 
     // Daemon Button
-    let daemon_running = app.status.is_some();
-    let daemon_btn = if daemon_running {
+    let daemon_btn = if app.status.is_some() {
         Span::styled(
             " [S] Stop Daemon ",
             Style::default()
@@ -321,58 +320,17 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Push Button
-
-    let auto_push_btn = Span::styled(
-        if app.ai_auto_push {
-            " [P] Auto-Push: ON "
-        } else {
-            " [P] Auto-Push: OFF "
-        },
-        Style::default().fg(if app.ai_auto_push {
-            Color::Green
-        } else {
-            Color::Gray
-        }),
-    );
-
-    let version_btn = Span::styled(
-        if app.version_bumping {
-            " [V] Auto-Version: ON "
-        } else {
-            " [V] Auto-Version: OFF "
-        },
-        Style::default().fg(if app.version_bumping {
-            Color::Yellow
-        } else {
-            Color::Gray
-        }),
-    );
-
-    let deploy_btn = Span::styled(
-        if app.ai_auto_deploy {
-            " [D] Auto-Deploy: ON "
-        } else {
-            " [D] Auto-Deploy: OFF "
-        },
-        Style::default().fg(if app.ai_auto_deploy {
-            Color::Magenta
-        } else {
-            Color::Gray
-        }),
-    );
-
-    let shadow_btn = Span::styled(
-        if app.shadow_branches {
-            " [B] Shadow Branches: ON "
-        } else {
-            " [B] Shadow Branches: OFF "
-        },
-        Style::default().fg(if app.shadow_branches {
-            Color::Magenta
-        } else {
-            Color::Gray
-        }),
-    );
+    let auto_push_btn = if app.ai_auto_push {
+        Span::styled(
+            " [P] Auto-Push: ON ",
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
+    };
 
     let controls_line_1 = Line::from(vec![
         daemon_btn,
@@ -382,6 +340,55 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         auto_push_btn,
     ]);
 
+    // Row 2
+    // Auto-Version
+    let version_btn = if app.version_bumping {
+        Span::styled(
+            " [V] Auto-Version: ON ",
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            " [V] Auto-Version: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
+    };
+
+    // Auto-Deploy
+    let deploy_btn = if app.ai_auto_deploy {
+        Span::styled(
+            " [D] Auto-Deploy: ON ",
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            " [D] Auto-Deploy: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
+    };
+
+    // Shadow Branches
+    let shadow_btn = if app.shadow_branches {
+        Span::styled(
+            " [B] Shadow Branches: ON ",
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            " [B] Shadow Branches: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
+    };
+
     let controls_line_2 = Line::from(vec![
         version_btn,
         separator.clone(),
@@ -390,7 +397,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         shadow_btn,
     ]);
 
-    let controls = Paragraph::new(vec![controls_line_1, controls_line_2])
+    let controls = Paragraph::new(vec![controls_line_1, Line::raw(""), controls_line_2])
         .block(controls_block)
         .alignment(ratatui::layout::Alignment::Center);
     f.render_widget(controls, chunks[2]);
