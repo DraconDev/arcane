@@ -37,16 +37,18 @@ impl ArcaneDeployer {
         let env_path = Path::new("config")
             .join("envs")
             .join(format!("{}.env", env_name));
-        if !env_path.exists() {
-            return Err(anyhow::anyhow!(
-                "Environment file not found: {}",
-                env_path.display()
-            ));
-        }
 
-        let content = std::fs::read(&env_path)?;
-        let decrypted = security.decrypt_with_repo_key(&repo_key, &content)?;
-        let env_str = String::from_utf8(decrypted)?;
+        let env_str = if !env_path.exists() {
+            println!(
+                "   ⚠️  Environment file not found: {} (Deploying without extra secrets)",
+                env_path.display()
+            );
+            String::new()
+        } else {
+            let content = std::fs::read(&env_path)?;
+            let decrypted = security.decrypt_with_repo_key(&repo_key, &content)?;
+            String::from_utf8(decrypted)?
+        };
 
         // 3. Construct Docker Flags
         let mut env_flags = String::new();
