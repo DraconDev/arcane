@@ -361,8 +361,20 @@ impl App {
             self.status = DaemonStatus::load();
             self.last_tick = std::time::Instant::now();
 
-            // Refresh Git Graph
-            // Refresh Git Graph
+            // Get unpushed commit hashes for highlighting
+            let unpushed_hashes: Vec<String> = std::process::Command::new("git")
+                .args(&["log", "--format=%h", "@{u}..HEAD"])
+                .output()
+                .ok()
+                .filter(|o| o.status.success())
+                .map(|o| {
+                    String::from_utf8_lossy(&o.stdout)
+                        .lines()
+                        .map(|s| s.to_string())
+                        .collect()
+                })
+                .unwrap_or_default();
+
             // Refresh Git Graph
             let git_cmd = std::process::Command::new("git")
                 .args(&[
@@ -370,7 +382,7 @@ impl App {
                     "--graph",
                     "--format=%C(auto)%h%d %s %C(white)%C(bold)%cr %C(cyan)<%an>%C(reset)",
                     "--all",
-                    "--color=always", // Force color for ANSI parsing
+                    "--color=always",
                     "-n",
                     "100",
                 ])
@@ -378,21 +390,29 @@ impl App {
 
             match git_cmd {
                 Ok(output) if output.status.success() => {
-                    // Parse ANSI to Ratatui Text
                     let stdout = String::from_utf8_lossy(&output.stdout);
 
-                    // Beautify ASCII to Unicode Box Drawing
-                    // * -> ● (Big Dot)
-                    // | -> │ (Vertical)
-                    // / -> ╱ (Diagonal)
-                    // \ -> ╲ (Back Diagonal)
-                    // _ -> ─ (Horizontal)
-                    let beautified = stdout
-                        .replace('*', "●")
-                        .replace('|', "│")
-                        .replace('/', "╱")
-                        .replace('\\', "╲")
-                        .replace('_', "─");
+                    // Beautify: Replace ASCII with Unicode, mark unpushed differently
+                    let mut beautified = String::new();
+                    for line in stdout.lines() {
+                        let mut new_line = line
+                            .replace('|', "│")
+                            .replace('/', "╱")
+                            .replace('\\', "╲")
+                            .replace('_', "─");
+
+                        // Check if this line contains an unpushed commit
+                        let is_unpushed = unpushed_hashes.iter().any(|h| line.contains(h));
+
+                        if is_unpushed {
+                            new_line = new_line.replace('*', "◯"); // Hollow = unpushed
+                        } else {
+                            new_line = new_line.replace('*', "●"); // Filled = pushed
+                        }
+
+                        beautified.push_str(&new_line);
+                        beautified.push('\n');
+                    }
 
                     if let Ok(text) = beautified.into_text() {
                         self.git_log = text;
