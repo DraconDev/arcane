@@ -128,12 +128,12 @@ impl App {
             git_log: Text::raw("Loading log..."),
             events: vec![],
             tabs: vec![
-                "Dashboard".to_string(),
-                "Graph".to_string(),
-                "Intelligence".to_string(),
-                "Identity".to_string(),
-                "Settings".to_string(),
-                "Ops".to_string(),
+                "Dashboard".to_string(),  // 0
+                "Graph".to_string(),      // 1
+                "AI".to_string(),         // 2 (Was Settings.AI)
+                "Repository".to_string(), // 3 (Was Settings.Patterns)
+                "Identity".to_string(),   // 4
+                "Ops".to_string(),        // 5
             ],
             current_tab: 0,
             scroll: 0,
