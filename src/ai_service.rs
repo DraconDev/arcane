@@ -621,6 +621,91 @@ Response ONLY VALID JSON."#,
         Ok(plan)
     }
 
+    pub async fn analyze_commits_for_lazy_squash(
+        &self,
+        commits: &[crate::git_operations::CommitInfo],
+    ) -> Result<SquashPlan> {
+        let commit_list: Vec<String> = commits
+            .iter()
+            .map(|c| {
+                format!(
+                    "{} {}",
+                    c.hash.chars().take(7).collect::<String>(),
+                    c.message
+                )
+            })
+            .collect();
+        // Limit context if too large, but for summary we want as much as possible.
+        // If > 100 commits, maybe just send subject lines?
+        let commit_block = if commit_list.len() > 200 {
+            commit_list
+                .iter()
+                .take(200)
+                .cloned()
+                .collect::<Vec<_>>()
+                .join("\n")
+                + "\n... (truncated)"
+        } else {
+            commit_list.join("\n")
+        };
+
+        let prompt = format!(
+            r#"You are a Lazy Release Manager. I have {} commits.
+I want to SQUASH ALL OF THEM into A SINGLE COMMIT.
+This is a MAJOR update.
+
+Commits:
+{}
+
+Instructions:
+1. Create ONE single group containing ALL provided commit hashes.
+2. The target_message MUST be a Conventional Commit with a BANG (!) for breaking changes, or a 'feat' composed of the most significant changes.
+   Example: "feat!: major overhaul of auth and ui systems"
+   Or if not breaking: "feat: major update including <top 3 features>"
+3. Summarize the high-level impact.
+
+JSON Format:
+{{
+  "groups": [
+    {{
+      "target_message": "feat!: ...",
+      "commits": ["<all_hashes_in_order>"]
+    }}
+  ]
+}}
+
+Response ONLY VALID JSON."#,
+            commits.len(),
+            commit_block
+        );
+
+        let response = self.try_providers_for_prompt(&prompt).await?;
+        let json_str = self.clean_json_response(&response);
+
+        // AI might miss some hashes if the list is long.
+        // FORCE the plan to include ALL hashes from input, using the AI's message.
+        // We trust AI for the message, but we enforce the hash list to ensure no data loss.
+
+        let mut plan: SquashPlan =
+            serde_json::from_str(&json_str).context("Failed to parse AI Lazy Plan")?;
+
+        if let Some(group) = plan.groups.first_mut() {
+            // Overwrite commits with ALL input hashes to be safe
+            group.commits = commits.iter().map(|c| c.hash.clone()).collect();
+        } else {
+            // If AI returned empty groups?!
+            plan.groups.push(crate::ai_service::SquashGroup {
+                target_message: "feat!: major update".to_string(),
+                commits: commits.iter().map(|c| c.hash.clone()).collect(),
+            });
+        }
+
+        // Ensure only 1 group
+        plan.groups.truncate(1);
+
+        Ok(plan)
+    }
+
     fn clean_json_response(&self, raw: &str) -> String {
         let mut text = raw.trim();
         if text.starts_with("```json") {
