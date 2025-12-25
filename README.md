@@ -49,6 +49,14 @@ git add .env && git commit -m "Add secrets"  # Encrypted in Git!
 | `arcane dashboard`              | Launch the Sovereign Terminal (TUI)         |
 | `arcane start [path]`           | Start AI Auto-Commit Daemon                 |
 
+### TUI Keybindings (Dashboard)
+
+| Key       | Action                                                     |
+| --------- | ---------------------------------------------------------- |
+| `Shift+S` | **Smart Squash**: AI groups commits into Minors + Patches  |
+| `Shift+L` | **Bulk Squash**: Squash all into one Major/Minor bump      |
+| `B`       | Toggle Bulk Squash between Major/Minor (in Versioning tab) |
+
 ## How It Works
 
 ```
@@ -112,6 +120,7 @@ arcane/
 | Sovereign Guardian (Auto-Init) | ✅ Stable |
 | AI-powered commits             | ✅ Beta   |
 | Sovereign Terminal (TUI)       | ✅ Stable |
+| Smart Squash (AI Git History)  | ✅ Beta   |
 
 ## License
 
