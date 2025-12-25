@@ -703,6 +703,23 @@ impl App {
         }
     }
 
+    pub fn toggle_auto_deploy(&mut self) {
+        self.ai_auto_deploy = !self.ai_auto_deploy;
+        self.events.push(format!(
+            "🚀 Auto-Deploy: {}",
+            if self.ai_auto_deploy {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        ));
+
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.auto_deploy_enabled = self.ai_auto_deploy;
+            let _ = config.save();
+        }
+    }
+
     pub fn inspect_commit(&mut self) {
         if self.current_tab != 1 {
             return;
