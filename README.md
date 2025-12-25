@@ -51,11 +51,11 @@ git add .env && git commit -m "Add secrets"  # Encrypted in Git!
 
 ### TUI Keybindings (Dashboard)
 
-| Key       | Action                                                     |
-| --------- | ---------------------------------------------------------- |
-| `Shift+S` | **Smart Squash**: AI groups commits into Minors + Patches  |
-| `Shift+L` | **Bulk Squash**: Squash all into one Major/Minor bump      |
-| `B`       | Toggle Bulk Squash between Major/Minor (in Versioning tab) |
+| Key | Action                                                     |
+| --- | ---------------------------------------------------------- |
+| `s` | **Smart Squash**: AI groups commits into Minors + Patches  |
+| `l` | **Bulk Squash**: Squash all into one Major/Minor bump      |
+| `m` | Toggle Bulk Squash between Major/Minor (in Versioning tab) |
 
 ## How It Works
 
