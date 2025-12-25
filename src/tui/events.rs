@@ -485,9 +485,18 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
                     KeyCode::Char('a') if !app.input_popup_active => {
-                        if app.current_tab == 4
-                            && app.ai_config_focused
-                            && app.ai_config_sub_tab == 4
+                        if app.current_tab == 4 // Actually this tab index is likely shifted now...
+                             // Tab 4 used to be Settings. Now:
+                             // 0: Dashboard
+                             // 1: Graph
+                             // 2: AI
+                             // 3: Repository
+                             // 4: Identity
+                             // 5: Ops
+                             // The previous code had 4 as Settings.
+                             // I must update the logic for tab indices in this file too!
+                             && app.ai_config_focused
+                             && app.ai_config_sub_tab == 4
                         {
                             match app.ai_patterns_sub_tab {
                                 0 => {
@@ -508,6 +517,9 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         } else {
                             app.toggle_auto_commit()
                         }
+                    }
+                    KeyCode::Char('p') if !app.input_popup_active => {
+                        app.toggle_auto_push();
                     }
                     KeyCode::Char('i') if !app.input_popup_active => app.ignore_selected_file(),
                     KeyCode::Esc => {
