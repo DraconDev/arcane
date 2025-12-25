@@ -52,6 +52,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
                     KeyCode::Char('S') => app.trigger_squash_analysis(), // Smart Squash
+                    KeyCode::Char('L') => app.trigger_lazy_squash(),     // Lazy Squash (Major)
                     KeyCode::Char('D') => {
                         if app.current_tab == 5 {
                             // Deploy Placeholder
