@@ -48,6 +48,7 @@ pub struct App {
     pub commit_stats: HashMap<String, CommitStats>,
     pub ai_auto_commit: bool,
     pub ai_auto_push: bool,
+    pub ai_auto_deploy: bool,
     pub shadow_branches: bool,
     pub pattern_mode: arcane::config::PatternMode,
     // Vault/Identity State
