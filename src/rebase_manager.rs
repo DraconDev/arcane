@@ -1,7 +1,7 @@
 use crate::ai_service::SquashPlan;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tokio::process::Command;
 
 pub struct RebaseManager;
