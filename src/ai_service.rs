@@ -649,34 +649,44 @@ Response ONLY VALID JSON."#,
             commit_list.join("\n")
         };
 
+        let version_type = if use_minor { "MINOR" } else { "MAJOR" };
+        let message_example = if use_minor {
+            "feat: consolidate all changes including <top 3 features>"
+        } else {
+            "feat!: major overhaul of auth and ui systems"
+        };
+
         let prompt = format!(
-            r#"You are a Lazy Release Manager. I have {} commits.
+            r#"You are a Release Manager. I have {} commits.
 I want to SQUASH ALL OF THEM into A SINGLE COMMIT.
-This is a MAJOR update.
+This is a {} update.
 
 Commits:
 {}
 
 Instructions:
 1. Create ONE single group containing ALL provided commit hashes.
-2. The target_message MUST be a Conventional Commit with a BANG (!) for breaking changes, or a 'feat' composed of the most significant changes.
-   Example: "feat!: major overhaul of auth and ui systems"
-   Or if not breaking: "feat: major update including <top 3 features>"
+2. The target_message MUST be a Conventional Commit.
+   - For MINOR: use "feat: ..." (no bang). 
+   - For MAJOR: use "feat!: ..." (with bang for breaking).
+   Example: "{}"
 3. Summarize the high-level impact.
 
 JSON Format:
-{{
+{{{{
   "groups": [
-    {{
-      "target_message": "feat!: ...",
+    {{{{
+      "target_message": "...",
       "commits": ["<all_hashes_in_order>"]
-    }}
+    }}}}
   ]
-}}
+}}}}
 
 Response ONLY VALID JSON."#,
             commits.len(),
-            commit_block
+            version_type,
+            commit_block,
+            message_example
         );
 
         let response = self.try_providers_for_prompt(&prompt).await?;
