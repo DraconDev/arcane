@@ -155,7 +155,19 @@ impl AIService {
         // If we find a line matching this, we discard everything before it.
         // We use a simplified check to avoid heavy regex if possible, but regex is safer.
         // Let's use basic string matching for common types.
-            "revert", "security_alert",
+        let common_types = [
+            "feat",
+            "fix",
+            "docs",
+            "style",
+            "refactor",
+            "perf",
+            "test",
+            "chore",
+            "build",
+            "ci",
+            "revert",
+            "security_alert",
         ];
         let lines: Vec<&str> = text.lines().collect();
 
