@@ -162,7 +162,7 @@ impl Default for ArcaneConfig {
             gitattributes_patterns: default_gitattributes_patterns(),
             system_prompt: default_system_prompt(),
             shadow_branches: false,
-            pattern_mode: PatternMode::Append,
+            shadow_branches: false,
             api_keys: HashMap::new(),
         }
     }
