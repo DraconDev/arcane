@@ -156,18 +156,31 @@ impl GitOperations {
             command.arg(path);
         }
 
-        command.output().await?;
+        let output = command.output().await?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(anyhow::anyhow!("Failed to add paths: {}", stderr));
+        }
         Ok(())
     }
 
     pub async fn commit(&self, repo_path: &Path, message: &str) -> Result<()> {
-        Command::new("git")
+        let output = Command::new("git")
             .current_dir(repo_path)
             .arg("commit")
             .arg("-m")
             .arg(message)
             .output()
             .await?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            // Ignore "nothing to commit" errors, but report others
+            if !stderr.contains("nothing to commit") && !stderr.contains("clean") {
+                return Err(anyhow::anyhow!("Failed to commit: {}", stderr));
+            }
+        }
 
         Ok(())
     }

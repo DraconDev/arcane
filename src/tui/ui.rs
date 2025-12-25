@@ -72,11 +72,14 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     let (main_area, footer_area) = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
         let status_text = if let Some(status) = &app.status {
+            let watching_str = if status.watching.is_empty() {
+                "None".to_string()
+            } else {
+                status.watching.join(", ")
+            };
             format!(
-                "Daemon: RUNNING (PID: {}) | State: {} | Watching: {} repos",
-                status.pid,
-                status.state,
-                status.watching.len()
+                "Daemon: RUNNING (PID: {}) | State: {} | Watching: {}",
+                status.pid, status.state, watching_str
             )
         } else {
             "Daemon: STOPPED (Waiting for signal...)".to_string()
@@ -201,11 +204,25 @@ fn centered_rect(
 
 fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let chunks = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(10), Constraint::Min(0)].as_ref())
         .split(area);
 
-    // Working Tree (Left)
+    // Security/Alerts (Top)
+    let events_block = Block::default()
+        .borders(Borders::ALL)
+        .title(" Security & Alerts ");
+
+    let events_text = if app.events.is_empty() {
+        "System secure. No alerts.".to_string()
+    } else {
+        app.events.join("\n")
+    };
+
+    let events = Paragraph::new(events_text).block(events_block);
+    f.render_widget(events, chunks[0]);
+
+    // Working Tree (Bottom)
     let work_block = Block::default()
         .borders(Borders::ALL)
         .title(" Working Tree (i: Ignore) ");
@@ -241,21 +258,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         .collect();
 
     let list = List::new(items).block(work_block);
-    f.render_widget(list, chunks[0]);
-
-    // Security/Alerts (Right) - Placeholder for now
-    let events_block = Block::default()
-        .borders(Borders::ALL)
-        .title(" Security & Alerts ");
-
-    let events_text = if app.events.is_empty() {
-        "System secure. No alerts.".to_string()
-    } else {
-        app.events.join("\n")
-    };
-
-    let events = Paragraph::new(events_text).block(events_block);
-    f.render_widget(events, chunks[1]);
+    f.render_widget(list, chunks[1]);
 }
 
 fn render_graph(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {

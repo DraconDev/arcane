@@ -111,6 +111,8 @@ pub struct ArcaneConfig {
     #[serde(default)]
     pub version_bumping: bool,
     #[serde(default)]
+    pub auto_commit_enabled: bool,
+    #[serde(default)]
     pub model_overrides: HashMap<String, String>, // per-provider defaults
     #[serde(default = "default_ignore_patterns")]
     pub ignore_patterns: Vec<String>,
@@ -150,6 +152,7 @@ impl Default for ArcaneConfig {
             backup2_model: None,
             timing: TimingConfig::default(),
             version_bumping: false,
+            auto_commit_enabled: false,
             model_overrides: HashMap::new(),
             ignore_patterns: default_ignore_patterns(),
             gitattributes_patterns: default_gitattributes_patterns(),
@@ -273,6 +276,22 @@ impl ConfigManager {
 
         // Local fallback (for offline/privacy)
         provider_models.insert(AIProvider::Ollama, "qwen2.5:7b".to_string());
+
+        // Apply overrides from config
+        for (provider_name, model_name) in &self.config.model_overrides {
+            let provider = match provider_name.to_lowercase().as_str() {
+                "gemini" => Some(AIProvider::Gemini),
+                "openrouter" => Some(AIProvider::OpenRouter),
+                "openai" => Some(AIProvider::OpenAI),
+                "anthropic" => Some(AIProvider::Anthropic),
+                "copilot" => Some(AIProvider::Copilot),
+                "ollama" => Some(AIProvider::Ollama),
+                _ => None,
+            };
+            if let Some(p) = provider {
+                provider_models.insert(p, model_name.clone());
+            }
+        }
 
         // Load API keys: Config takes priority, then environment variables
         let mut api_keys = HashMap::new();

@@ -38,6 +38,18 @@ pub fn start_daemon() -> Result<()> {
 
     log_event("⚡ Daemon is active. Waiting for new repositories...");
 
+    // Save Status to disk so TUI can see it
+    let status = crate::DaemonStatus {
+        pid: std::process::id(),
+        state: "Running".to_string(),
+        last_commit: None,
+        watching: roots.iter().map(|p| p.display().to_string()).collect(),
+        branch: None,
+    };
+    if let Err(e) = status.save() {
+        log_event(&format!("❌ Failed to save daemon status: {}", e));
+    }
+
     // Event loop
     for res in rx {
         match res {
@@ -70,23 +82,121 @@ pub fn log_event(message: &str) {
 }
 
 fn handle_event(event: Event) {
-    // We only care about file/folder creation
-    if let EventKind::Create(_) = event.kind {
-        for path in event.paths {
-            // Check if it's a .git directory being created
-            if path.file_name().and_then(|s| s.to_str()) == Some(".git") {
-                if let Some(parent) = path.parent() {
-                    log_event(&format!("✨ Detected new git repo: {:?}", parent));
-                    // Trigger Auto-Init
-                    if let Err(e) = auto_init_repo(parent) {
-                        log_event(&format!("❌ Failed to auto-init: {:?}", e));
-                    } else {
-                        log_event(&format!("✅ Auto-Init successful for {:?}", parent));
+    match event.kind {
+        EventKind::Create(_) => {
+            for path in event.paths {
+                if path.file_name().and_then(|s| s.to_str()) == Some(".git") {
+                    if let Some(parent) = path.parent() {
+                        log_event(&format!("✨ Detected new git repo: {:?}", parent));
+                        if let Err(e) = auto_init_repo(parent) {
+                            log_event(&format!("❌ Failed to auto-init: {:?}", e));
+                        } else {
+                            log_event(&format!("✅ Auto-Init successful for {:?}", parent));
+                        }
                     }
                 }
             }
         }
+        EventKind::Modify(_) => {
+            // Check if auto-commit is enabled
+            if let Ok(config_manager) = ConfigManager::new() {
+                if !config_manager.config.auto_commit_enabled {
+                    return;
+                }
+
+                // Debounce/Throttle could go here
+
+                for path in event.paths {
+                    // Ignore modifications inside .git folder
+                    if path.to_string_lossy().contains(".git") {
+                        continue;
+                    }
+
+                    // Find repo root
+                    let repo_root = find_git_root(&path);
+                    if let Some(root) = repo_root {
+                        // Spin up a thread to handle commit to avoid blocking watcher
+                        let root_clone = root.clone();
+                        std::thread::spawn(move || {
+                            if let Err(e) = perform_auto_commit(&root_clone) {
+                                // log_event(&format!("❌ Auto-commit failed: {:?}", e));
+                                // Silence frequent errors to avoid log spam, or log only criticals
+                            }
+                        });
+                    }
+                }
+            }
+        }
+        _ => {}
     }
+}
+
+fn find_git_root(path: &Path) -> Option<PathBuf> {
+    let mut current = path;
+    if current.is_file() {
+        if let Some(p) = current.parent() {
+            current = p;
+        } else {
+            return None;
+        }
+    }
+
+    loop {
+        if current.join(".git").exists() {
+            return Some(current.to_path_buf());
+        }
+        if let Some(parent) = current.parent() {
+            current = parent;
+        } else {
+            return None;
+        }
+    }
+}
+
+fn perform_auto_commit(repo_path: &Path) -> Result<()> {
+    use crate::ai_service::{AIConfig, AIService};
+    use crate::git_operations::GitOperations;
+
+    let git = GitOperations::new();
+
+    // Since we are in a sync thread, we need a runtime for async calls
+    let rt = tokio::runtime::Runtime::new()?;
+    rt.block_on(async {
+        if !git.has_changes(repo_path).await? {
+            return Ok(());
+        }
+
+        // Add all
+        git.add_paths(repo_path, &[PathBuf::from(".")]).await?;
+
+        // Generate Message
+        // Load config for AI
+        let config_manager = ConfigManager::new()?;
+        let ai_config = config_manager.ai_config();
+
+        // Use AI Service
+        let ai = AIService::new(ai_config);
+        let diff = git.get_diff(repo_path).await?;
+
+        let message = if diff.trim().is_empty() {
+            format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S"))
+        } else {
+            ai.generate_commit_message(&diff).await.unwrap_or_else(|_| {
+                format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S"))
+            })
+        };
+
+        git.commit(repo_path, &message).await?;
+        log_event(&format!(
+            "🤖 Auto-committed in {:?}: {}",
+            repo_path.file_name().unwrap_or_default(),
+            message
+        ));
+
+        Ok::<(), anyhow::Error>(())
+    })?;
+
+    Ok(())
 }
 
 fn auto_init_repo(path: &Path) -> Result<()> {
