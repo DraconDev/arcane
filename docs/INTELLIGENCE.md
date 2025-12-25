@@ -40,3 +40,29 @@ You can customize this in `~/.arcane/config.toml` (if implemented) or environmen
 
 **Server Safe**: This feature is strictly isolated to the `start` command.
 The standard `arcane run` command (used on servers) **never** attempts to connect to AI providers or watch files.
+
+---
+
+## Smart Squash (Git History Management)
+
+When you've accumulated many small auto-commits, use **Smart Squash** to clean your history before pushing.
+
+### Strategies
+
+| Mode             | Trigger   | Result                          |
+| ---------------- | --------- | ------------------------------- |
+| **Auto-Push ON** | Toggle    | Each commit = Patch             |
+| **Smart Squash** | `Shift+S` | AI groups into Minors + Patches |
+| **Bulk Squash**  | `Shift+L` | All → 1 Major/Minor bump        |
+
+### Usage
+
+1. Accumulate commits with Auto-Commit (keep Auto-Push OFF)
+2. Open Dashboard: `arcane dashboard`
+3. Press `Shift+S` (Smart) or `Shift+L` (Bulk)
+4. Review the plan → `Enter` to execute, `Esc` to cancel
+
+### Configuration
+
+-   **Bulk Squash Mode**: Defaults to Major bump. Press `B` in AI → Versioning tab to toggle to Minor.
+-   A backup branch (`before-squash`) is created automatically.
