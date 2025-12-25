@@ -596,16 +596,20 @@ impl App {
 
     pub fn toggle_auto_commit(&mut self) {
         self.ai_auto_commit = !self.ai_auto_commit;
-        // In a real implementation, we would send a signal to the daemon or write this to a config file.
-        // For now, we simulate the state in the UI.
-        self.events.push(format!(
-            "AI Auto-Commit: {}",
-            if self.ai_auto_commit {
-                "ENABLED"
-            } else {
-                "DISABLED"
+
+        if self.ai_auto_commit {
+            self.events.push("🤖 AI Auto-Commit ENABLED".to_string());
+        } else {
+            self.events.push("🤖 AI Auto-Commit DISABLED".to_string());
+        }
+
+        // Save to config
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.auto_commit_enabled = self.ai_auto_commit;
+            if let Err(e) = config.save() {
+                self.events.push(format!("⚠️ Failed to save config: {}", e));
             }
-        ));
+        }
     }
 
     pub fn toggle_auto_push(&mut self) {

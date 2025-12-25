@@ -252,7 +252,7 @@ Max 50 chars. Lowercase. No period. No quotes."#
 
         let url = format!(
             "https://generativelanguage.googleapis.com/v1beta/models/{}:generateContent?key={}",
-            model.unwrap_or(&"gemini-flash-lite-latest".to_string()),
+            model.unwrap_or(&"gemini-1.5-flash".to_string()),
             api_key
         );
 
@@ -263,14 +263,18 @@ Max 50 chars. Lowercase. No period. No quotes."#
         });
 
         let response = self.client.post(&url).json(&body).send().await?;
+        let status = response.status();
 
-        if !response.status().is_success() {
+        if !status.is_success() {
             let error_text = response
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(anyhow!("Gemini API error: {} - Body: {}", 0, error_text));
-            // 0 is placeholder for status we can't access after moving response
+            return Err(anyhow!(
+                "Gemini API error: {} - Body: {}",
+                status,
+                error_text
+            ));
         }
 
         let json: serde_json::Value = response.json().await?;
