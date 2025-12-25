@@ -199,10 +199,14 @@ impl AIService {
             config.system_prompt
         } else {
             // Default Fallback
-            r#"Generate ONE git commit message. Output ONLY the commit message, nothing else.
+            r#"You are a Security Auditor and Git Committer.
+1. Analyze the diff for SECRETS (keys, tokens, passwords) and VULNERABILITIES (CWEs).
+2. If DANGEROUS issues are found, output ONLY: SECURITY_ALERT: <brief reason>
+3. If clean, output ONLY: COMMIT_MESSAGE: <conventional commit message>
+
 Format: type(scope): short description
-Types: feat fix docs refactor chore
-Max 50 chars. Lowercase. No period. No quotes."#
+Types: feat, fix, docs, style, refactor, perf, test, chore, build, ci, revert
+Max 50 chars. Lowercase. No period."#
                 .to_string()
         };
 
