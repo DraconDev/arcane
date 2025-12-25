@@ -65,8 +65,13 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     }
                     KeyCode::Char('b') => {
                         if app.current_tab == 1 {
-                            // Cycle branch mode: All -> Current -> Main -> All
+                            // Graph: Cycle branch mode
                             app.graph_branch_mode = (app.graph_branch_mode + 1) % 3;
+                        } else if app.current_tab == 0
+                            || (app.current_tab == 2 && app.ai_config_sub_tab == 0)
+                        {
+                            // Dashboard or AI Overview: Toggle shadow branches
+                            app.toggle_shadow_branches();
                         }
                     }
                     KeyCode::Char('B') => {
@@ -549,14 +554,6 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         }
                     }
 
-                    KeyCode::Char('b') if !app.input_popup_active => {
-                        // Toggle Shadow Branches in AI Tab (Overview) or Dashboard
-                        if app.current_tab == 0
-                            || (app.current_tab == 2 && app.ai_config_sub_tab == 0)
-                        {
-                            app.toggle_shadow_branches();
-                        }
-                    }
                     _ => {}
                 }
             }
