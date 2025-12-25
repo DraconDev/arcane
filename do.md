@@ -14,11 +14,3 @@
 
 -   we can have arcane auto or arcane spark, that actually does listen to github and webhooks if we must, but this doesn't make sense for a solo guy, but lets say you had a build server, and no one builds ever, only this server, so you don't have individuals pushing when they feel like it, but literally this server has the keys it can even push to itself i suppose, and listen to commits and do so, this way we don't neeqd a super complex who is pushing and how we lock it, if you are solo you live the easy life, if you are team, you should have a build server, it can still be your laptop, and you push when you make a change, and you pull it when others then arcane push it
 
--   **Smart Squash & Versioning**:
-
-    -   If `Auto-Push` is OFF, allow Arcane to accumulate local commits.
-    -   When user triggers Sync/Push, AI scans the batch.
-    -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
-    -   User approves -> Arcane squashes and pushes.
-
--   graph screen could use submenus to switch between main/master , current , and all branches, maybe if there are a ton of branch it would be broken, so just let us select up to like 5?b
