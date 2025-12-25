@@ -426,6 +426,28 @@ impl App {
 
             // Refresh Status (Dashboard)
             self.refresh_status();
+
+            // Refresh Log Events (Alerts)
+            self.tail_daemon_log();
+        }
+    }
+
+    fn tail_daemon_log(&mut self) {
+        if let Some(home) = home::home_dir() {
+            let log_path = home.join(".arcane").join("daemon.log");
+            if log_path.exists() {
+                let output = std::process::Command::new("tail")
+                    .args(&["-n", "10", log_path.to_str().unwrap()])
+                    .output();
+
+                if let Ok(out) = output {
+                    let stdout = String::from_utf8_lossy(&out.stdout);
+                    self.events = stdout.lines().map(|s| s.to_string()).collect();
+                    if !self.events.is_empty() {
+                        self.events.reverse(); // Show newest at top (if rendering top-down)
+                    }
+                }
+            }
         }
     }
 
