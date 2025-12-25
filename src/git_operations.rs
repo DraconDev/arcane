@@ -171,4 +171,21 @@ impl GitOperations {
 
         Ok(())
     }
+
+    /// Get the current HEAD commit SHA
+    pub async fn get_head_sha(&self, repo_path: &Path) -> Result<String> {
+        let output = Command::new("git")
+            .current_dir(repo_path)
+            .arg("rev-parse")
+            .arg("HEAD")
+            .output()
+            .await?;
+
+        if !output.status.success() {
+            return Err(anyhow::anyhow!("Failed to get HEAD SHA"));
+        }
+
+        let sha = String::from_utf8(output.stdout)?;
+        Ok(sha.trim().to_string())
+    }
 }

@@ -770,6 +770,24 @@ impl App {
             config.ai_provider = parse_provider(&self.current_ai_provider);
             config.backup_provider_1 = parse_provider(&self.backup_provider_1);
             config.backup_provider_2 = parse_provider(&self.backup_provider_2);
+
+            // Save model selections
+            config.primary_model = if self.primary_model.is_empty() {
+                None
+            } else {
+                Some(self.primary_model.clone())
+            };
+            config.backup1_model = if self.backup1_model.is_empty() {
+                None
+            } else {
+                Some(self.backup1_model.clone())
+            };
+            config.backup2_model = if self.backup2_model.is_empty() {
+                None
+            } else {
+                Some(self.backup2_model.clone())
+            };
+
             config.timing.inactivity_delay = self.inactivity_delay;
             config.timing.min_commit_delay = self.min_commit_delay;
             config.version_bumping = self.version_bumping;

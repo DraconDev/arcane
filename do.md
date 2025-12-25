@@ -1,7 +1,7 @@
-shadow braches
+add shadow branches
 
 add or replace gitattributes and gitignore
 
-- arcane ops
-  - desired features 
-    - smart port changes 
+-   arcane ops
+    -   desired features
+        -   smart port changes

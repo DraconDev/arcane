@@ -118,6 +118,8 @@ pub struct ArcaneConfig {
     pub gitattributes_patterns: Vec<String>,
     #[serde(default = "default_system_prompt")]
     pub system_prompt: String,
+    #[serde(default)]
+    pub shadow_mode: bool, // true = commit to shadow branch, false = commit to HEAD
 }
 
 fn default_ignore_patterns() -> Vec<String> {
@@ -150,6 +152,7 @@ impl Default for ArcaneConfig {
             ignore_patterns: default_ignore_patterns(),
             gitattributes_patterns: default_gitattributes_patterns(),
             system_prompt: default_system_prompt(),
+            shadow_mode: false, // Default to direct commits
         }
     }
 }

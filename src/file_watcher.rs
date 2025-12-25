@@ -10,11 +10,12 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 
 use crate::ai_service::AIService;
+use crate::config::ArcaneConfig;
 use crate::git_operations::GitOperations;
 use crate::security::ArcaneSecurity;
 use crate::shadow::ShadowManager;
 
-use crate::DaemonStatus;
+use crate::{CommitEntry, CommitLog, DaemonStatus};
 
 #[allow(dead_code)]
 pub struct FileWatcher {
@@ -27,9 +28,11 @@ pub struct FileWatcher {
     shadow_mode: bool,
     change_queue: Arc<Mutex<Vec<PathBuf>>>,
     last_commit_time: Arc<Mutex<chrono::DateTime<Local>>>,
+    last_commit_message: Arc<Mutex<Option<String>>>,
     processing: Arc<Mutex<bool>>,
     gitignore: Gitignore,
     status_tx: Option<tokio::sync::broadcast::Sender<DaemonStatus>>,
+    commit_log: Arc<Mutex<CommitLog>>,
 }
 
 #[allow(dead_code)]
@@ -56,18 +59,23 @@ impl FileWatcher {
 
         let gitignore = builder.build().unwrap_or_else(|_| Gitignore::empty());
 
+        // Load shadow_mode from config
+        let shadow_mode = ArcaneConfig::load().map(|c| c.shadow_mode).unwrap_or(false);
+
         Self {
             root_path,
             git_operations,
             ai_service,
             security,
             shadow_manager,
-            shadow_mode: false, // Default to REAL commits (Direct Mode)
+            shadow_mode,
             change_queue: Arc::new(Mutex::new(Vec::new())),
             last_commit_time: Arc::new(Mutex::new(Local::now())),
+            last_commit_message: Arc::new(Mutex::new(None)),
             processing: Arc::new(Mutex::new(false)),
             gitignore,
             status_tx: None,
+            commit_log: Arc::new(Mutex::new(CommitLog::load())),
         }
     }
 
@@ -361,22 +369,69 @@ impl FileWatcher {
             .add_paths(&self.root_path, &changes)
             .await?;
 
-        if self.shadow_mode {
+        let branch = self
+            .git_operations
+            .get_current_branch(&self.root_path)
+            .await
+            .unwrap_or_else(|_| "unknown".to_string());
+
+        let (commit_sha, is_shadow) = if self.shadow_mode {
             // Shadow mode: commit to shadow branch
             match self.shadow_manager.commit_to_shadow(&commit_message) {
-                Ok(sha) => println!("👻 Shadow commit: {}", &sha[..8]),
-                Err(e) => eprintln!("⚠️ Shadow commit failed, falling back to regular: {}", e),
+                Ok(sha) => {
+                    println!("👻 Shadow commit: {}", &sha[..8.min(sha.len())]);
+                    (sha, true)
+                }
+                Err(e) => {
+                    eprintln!("⚠️ Shadow commit failed, falling back to regular: {}", e);
+                    // Fallback to regular commit
+                    self.git_operations
+                        .commit(&self.root_path, &commit_message)
+                        .await?;
+                    let sha = self
+                        .git_operations
+                        .get_head_sha(&self.root_path)
+                        .await
+                        .unwrap_or_else(|_| "unknown".to_string());
+                    (sha, false)
+                }
             }
         } else {
             // Regular mode: commit to HEAD
             self.git_operations
                 .commit(&self.root_path, &commit_message)
                 .await?;
+            let sha = self
+                .git_operations
+                .get_head_sha(&self.root_path)
+                .await
+                .unwrap_or_else(|_| "unknown".to_string());
             println!("✅ Committed: {}", commit_message);
+            (sha, false)
+        };
+
+        // Log the commit
+        let entry = CommitEntry {
+            timestamp: Local::now().to_rfc3339(),
+            sha: commit_sha.clone(),
+            message: commit_message.clone(),
+            repo: self.root_path.to_string_lossy().to_string(),
+            branch: if is_shadow {
+                format!("shadow/{}", branch)
+            } else {
+                branch
+            },
+            shadow: is_shadow,
+            files_changed: changes.len(),
+        };
+
+        if let Err(e) = self.commit_log.lock().await.log_commit(entry) {
+            eprintln!("⚠️ Failed to log commit: {}", e);
         }
 
-        // Update last commit time
+        // Update last commit time and message
         *self.last_commit_time.lock().await = Local::now();
+        *self.last_commit_message.lock().await = Some(commit_message);
 
         *self.processing.lock().await = false;
         self.update_status("Idle").await?;
