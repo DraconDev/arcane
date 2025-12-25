@@ -23,4 +23,4 @@
     -   AI suggests grouping: "These 10 commits -> 1 Minor Feature".
     -   User approves -> Arcane squashes and pushes.
 
--   graph scren could use submenus to switch between main/master , current , and all the brnaches
+-   graph scren could use submenus to switch between main/master , current , and all branches, 
