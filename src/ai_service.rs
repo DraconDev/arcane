@@ -596,18 +596,18 @@ Rules:
 6. Output specific JSON format.
 
 JSON Format:
-{
+{{
   "groups": [
-    {
+    {{
       "target_message": "feat(auth): implement login flow",
       "commits": ["hash1", "hash2"]
-    },
-    {
+    }},
+    {{
       "target_message": "fix(ui): correct padding",
       "commits": ["hash3"]
-    }
+    }}
   ]
-}
+}}
 
 Response ONLY VALID JSON."#,
             commit_block
