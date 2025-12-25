@@ -292,6 +292,20 @@ impl SecretScanner {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_user_repro_case() {
+        let scanner = SecretScanner::new();
+        let input = "-   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA";
+        let matches = scanner.scan(input);
+        assert!(!matches.is_empty(), "Should have caught STRIPE_PRIVATE_KEY");
+        assert!(matches.contains(&"Private Key Variable (Unquoted)".to_string()));
+    }
+}
+
 #[derive(Zeroize, ZeroizeOnDrop)]
 pub struct RepoKey(Vec<u8>);
 
