@@ -129,123 +129,63 @@ impl AIService {
     }
 
     fn clean_response(&self, raw: &str) -> String {
-        // 1. Remove Markdown code blocks if present
-        let mut text = raw.to_string();
+        let mut text = raw.trim().to_string();
+
+        // 1. Hunt for Explicit Delimiters (Highest Priority)
+        // We look for ARCANE_COMMIT: or SECURITY_ALERT: anywhere in the text.
+        let delimiters = ["ARCANE_COMMIT:", "SECURITY_ALERT:"];
+        for d in delimiters {
+            if let Some(idx) = text.to_lowercase().find(&d.to_lowercase()) {
+                // Return everything after the tag on that line + all subsequent lines
+                let after_tag = &text[idx + d.len()..];
+                return after_tag.trim().to_string();
+            }
+        }
+
+        // 2. Remove Markdown code blocks if present (Fallback extraction)
         if let Some(start) = text.find("```") {
             if let Some(end) = text[start + 3..].find("```") {
                 let content = &text[start + 3..start + 3 + end];
                 let lines: Vec<&str> = content.lines().collect();
+                // If the first line is exactly a language name (no spaces), skip it
                 if lines.len() > 1 && !lines[0].contains(' ') {
                     text = lines[1..].join("\n");
                 } else {
                     text = content.to_string();
                 }
             } else {
+                // Unclosed block, just strip the marker
                 text = text.replace("```", "");
             }
         }
 
-        // 2. Strip "COMMIT_MESSAGE:" prefix (from our system prompt)
-        if let Some(stripped) = text.strip_prefix("COMMIT_MESSAGE:") {
-            text = stripped.to_string();
+        // 3. Strip legacy prefixes
+        let protocols = ["COMMIT_MESSAGE:", "MESSAGE:"];
+        for p in protocols {
+            if let Some(idx) = text.to_lowercase().find(&p.to_lowercase()) {
+                text = text[idx + p.len()..].trim().to_string();
+                break;
+            }
         }
 
-        // 3. Scan for Conventional Commit Header (Strong Heuristic)
-        // Regex: ^[a-z]+(\([a-z0-9-]+\))?: .+$
-        // If we find a line matching this, we discard everything before it.
-        // We use a simplified check to avoid heavy regex if possible, but regex is safer.
-        // Let's use basic string matching for common types.
+        // 4. Conventional Commit Header Scan (Heuristic fallback)
         let common_types = [
-            "feat",
-            "fix",
-            "docs",
-            "style",
-            "refactor",
-            "perf",
-            "test",
-            "chore",
-            "build",
-            "ci",
+            "feat", "fix", "docs", "style", "refactor", "perf", "test", "chore", "build", "ci",
             "revert",
-            "security_alert",
         ];
-        let lines: Vec<&str> = text.lines().collect();
 
+        // Scan lines for something that looks like type(scope): or type:
+        let lines: Vec<&str> = text.lines().collect();
         for (i, line) in lines.iter().enumerate() {
             let lower = line.trim().to_lowercase();
-            // Check if line starts with specific type
             for t in common_types {
-                // e.g. "feat:" or "feat("
                 if lower.starts_with(&format!("{}:", t)) || lower.starts_with(&format!("{}(", t)) {
                     return lines[i..].join("\n").trim().to_string();
                 }
             }
         }
 
-        fn goto_extraction(_idx: usize, _lines: &[&str]) {} // dummy closure to break simple loops
-
-        // 4. Aggressive fallback: Strip conversational preamble
-        // Common patterns:
-        //   "Here's a concise and descriptive commit message for this change:\n\nfeat: ..."
-        //   "Here's a concise commit message:\n\n**Commit Message:**\n\nfeat: ..."
-        //   "Sure! Here's a commit message:\n\nfeat: ..."
-        let lower = text.to_lowercase();
-
-        // List of garbage prefixes the AI loves to add
-        let garbage_prefixes = [
-            "here's a concise",
-            "here is a concise",
-            "here's a commit",
-            "here is a commit",
-            "here's the commit",
-            "here is the commit",
-            "here's a descriptive",
-            "here is a descriptive",
-            "sure!",
-            "sure,",
-            "okay,",
-            "certainly!",
-            "**commit message:**",
-            "commit message:",
-            "here's a concise and descriptive",
-            "here is a concise and descriptive",
-            "message for this change:",
-        ];
-
-        // If text starts with garbage, find the first conventional commit line
-        let starts_garbage = garbage_prefixes.iter().any(|p| lower.starts_with(p));
-
-        if starts_garbage {
-            // Re-scan lines for first conventional commit
-            for (i, line) in text.lines().enumerate() {
-                let trimmed = line.trim();
-                let lower_line = trimmed.to_lowercase();
-                for t in common_types {
-                    if lower_line.starts_with(&format!("{}:", t))
-                        || lower_line.starts_with(&format!("{}(", t))
-                    {
-                        // Found the start! Return this and all subsequent lines.
-                        let mut result = Vec::new();
-                        for l in &lines[i..] {
-                            result.push(*l);
-                        }
-                        return result.join("\n").trim().to_string();
-                    }
-                }
-            }
-            // If we still haven't found a conventional commit, take first non-empty line after a colon
-            if let Some(colon_idx) = text.find(':') {
-                let after_colon = &text[colon_idx + 1..];
-                for line in after_colon.lines() {
-                    let trimmed = line.trim();
-                    if !trimmed.is_empty() && !trimmed.starts_with("*") && !trimmed.starts_with("-")
-                    {
-                        return trimmed.to_string();
-                    }
-                }
-            }
-        }
-
+        // 5. Final fallback: Clean quotes
         text.trim().trim_matches('"').trim_matches('\'').to_string()
     }
 
