@@ -72,11 +72,6 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     let (main_area, footer_area) = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
         let status_text = if let Some(status) = &app.status {
-            let watching_str = if status.watching.is_empty() {
-                "None".to_string()
-            } else {
-                status.watching.join(", ")
-            };
             format!(
                 " Daemon: RUNNING (PID: {}) | State: {}\n [S] Stop Daemon | [A] Auto-Commit: {} | [P] Auto-Push: {}",
                 status.pid,
