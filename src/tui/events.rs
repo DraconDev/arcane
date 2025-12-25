@@ -480,6 +480,9 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     KeyCode::Char('p') if !app.input_popup_active => {
                         app.toggle_auto_push();
                     }
+                    KeyCode::Char('v') if !app.input_popup_active => {
+                        app.toggle_version_bumping();
+                    }
                     KeyCode::Char('i') if !app.input_popup_active => app.ignore_selected_file(),
                     KeyCode::Esc => {
                         if app.input_popup_active {

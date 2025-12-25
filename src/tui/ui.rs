@@ -333,12 +333,28 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         Span::styled(" [P] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
     };
 
+    // Auto-Version Button
+    let version_btn = if app.version_bumping {
+        Span::styled(
+            " [V] Auto-Version: ON ",
+            Style::default()
+                .bg(Color::Green)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else {
+        Span::styled(
+            " [V] Auto-Version: OFF ",
+            Style::default().fg(Color::DarkGray),
+        )
+    };
+
     // Shadow Branch Button
     let shadow_btn = if app.shadow_branches {
         Span::styled(
             " [B] Shadow Branches: ON ",
             Style::default()
-                .bg(Color::Blue)
+                .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
@@ -355,6 +371,8 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         auto_commit_btn,
         separator.clone(),
         auto_push_btn,
+        separator.clone(),
+        version_btn,
         separator,
         shadow_btn,
     ]);
