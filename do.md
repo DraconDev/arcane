@@ -1,6 +1,6 @@
 -   STRIPE_PRIVATE_KEY=ANSKDFN13N141212311123123asdasdBA
 
-- the auto 
+- dash
 
 -   option to add to or override gitattributes and gitignore
 
