@@ -116,6 +116,19 @@ pub struct App {
     pub ops_loading: bool,
     pub ops_action_menu_open: bool,
     pub ops_action_idx: usize,
+
+    // Services
+    pub config: crate::config::ArcaneConfig,
+    pub ai_service: Arc<crate::ai_service::AIService>,
+    pub git_ops: crate::git_operations::GitOperations,
+    pub rebase_manager: RebaseManager,
+
+    // Smart Squash State
+    pub squash_plan: Option<SquashPlan>,
+    pub analyzing_squash: bool,
+    pub squash_rx: UnboundedReceiver<Result<SquashPlan>>,
+    pub squash_tx: UnboundedSender<Result<SquashPlan>>,
+    pub squash_error: Option<String>,
 }
 
 impl App {
