@@ -251,6 +251,21 @@ impl SecretScanner {
                 "Private Token Pattern",
                 r#"(?i)private[_-]?(?:key|token).{0,10}[=:].{0,5}["'][A-Za-z0-9_-]{20,}["']"#,
             ),
+            // ============================================================
+            // Unquoted Assignments (Env Vars / Configs)
+            // ============================================================
+            (
+                "Generic Secret (Unquoted)",
+                r#"(?i)(?:secret|token|password|passwd|pwd|credential).{0,10}=[^\s"']{16,}"#,
+            ),
+            (
+                "Generic API Key (Unquoted)",
+                r#"(?i)(?:api[_-]?key|apikey).{0,10}=[A-Za-z0-9_-]{20,}"#,
+            ),
+            (
+                "Private Key Variable (Unquoted)",
+                r#"(?i)[A-Z0-9_]*PRIVATE_KEY[A-Z0-9_]*=[A-Za-z0-9_-]{20,}"#,
+            ),
         ];
 
         let compiled: Vec<(String, Regex)> = patterns
