@@ -152,6 +152,7 @@ impl App {
             commit_stats: HashMap::new(),
             ai_auto_commit: config.auto_commit_enabled,
             ai_auto_push: config.auto_push_enabled,
+            ai_auto_deploy: config.auto_deploy_enabled,
             shadow_branches: config.shadow_branches,
             pattern_mode: config.pattern_mode,
             identity_sub_tab: 0,
