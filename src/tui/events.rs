@@ -53,13 +53,19 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     KeyCode::Char('q') => app.quit(),
                     KeyCode::Char('s') => {
                         if app.current_tab == 1 {
-                            // Graph tab only
+                            // Graph: Smart Squash
                             app.trigger_squash_analysis();
+                        } else if app.current_tab == 3 && app.identity_sub_tab == 3 {
+                            // Identity/Security: Scan Repo
+                            app.scan_repo();
+                        } else {
+                            // Default: Toggle Daemon
+                            app.toggle_daemon();
                         }
                     }
                     KeyCode::Char('l') => {
                         if app.current_tab == 1 {
-                            // Graph tab only
+                            // Graph tab only: Bulk Squash
                             app.trigger_lazy_squash();
                         }
                     }
@@ -438,13 +444,6 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             {
                                 app.remove_team_member(app.selected_team_idx);
                             }
-                        }
-                    }
-                    KeyCode::Char('s') if !app.input_popup_active => {
-                        if app.current_tab == 3 && app.identity_sub_tab == 3 {
-                            app.scan_repo();
-                        } else {
-                            app.toggle_daemon();
                         }
                     }
                     KeyCode::Char('r')
