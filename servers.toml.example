@@ -1,0 +1,6 @@
+[[servers]]
+name = "micro1"
+host = "<MICRO_IP>"
+user = "root"
+key_path = "/home/dracon/.ssh/micro1_key" # Update if different!
+docker_socket = "/var/run/docker.sock"

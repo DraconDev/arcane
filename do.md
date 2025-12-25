@@ -9,9 +9,6 @@ add or replace gitattributes and gitignore
 - challenges
   - backup container
 
-arcane spark 
-
-
 
 This is the difference between a "Weekend Project" and "Production Infrastructure."
 You are at 995 because you have a brilliant architecture (Push/SSH/TUI).

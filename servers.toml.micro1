@@ -1,0 +1,5 @@
+[[servers]]
+name = "micro1"
+host = "micro1"
+user = "ubuntu"
+docker_socket = "/var/run/docker.sock"
