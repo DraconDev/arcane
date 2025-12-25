@@ -91,9 +91,19 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     }
                     KeyCode::Char('D') => {
                         if app.current_tab == 5 {
-                            // Deploy Placeholder
-                            app.events
-                                .push("🚀 Deploy Feature Coming Soon...".to_string());
+                            // Trigger Deploy to Selected Server
+                            if app.ops_servers.is_empty() {
+                                app.events.push(
+                                    "❌ No servers configured. Add to ~/.arcane/servers.toml"
+                                        .to_string(),
+                                );
+                            } else {
+                                let server = &app.ops_servers[app.ops_selected_server_idx];
+                                let server_name = server.name.clone();
+                                app.events
+                                    .push(format!("🚀 Deploying to {}...", server_name));
+                                app.trigger_deploy(server_name);
+                            }
                         }
                     }
                     KeyCode::Char('t') | KeyCode::Char('T') => {
