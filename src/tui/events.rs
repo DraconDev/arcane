@@ -51,13 +51,13 @@ pub fn run_app<B: ratatui::backend::Backend>(
 
                 match key.code {
                     KeyCode::Char('q') => app.quit(),
-                    KeyCode::Char('S') => {
+                    KeyCode::Char('s') => {
                         if app.current_tab == 1 {
                             // Graph tab only
                             app.trigger_squash_analysis();
                         }
                     }
-                    KeyCode::Char('L') => {
+                    KeyCode::Char('l') => {
                         if app.current_tab == 1 {
                             // Graph tab only
                             app.trigger_lazy_squash();
@@ -74,7 +74,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.toggle_shadow_branches();
                         }
                     }
-                    KeyCode::Char('B') => {
+                    KeyCode::Char('m') => {
                         // Toggle Bulk Squash Minor mode (in Versioning tab)
                         if app.current_tab == 2 && app.ai_config_sub_tab == 3 {
                             app.config.bulk_squash_minor = !app.config.bulk_squash_minor;
