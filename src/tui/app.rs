@@ -684,6 +684,23 @@ impl App {
         }
     }
 
+    pub fn toggle_version_bumping(&mut self) {
+        self.version_bumping = !self.version_bumping;
+        self.events.push(format!(
+            "🔖 Auto-Version: {}",
+            if self.version_bumping {
+                "ENABLED"
+            } else {
+                "DISABLED"
+            }
+        ));
+
+        if let Ok(mut config) = arcane::config::ArcaneConfig::load() {
+            config.version_bumping = self.version_bumping;
+            let _ = config.save();
+        }
+    }
+
     pub fn inspect_commit(&mut self) {
         if self.current_tab != 1 {
             return;
