@@ -18,10 +18,18 @@ fn default_docker_socket() -> String {
     "/var/run/docker.sock".to_string()
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+pub struct ServerGroup {
+    pub name: String,
+    pub servers: Vec<String>, // List of server names
+}
+
 #[derive(Debug, Serialize, Deserialize, Default)]
 pub struct OpsConfig {
     #[serde(default)]
     pub servers: Vec<ServerConfig>,
+    #[serde(default)]
+    pub groups: Vec<ServerGroup>,
 }
 
 impl OpsConfig {
