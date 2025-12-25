@@ -91,17 +91,26 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     }
                     KeyCode::Char('D') => {
                         if app.current_tab == 5 {
-                            // Trigger Deploy to Selected Server
-                            if app.ops_servers.is_empty() {
-                                app.events.push(
-                                    "❌ No servers configured. Add to ~/.arcane/servers.toml"
-                                        .to_string(),
-                                );
-                            } else {
-                                let server = &app.ops_servers[app.ops_selected_server_idx];
-                                let server_name = server.name.clone();
+                            let total_groups = app.ops_groups.len();
+                            let total_servers = app.ops_servers.len();
+                            let total_targets = total_groups + total_servers;
+
+                            if total_targets == 0 {
                                 app.events
-                                    .push(format!("🚀 Deploying to {}...", server_name));
+                                    .push("❌ No servers or groups configured.".to_string());
+                            } else if app.ops_selected_server_idx < total_groups {
+                                // Target is a Group
+                                let group_name =
+                                    app.ops_groups[app.ops_selected_server_idx].name.clone();
+                                app.events
+                                    .push(format!("🚀 Deploying to group {}...", group_name));
+                                app.trigger_deploy(group_name);
+                            } else {
+                                // Target is a Server
+                                let server_idx = app.ops_selected_server_idx - total_groups;
+                                let server_name = app.ops_servers[server_idx].name.clone();
+                                app.events
+                                    .push(format!("🚀 Deploying to server {}...", server_name));
                                 app.trigger_deploy(server_name);
                             }
                         }
@@ -230,8 +239,8 @@ pub fn run_app<B: ratatui::backend::Backend>(
                             app.ai_config_focused = true;
                             app.ai_config_row = 0;
                         } else if app.current_tab == 5 {
-                            if app.ops_selected_server_idx < app.ops_servers.len().saturating_sub(1)
-                            {
+                            let total_targets = app.ops_groups.len() + app.ops_servers.len();
+                            if app.ops_selected_server_idx < total_targets.saturating_sub(1) {
                                 app.ops_selected_server_idx += 1;
                                 app.ops_selected_container_idx = 0;
                             }
@@ -241,20 +250,29 @@ pub fn run_app<B: ratatui::backend::Backend>(
                     }
                     KeyCode::Enter => {
                         if app.current_tab == 5 {
-                            app.ops_loading = true;
-                            if !app.ops_servers.is_empty() {
-                                let server = app.ops_servers[app.ops_selected_server_idx].clone();
-                                match crate::ops::monitor::Monitor::list_containers(&server) {
-                                    Ok(c) => {
-                                        app.ops_containers = c;
-                                        app.events.push("✅ Refreshed containers".to_string());
+                            let total_groups = app.ops_groups.len();
+                            if app.ops_selected_server_idx < total_groups {
+                                app.events.push(
+                                    "🌐 Group selected. Use 'D' to deploy to all.".to_string(),
+                                );
+                                app.ops_containers.clear();
+                            } else {
+                                let server_idx = app.ops_selected_server_idx - total_groups;
+                                if !app.ops_servers.is_empty() {
+                                    app.ops_loading = true;
+                                    let server = app.ops_servers[server_idx].clone();
+                                    match crate::ops::monitor::Monitor::list_containers(&server) {
+                                        Ok(c) => {
+                                            app.ops_containers = c;
+                                            app.events.push("✅ Refreshed containers".to_string());
+                                        }
+                                        Err(e) => {
+                                            app.events.push(format!("❌ Connection failed: {}", e))
+                                        }
                                     }
-                                    Err(e) => {
-                                        app.events.push(format!("❌ Connection failed: {}", e))
-                                    }
+                                    app.ops_loading = false;
                                 }
                             }
-                            app.ops_loading = false;
                         } else if app.input_popup_active {
                             // Handle popup submission
                             let input = app.input_popup_buffer.clone();
