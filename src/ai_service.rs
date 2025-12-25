@@ -197,6 +197,9 @@ impl AIService {
             "certainly!",
             "**commit message:**",
             "commit message:",
+            "here's a concise and descriptive",
+            "here is a concise and descriptive",
+            "message for this change:",
         ];
 
         // If text starts with garbage, find the first conventional commit line
@@ -211,9 +214,12 @@ impl AIService {
                     if lower_line.starts_with(&format!("{}:", t))
                         || lower_line.starts_with(&format!("{}(", t))
                     {
-                        // Found it! Return from this line onwards
-                        let idx = text.find(trimmed).unwrap_or(0);
-                        return text[idx..].trim().to_string();
+                        // Found the start! Return this and all subsequent lines.
+                        let mut result = Vec::new();
+                        for l in &lines[i..] {
+                            result.push(*l);
+                        }
+                        return result.join("\n").trim().to_string();
                     }
                 }
             }
