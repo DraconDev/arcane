@@ -149,7 +149,7 @@ impl App {
             selected_file_idx: 0,
             commit_details: Text::default(),
             commit_stats: HashMap::new(),
-            ai_auto_commit: false,
+            ai_auto_commit: config.auto_commit_enabled,
             ai_auto_push: config.auto_push_enabled,
             shadow_branches: config.shadow_branches,
             pattern_mode: config.pattern_mode,
