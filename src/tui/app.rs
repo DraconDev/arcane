@@ -108,6 +108,7 @@ pub struct App {
 
     // Ops State
     pub ops_servers: Vec<crate::ops::config::ServerConfig>,
+    pub ops_groups: Vec<crate::ops::config::ServerGroup>,
     pub ops_selected_server_idx: usize,
     pub ops_containers: Vec<crate::ops::monitor::ContainerInfo>,
     pub ops_selected_container_idx: usize,
@@ -312,6 +313,7 @@ impl App {
 
             // Ops Init
             ops_servers: ops_config.servers,
+            ops_groups: ops_config.groups,
             ops_selected_server_idx: 0,
             ops_containers: vec![],
             ops_selected_container_idx: 0,
