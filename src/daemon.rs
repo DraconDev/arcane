@@ -174,6 +174,8 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         let config_manager = ConfigManager::new()?;
         let ai_config = config_manager.ai_config();
 
+        let auto_push = config_manager.config.auto_push_enabled;
+
         // Use AI Service
         let ai = AIService::new(ai_config);
         let diff = git.get_diff(repo_path).await?;
@@ -187,11 +189,25 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         };
 
         git.commit(repo_path, &message).await?;
-        log_event(&format!(
+
+        let mut action_msg = format!(
             "🤖 Auto-committed in {:?}: {}",
             repo_path.file_name().unwrap_or_default(),
             message
-        ));
+        );
+
+        if auto_push {
+            match git.push(repo_path).await {
+                Ok(_) => {
+                    action_msg.push_str(" (Pushed 🚀)");
+                }
+                Err(e) => {
+                    action_msg.push_str(&format!(" (Push Failed: {})", e));
+                }
+            }
+        }
+
+        log_event(&action_msg);
 
         Ok::<(), anyhow::Error>(())
     })?;
