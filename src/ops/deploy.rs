@@ -316,8 +316,10 @@ impl<'a> DeployLock<'a> {
         let cmd = "mkdir /var/lock/arcane.deploy";
         match Shell::exec_remote(server, cmd) {
             Ok(_) => Ok(Self { server }),
-            Err(_) => Err(anyhow::anyhow!(
-                "⚠️  Deployment Locked! /var/lock/arcane.deploy exists. Another user is deploying."
+            Err(e) => Err(anyhow::anyhow!(
+                "⚠️  Deployment Locked! (or SSH Error): {}\n   If you are sure no one is deploying, run: ssh {} 'rmdir /var/lock/arcane.deploy'",
+                e,
+                server.host
             )),
         }
     }

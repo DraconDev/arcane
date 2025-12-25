@@ -5,6 +5,42 @@
 
 ---
 
+## Quick Start (5 Minutes)
+
+### 1. Provision Your Server (One-Time)
+
+Run this from your laptop to install Docker, Caddy, and Zstd on any fresh Ubuntu server:
+
+```bash
+ssh <user>@<server-ip> "sudo bash -s" < scripts/setup_server.sh
+```
+
+That's it. Your server is now ready for Arcane deployments.
+
+### 2. Configure Your Fleet
+
+Add the server to `~/.arcane/servers.toml`:
+
+```toml
+[[servers]]
+name = "my-server"
+host = "my-server"  # Can be IP or SSH alias from ~/.ssh/config
+user = "ubuntu"
+docker_socket = "/var/run/docker.sock"
+```
+
+### 3. Deploy
+
+```bash
+# Tag any local Docker image
+docker build -t my-app:v1 .
+
+# Push to server (Compressed, Registry-less)
+arcane push --target my-server --app my-app --tag v1
+```
+
+---
+
 ## 1. The Manifesto
 
 **The Problem:**

@@ -51,8 +51,14 @@ impl Shell {
         let output = ssh.output().context("SSH connection failed")?;
 
         if !output.status.success() {
-            let err = String::from_utf8_lossy(&output.stderr);
-            return Err(anyhow::anyhow!("Remote command failed: {}", err));
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            return Err(anyhow::anyhow!(
+                "Remote command failed (Exit: {:?}): STDERR: [{}] STDOUT: [{}]",
+                output.status.code(),
+                stderr.trim(),
+                stdout.trim()
+            ));
         }
 
         Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())

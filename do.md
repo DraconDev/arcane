@@ -2,13 +2,6 @@ add shadow branches
 
 add or replace gitattributes and gitignore
 
--   arcane ops
-    -   desired features
-        -   smart port changes
-
-- challenges
-  - backup container
-
 
 This is the difference between a "Weekend Project" and "Production Infrastructure."
 You are at 995 because you have a brilliant architecture (Push/SSH/TUI).
