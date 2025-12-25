@@ -123,7 +123,7 @@ pub fn run_app<B: ratatui::backend::Backend>(
                         if app.current_tab == 2 && app.ai_config_focused {
                             // AI
                             // Navigate rows
-                            let limit = match app.ai_config_sub_tab {
+                            let limit: usize = match app.ai_config_sub_tab {
                                 1 => 9, // Providers
                                 2 => 2, // Timing
                                 3 => 1, // Versioning
