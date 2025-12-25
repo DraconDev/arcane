@@ -175,26 +175,61 @@ impl AIService {
             }
         }
 
-        fn goto_extraction(idx: usize, lines: &[&str]) {} // dummy closure to break simple loops
+        fn goto_extraction(_idx: usize, _lines: &[&str]) {} // dummy closure to break simple loops
 
-        // 4. Fallback: Strip conversational trash
+        // 4. Aggressive fallback: Strip conversational preamble
+        // Common patterns:
+        //   "Here's a concise and descriptive commit message for this change:\n\nfeat: ..."
+        //   "Here's a concise commit message:\n\n**Commit Message:**\n\nfeat: ..."
+        //   "Sure! Here's a commit message:\n\nfeat: ..."
         let lower = text.to_lowercase();
-        if let Some(idx) = lower.find("commit message:") {
-            text = text[idx + 15..].to_string();
-        } else if let Some(idx) = lower.find("message is:") {
-            text = text[idx + 11..].to_string();
-        } else if lower.starts_with("here")
-            || lower.starts_with("sure")
-            || lower.starts_with("okay")
-        {
-            // Find the first colon and take after it? Risky.
-            // Just take the first line that looks like a commit?
-            // Let's just strip known prefixes line by line
-            if let Some(first_colon) = text.find(':') {
-                // "Here is the message: feat: foo" -> " feat: foo"
-                // "Here's a message for you:" (newline) "feat: foo"
-                // If the colon is early in the text, maybe splitting there helps?
-                // But safer to rely on the Loop above.
+
+        // List of garbage prefixes the AI loves to add
+        let garbage_prefixes = [
+            "here's a concise",
+            "here is a concise",
+            "here's a commit",
+            "here is a commit",
+            "here's the commit",
+            "here is the commit",
+            "here's a descriptive",
+            "here is a descriptive",
+            "sure!",
+            "sure,",
+            "okay,",
+            "certainly!",
+            "**commit message:**",
+            "commit message:",
+        ];
+
+        // If text starts with garbage, find the first conventional commit line
+        let starts_garbage = garbage_prefixes.iter().any(|p| lower.starts_with(p));
+
+        if starts_garbage {
+            // Re-scan lines for first conventional commit
+            for line in text.lines() {
+                let trimmed = line.trim();
+                let lower_line = trimmed.to_lowercase();
+                for t in common_types {
+                    if lower_line.starts_with(&format!("{}:", t))
+                        || lower_line.starts_with(&format!("{}(", t))
+                    {
+                        // Found it! Return from this line onwards
+                        let idx = text.find(trimmed).unwrap_or(0);
+                        return text[idx..].trim().to_string();
+                    }
+                }
+            }
+            // If we still haven't found a conventional commit, take first non-empty line after a colon
+            if let Some(colon_idx) = text.find(':') {
+                let after_colon = &text[colon_idx + 1..];
+                for line in after_colon.lines() {
+                    let trimmed = line.trim();
+                    if !trimmed.is_empty() && !trimmed.starts_with("*") && !trimmed.starts_with("-")
+                    {
+                        return trimmed.to_string();
+                    }
+                }
             }
         }
 
