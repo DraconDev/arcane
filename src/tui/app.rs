@@ -137,6 +137,7 @@ impl App {
         let config = arcane::config::ArcaneConfig::load().unwrap_or_default();
         let (tx, rx) = std::sync::mpsc::channel();
         let (v_tx, v_rx) = std::sync::mpsc::channel();
+        let (sq_tx, sq_rx) = mpsc::unbounded_channel();
 
         let ops_config = crate::ops::config::OpsConfig::load();
 
@@ -176,6 +177,20 @@ impl App {
             scan_results: vec![],
             snapshots: vec![],
             selected_team_idx: 0,
+
+            // Services
+            config: config.clone(),
+            ai_service: Arc::new(crate::ai_service::AIService::new(config.clone())),
+            git_ops: crate::git_operations::GitOperations::new(),
+            rebase_manager: RebaseManager::new(),
+
+            // Squash
+            squash_plan: None,
+            analyzing_squash: false,
+            squash_rx: sq_rx,
+            squash_tx: sq_tx,
+            squash_error: None,
+
             sub_tab_focused: false,
             ai_config_sub_tab: 0,
             ai_patterns_sub_tab: 0,
