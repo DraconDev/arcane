@@ -2,7 +2,7 @@ use crate::tui::app::App;
 use crate::tui::ops_view::render_ops;
 use ratatui::{
     backend::Backend,
-    layout::{Constraint, Direction, Layout},
+    layout::{Alignment, Constraint, Direction, Layout},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Borders, Clear, List, ListItem, Paragraph, Tabs, Wrap},
@@ -21,7 +21,6 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                     Constraint::Length(3), // Tabs
                     Constraint::Length(3), // Status Hub (Dashboard only)
                     Constraint::Min(0),    // Main Content
-                    Constraint::Length(3), // Footer/Help
                 ]
                 .as_ref(),
             )
@@ -33,11 +32,23 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                 [
                     Constraint::Length(3), // Tabs
                     Constraint::Min(0),    // Main Content (more space!)
-                    Constraint::Length(3), // Footer/Help
                 ]
                 .as_ref(),
             )
             .split(f.area())
+    };
+
+    // Calculate Hints (formerly footer)
+    let hint_text = match app.current_tab {
+        1 => {
+            let mode = match app.graph_branch_mode {
+                0 => "All",
+                1 => "Current",
+                _ => "Main",
+            };
+            format!(" s: Smart | l: Bulk | b: Branch ({}) | q: Quit ", mode)
+        }
+        _ => " ←/→: Nav | q: Quit ".to_string(),
     };
 
     // 1. Tabs
@@ -53,6 +64,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(" Arcane v{} ", env!("CARGO_PKG_VERSION")))
+                .title(ratatui::widgets::block::Title::from(hint_text).alignment(Alignment::Right))
                 .border_style(if views_focused {
                     Style::default().fg(Color::Magenta)
                 } else {
@@ -115,9 +127,9 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
 
         let p = Paragraph::new(status_lines).block(status_block);
         f.render_widget(p, chunks[1]);
-        (chunks[2], chunks[3])
+        chunks[2]
     } else {
-        (chunks[1], chunks[2])
+        chunks[1]
     };
 
     // 3. Main Content
@@ -130,21 +142,6 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
         5 => render_ops(f, app, main_area),
         _ => {}
     }
-
-    // 4. Footer - Context-sensitive help
-    let footer_text = match app.current_tab {
-        1 => {
-            let mode = match app.graph_branch_mode {
-                0 => "All",
-                1 => "Current",
-                _ => "Main",
-            };
-            format!("s: Smart | l: Bulk | b: Branch ({}) | q: Quit", mode)
-        }
-        _ => "←/→: Nav | q: Quit".to_string(),
-    };
-    let help = Paragraph::new(footer_text).block(Block::default().borders(Borders::ALL));
-    f.render_widget(help, footer_area);
 
     if app.show_popup {
         let area = centered_rect(80, 80, f.area());
