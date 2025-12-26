@@ -11,8 +11,9 @@ When you run `arcane start`, Arcane acts as an intelligent daemon:
 2.  **Waits** for a "quiet period" (5 seconds).
 3.  **Analyzes** the `git diff`.
 4.  **Generates** a concise commit message using the "Senior Engineer" persona.
-5.  **Extracts** the message using Zero-Tolerance logic (no chatter, no preambles).
-6.  **Commits** the changes automatically.
+5.  **Loop Prevention**: Ignores changes that are _only_ version bumps to prevent infinite commit loops.
+6.  **Extracts** the message using Zero-Tolerance logic (no chatter, no preambles).
+7.  **Commits** the changes automatically.
 
 ## Prerequisites
 
