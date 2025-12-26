@@ -114,3 +114,97 @@ The innovation is **machine-specific deploy keys**. A build server can deploy wi
 > **Arcane is the only tool where developers can contribute code to a production app without ever having access to production secrets.**
 
 No other tool does this. Not Vault. Not AWS. Not SOPS. Not any of them.
+
+---
+
+## The Holy Grail: Security + Speed
+
+Most tools make you choose:
+
+| Approach                  | Security                              | Speed                        | Revocation           |
+| ------------------------- | ------------------------------------- | ---------------------------- | -------------------- |
+| **Traditional**           | ❌ Devs have secrets                  | ✅ Fast (but insecure)       | ❌ Rotate everything |
+| **Enterprise "Security"** | ⚠️ Complex policies, still accessible | ❌ Slow (approval workflows) | ⚠️ Audit + rotate    |
+| **Arcane**                | ✅ Zero access                        | ✅ Push → Deploy             | ✅ Delete one file   |
+
+**The trade others make:**
+
+-   "Security" = slow approval workflows + devs still have access
+-   "Speed" = everyone has keys + pray they don't leak
+
+**Arcane's position:**
+
+-   **Security** = mathematically impossible without the key
+-   **Speed** = push and it deploys
+-   **Revocation** = delete a `.age` file, instant lockout
+
+No compromise. Both at once.
+
+---
+
+## Instant Revocation
+
+When someone leaves or a key is compromised:
+
+**Traditional:**
+
+```
+1. Identify all secrets they had access to
+2. Generate new secrets for each service
+3. Update all deployments
+4. Coordinate downtime
+5. Hope you didn't miss any
+```
+
+**Arcane:**
+
+```bash
+rm .git/arcane/keys/machine:compromised.age
+git commit -m "Revoke access"
+git push
+# Done. They can't decrypt anything anymore.
+```
+
+No secret rotation. No service restarts. No downtime. They never had the actual secrets - just a key to unlock them. Remove the key, game over.
+
+---
+
+## Solo Workflow: Embarrassingly Simple
+
+For solo developers, Arcane is so simple it feels like cheating:
+
+```bash
+# Setup (once)
+arcane identity new
+arcane init
+
+# Daily work
+# ... edit code ...
+# Daemon auto-commits with AI messages
+git push  # Optional: auto-push enabled
+
+# Deploy
+arcane deploy myapp
+```
+
+That's it. No Kubernetes. No Docker Swarm. No CI/CD pipelines. No secret managers. No cloud accounts.
+
+Just you, your code, and your servers.
+
+**The feeling:** You're writing code in 2024 with the simplicity of 2005 `scp` deployments, but with enterprise-grade encryption and zero-downtime deploys.
+
+---
+
+## Scale As You Grow
+
+The same tool scales without changing your workflow:
+
+| Stage           | Who Deploys            | Setup                      |
+| --------------- | ---------------------- | -------------------------- |
+| **Solo**        | You from your laptop   | Just use it                |
+| **Small team**  | Any dev with a key     | `arcane team invite`       |
+| **Medium team** | Only leads deploy      | Give keys to leads only    |
+| **Large team**  | Build server only      | Set up Arcane Spark        |
+| **Enterprise**  | Multiple build servers | Stage/Prod Spark instances |
+
+You don't migrate to a new tool. You just add machine keys.
