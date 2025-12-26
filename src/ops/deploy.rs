@@ -109,7 +109,7 @@ impl ArcaneDeployer {
 
         // Load the environment (handles base.env + specific.env + encryption)
         let env =
-            crate::config::env::Environment::load(env_name, &project_root, &security, &repo_key)?;
+            arcane::config::env::Environment::load(env_name, &project_root, &security, &repo_key)?;
 
         // 3. Construct Docker Flags
         let mut env_flags = String::new();
