@@ -666,6 +666,68 @@ async fn main() {
                 }
             }
         }
+        Some(("logs", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let app = sub_matches
+                .get_one::<String>("app")
+                .map(|s| s.as_str())
+                .unwrap_or("app");
+            let follow = sub_matches.get_flag("follow");
+            let lines = sub_matches.get_one::<String>("lines").map(|s| s.as_str());
+
+            let config = crate::ops::config::OpsConfig::load();
+            if let Some(server) = config.find_server(target) {
+                let mut cmd = format!("docker logs {}", app);
+                if follow {
+                    cmd.push_str(" -f");
+                }
+                if let Some(n) = lines {
+                    cmd.push_str(&format!(" -n {}", n));
+                }
+
+                println!("📜 Streaming logs from {}/{}...", target, app);
+                if let Err(e) = crate::ops::shell::Shell::passthrough(server, &cmd, false) {
+                    eprintln!("❌ Logs interrupted: {}", e);
+                    std::process::exit(1);
+                }
+            } else {
+                eprintln!("❌ Server '{}' not found in servers.toml", target);
+                std::process::exit(1);
+            }
+        }
+        Some(("exec", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let app = sub_matches
+                .get_one::<String>("app")
+                .map(|s| s.as_str())
+                .unwrap_or("app");
+            let args: Vec<&str> = sub_matches
+                .get_many::<String>("command")
+                .expect("Command required")
+                .map(|s| s.as_str())
+                .collect();
+            let command = args.join(" ");
+
+            let config = crate::ops::config::OpsConfig::load();
+            if let Some(server) = config.find_server(target) {
+                // Interactive exec require -it on docker side too
+                let remote_cmd = format!("docker exec -it {} {}", app, command);
+                println!("🔌 Connecting to {}/{}...", target, app);
+
+                // use_tty = true for interactive SSH
+                if let Err(e) = crate::ops::shell::Shell::passthrough(server, &remote_cmd, true) {
+                    eprintln!("❌ Exec failed: {}", e);
+                    std::process::exit(1);
+                }
+            } else {
+                eprintln!("❌ Server '{}' not found in servers.toml", target);
+                std::process::exit(1);
+            }
+        }
         Some(("pull", _)) => {
             println!("📥 Arcane Pull: Not implemented yet (Coming soon: Logs/State sync)");
         }
