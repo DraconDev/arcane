@@ -1,6 +1,21 @@
 # Arcane Roadmap
 
-> **Philosophy**: Build an amazing tool for myself. Licensing means companies pay.
+> **Philosophy**: Build an amazing tool for solo devs and small teams. Zero cloud dependencies. You own everything.
+
+---
+
+## What Arcane Is NOT
+
+-   **Not Kubernetes** - No pods, services, ingress, operators
+-   **Not Coolify/Vercel** - No hosted management UI
+-   **Not CI/CD** - No YAML pipelines, no GitHub Actions dependency
+
+## What Arcane IS
+
+-   **Local-first** - Build on your machine, push to your servers
+-   **Direct SSH** - No agents to install on servers
+-   **Baked secrets** - Encrypted at rest, decrypted during deploy
+-   **Simple mental model** - `arcane deploy` = done
 
 ---
 
@@ -11,59 +26,188 @@
 -   **Security Layer**: Envelope encryption, team keys, machine keys, secrets scanning
 -   **Git Integration**: Transparent encrypt/decrypt, git filters, shadow branches
 -   **TUI Dashboard**: Tabs, graph, settings, identity vault
+-   **Desktop Notifications**: Security alerts with click-to-open
 
 ### ✅ Beta
 
 -   **AI Auto-Commit**: Daemon watches files, generates commit messages
 -   **Smart Squash**: AI groups commits into Minors + Patches
--   **Bulk Squash**: All commits → 1 Major/Minor bump (configurable)
--   **Version Bumping**: Auto-detect Cargo.toml/package.json, AI-driven semver
 -   **Push-to-Deploy**: `arcane deploy` pushes code + baked secrets to server
--   **Server Groups**: Define groups (prod, stage) → deploy to many at once
--   **Health Checks**: Internal HTTP ping for deployed containers
--   **Graph Filtering**: Filter by main/current/all branches (key: `b`)
+-   **Garage Mode**: Build locally → smoke test → push image
 
 ---
 
-## Next Horizon (v0.3.x)
+## Phase 1: Stage/Prod Environments
 
----
+### The Problem
 
-## Medium Term (v0.3.x)
+Currently deploying to one server at a time. Real apps need staging vs production.
 
-| Feature                | Description                                             |
-| ---------------------- | ------------------------------------------------------- |
-| **Build Server Mode**  | `arcane spark` listens for commits, auto-builds/deploys |
-| **Rollback Timeline**  | Visual history with one-click revert                    |
-| **Multi-Repo Support** | Orchestrate linked projects                             |
+### Solution
 
----
-
-## Long Term Vision
-
-**Arcane = The Sovereign Developer Platform**
+**Environment files (layered):**
 
 ```
-Local Dev → Auto-Commit → Smart Squash → Version → Deploy → Monitor
-     └── All local. All yours. Zero cloud required.
+config/envs/
+├── base.env         # Shared defaults (API URLs, feature flags)
+├── staging.env      # Staging overrides + secrets (encrypted)
+└── production.env   # Prod overrides + secrets (encrypted)
 ```
 
+**Server registry:**
+
+```toml
+# config/servers.toml
+[servers.micro1]
+host = "micro1.dracon.uk"
+env = "staging"
+
+[servers.oracle]
+host = "oracle.dracon.uk"
+env = "production"
+```
+
+**Commands:**
+
+```bash
+arcane deploy citadel --env staging    # Deploy to all staging servers
+arcane deploy citadel --env production # Deploy to all prod servers
+arcane deploy citadel                  # Default = staging (safe default)
+```
+
+**Safety:**
+
+-   `--env production` prompts: "Deploy to PRODUCTION? [y/N]"
+-   Or flag: `arcane deploy citadel --env production --yes`
+
 ---
 
-## Licensing Strategy
+## Phase 2: Docker Compose Support
 
-| User                    | License                     |
-| ----------------------- | --------------------------- |
-| Solo devs               | Free                        |
-| Open source             | Free                        |
-| Companies < 5 employees | Free                        |
-| Companies 5+ employees  | Commercial license required |
+### The Problem
+
+Multi-container apps need compose, not just single Dockerfile.
+
+### Solution
+
+**Auto-detect:**
+
+-   If `docker-compose.yml` exists → compose mode
+-   Else → Dockerfile mode
+
+**Compose Flow:**
+
+1. Build images locally (or use pre-built)
+2. Copy compose file to server
+3. Push images to server (or pull from registry)
+4. `docker compose up -d` on server
+
+**Environment integration:**
+
+-   Compose uses env files from Phase 1
+-   `docker compose --env-file staging.env up -d`
 
 ---
 
-## Next Actions
+## Phase 3: Server Groups
 
--   [ ] Stabilize squash features (test with real repos)
--   [ ] Complete `arcane deploy` command
--   [ ] Define server group config format
--   [ ] Integrate deploy into TUI Ops tab
+### The Problem
+
+Deploying to 10 servers one by one is tedious.
+
+### Solution
+
+```toml
+# config/servers.toml
+[groups.prod]
+servers = ["oracle", "micro2", "micro3"]
+env = "production"
+
+[groups.stage]
+servers = ["micro1"]
+env = "staging"
+```
+
+**Commands:**
+
+```bash
+arcane deploy citadel --group prod   # All prod servers
+arcane deploy citadel --group stage  # All stage servers
+```
+
+**Rolling Deploy:**
+
+-   Default: Sequential (one at a time)
+-   `--parallel`: Simultaneous (faster, riskier)
+
+---
+
+## Phase 4: Health Checks
+
+### The Problem
+
+Deploy succeeds but app crashes on startup.
+
+### Solution
+
+```toml
+# In project config or servers.toml
+[deploy.health]
+url = "/health"
+port = 3000
+timeout = 30
+```
+
+**Flow:**
+
+1. Deploy completes
+2. Wait up to 30s for `http://container:3000/health` to return 200
+3. If fails: Log error, optionally rollback
+
+---
+
+## Future: Arcane Spark (Build Server)
+
+**What it is:** A daemon that listens for GitHub webhooks and auto-deploys.
+
+**When we need it:**
+
+-   Team workflows where individuals shouldn't deploy directly
+-   CI-like functionality without GitHub Actions
+
+**Why defer:**
+
+-   Solo devs push from laptop (current flow works)
+-   Adds complexity (webhook auth, queuing, logs)
+
+---
+
+## Priority Order
+
+| Priority | Feature                 | Reason                    |
+| -------- | ----------------------- | ------------------------- |
+| 1        | Stage/Prod Environments | Needed for any real app   |
+| 2        | Compose Support         | Multi-container is common |
+| 3        | Server Groups           | Quality of life           |
+| 4        | Health Checks           | Deployment confidence     |
+| 5        | Arcane Spark            | Only for teams            |
+
+---
+
+## Open Questions
+
+-   [ ] Should compose pull images from registry or push locally like Garage Mode?
+-   [ ] How to handle compose volumes? (Persistent data on remote)
+-   [ ] Should we support `docker swarm` or just `docker compose`?
+-   [ ] Rollback strategy: keep last N images? Automatic on health fail?
+
+---
+
+## Licensing
+
+| User                    | License    |
+| ----------------------- | ---------- |
+| Solo devs               | Free       |
+| Open source             | Free       |
+| Companies < 5 employees | Free       |
+| Companies 5+ employees  | Commercial |
