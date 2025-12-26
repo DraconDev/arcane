@@ -196,6 +196,12 @@ async fn main() {
                         .long("follow")
                         .action(clap::ArgAction::SetTrue)
                         .help("Follow log output"),
+                )
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Simulate command"),
                 ),
         )
         .subcommand(
@@ -219,6 +225,12 @@ async fn main() {
                         .last(true)
                         .num_args(1..)
                         .help("Command to run (e.g. /bin/bash)"),
+                )
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Simulate command"),
                 ),
         )
         .subcommand(
