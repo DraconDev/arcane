@@ -280,7 +280,7 @@ async fn deploy_worker(
 
         // Auto-detect compose file
         if repo_dir.join("compose.yml").exists() {
-            cmd.args(["--compose-file", "compose.yml"]);
+            cmd.args(["--compose", "compose.yml"]);
         } else if repo_dir.join("docker-compose.yml").exists() {
             cmd.args(["--compose-file", "docker-compose.yml"]);
         }
