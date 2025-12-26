@@ -1,5 +1,8 @@
 use crate::ai_service::{AIConfig, AIProvider};
 use serde::{Deserialize, Serialize};
+
+pub mod env;
+
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
