@@ -306,11 +306,45 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         .borders(Borders::ALL)
         .title(" Dashboard Controls ");
 
-    let separator = Span::raw("   ");
+    f.render_widget(controls_block.clone(), chunks[2]);
+    let controls_area = controls_block.inner(chunks[2]);
+
+    // Split into 3 rows (Row 1, Spacer, Row 2)
+    // Vertically center the 3 lines in the available 4 lines height?
+    // Let's just do top alignment for now or vertical center.
+    let rows = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1), // Row 1
+            Constraint::Length(1), // Spacer
+            Constraint::Length(1), // Row 2
+            Constraint::Min(0),    // Remaining
+        ])
+        .split(controls_area);
+
+    // Row 1 Columns
+    let row1_cols = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+        ])
+        .split(rows[0]);
+
+    // Row 2 Columns
+    let row2_cols = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+            Constraint::Ratio(1, 3),
+        ])
+        .split(rows[2]);
 
     // Daemon Button
-    let daemon_btn = if app.daemon_starting {
-        // Animated loading state with cycling dots
+    let daemon_span = if app.daemon_starting {
+        // Animated loading state
         let dots = match app.tick_counter % 4 {
             0 => "   ",
             1 => ".  ",
@@ -343,7 +377,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Commit Button
-    let auto_commit_btn = if app.ai_auto_commit {
+    let auto_commit_span = if app.ai_auto_commit {
         Span::styled(
             " [a] Auto-Commit: ON ",
             Style::default()
@@ -359,7 +393,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Push Button
-    let auto_push_btn = if app.ai_auto_push {
+    let auto_push_span = if app.ai_auto_push {
         Span::styled(
             " [p] Auto-Push: ON ",
             Style::default()
@@ -371,17 +405,9 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         Span::styled(" [p] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
     };
 
-    let controls_line_1 = Line::from(vec![
-        daemon_btn,
-        separator.clone(),
-        auto_commit_btn,
-        separator.clone(),
-        auto_push_btn,
-    ]);
-
     // Row 2
     // Auto-Version
-    let version_btn = if app.version_bumping {
+    let version_span = if app.version_bumping {
         Span::styled(
             " [v] Auto-Version: ON ",
             Style::default()
@@ -397,7 +423,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Deploy
-    let deploy_btn = if app.ai_auto_deploy {
+    let deploy_span = if app.ai_auto_deploy {
         Span::styled(
             " [d] Auto-Deploy: ON ",
             Style::default()
@@ -413,7 +439,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Shadow Branches
-    let shadow_btn = if app.shadow_branches {
+    let shadow_span = if app.shadow_branches {
         Span::styled(
             " [b] Shadow Branches: ON ",
             Style::default()
@@ -428,18 +454,32 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         )
     };
 
-    let controls_line_2 = Line::from(vec![
-        version_btn,
-        separator.clone(),
-        deploy_btn,
-        separator,
-        shadow_btn,
-    ]);
+    // Render Widgets
+    f.render_widget(
+        Paragraph::new(daemon_span).alignment(ratatui::layout::Alignment::Center),
+        row1_cols[0],
+    );
+    f.render_widget(
+        Paragraph::new(auto_commit_span).alignment(ratatui::layout::Alignment::Center),
+        row1_cols[1],
+    );
+    f.render_widget(
+        Paragraph::new(auto_push_span).alignment(ratatui::layout::Alignment::Center),
+        row1_cols[2],
+    );
 
-    let controls = Paragraph::new(vec![controls_line_1, Line::raw(""), controls_line_2])
-        .block(controls_block)
-        .alignment(ratatui::layout::Alignment::Center);
-    f.render_widget(controls, chunks[2]);
+    f.render_widget(
+        Paragraph::new(version_span).alignment(ratatui::layout::Alignment::Center),
+        row2_cols[0],
+    );
+    f.render_widget(
+        Paragraph::new(deploy_span).alignment(ratatui::layout::Alignment::Center),
+        row2_cols[1],
+    );
+    f.render_widget(
+        Paragraph::new(shadow_span).alignment(ratatui::layout::Alignment::Center),
+        row2_cols[2],
+    );
 }
 
 fn render_graph(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
