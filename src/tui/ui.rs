@@ -64,7 +64,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(" Arcane v{} ", env!("CARGO_PKG_VERSION")))
-                .title(ratatui::widgets::block::Title::from(hint_text).alignment(Alignment::Right))
+                .title_top(Line::from(hint_text).alignment(Alignment::Right))
                 .border_style(if views_focused {
                     Style::default().fg(Color::Magenta)
                 } else {
@@ -81,7 +81,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     f.render_widget(tabs, chunks[0]);
 
     // 2. Status Hub (Dashboard only)
-    let (main_area, footer_area) = if show_status_hub {
+    let main_area = if show_status_hub {
         let status_block = Block::default().borders(Borders::ALL).title(" Status Hub ");
         let status_lines = if let Some(status) = &app.status {
             let watched_path = app
