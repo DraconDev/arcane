@@ -544,9 +544,29 @@ async fn main() {
                         .get_one::<String>("ports")
                         .map(|p| p.split(',').filter_map(|s| s.trim().parse().ok()).collect());
 
-                    // Re-use target name as env_name (e.g. 'prod' -> 'prod.env')
-                    match crate::ops::deploy::ArcaneDeployer::deploy(target, &image, target, ports)
-                        .await
+                    let env_name = sub_matches
+                        .get_one::<String>("env")
+                        .map(|s| s.as_str())
+                        .unwrap_or("staging");
+
+                    if env_name == "production" {
+                        use std::io::Write;
+                        print!("⚠️  Deploying to PRODUCTION. Are you sure? [y/N] ");
+                        std::io::stdout().flush().expect("Failed to flush stdout");
+                        let mut input = String::new();
+                        std::io::stdin()
+                            .read_line(&mut input)
+                            .expect("Failed to read input");
+                        if input.trim().to_lowercase() != "y" {
+                            println!("🚫 Aborted.");
+                            std::process::exit(0);
+                        }
+                    }
+
+                    match crate::ops::deploy::ArcaneDeployer::deploy(
+                        target, &image, env_name, ports,
+                    )
+                    .await
                     {
                         Ok(_) => println!("✅ Deploy Successful"),
                         Err(e) => {
