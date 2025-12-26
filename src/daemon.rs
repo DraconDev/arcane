@@ -426,7 +426,7 @@ fn notify_user(title: &str, body: &str) {
             .as_secs();
         let last = LAST_NOTIFY.load(Ordering::Relaxed);
 
-        if now - last < 10 {
+        if now - last < 30 {
             return; // Skip - too soon since last notification
         }
         LAST_NOTIFY.store(now, Ordering::Relaxed);
@@ -437,8 +437,7 @@ fn notify_user(title: &str, body: &str) {
             .appname("Arcane")
             .icon("security-high")
             .urgency(Urgency::Critical)
-            .hint(Hint::Resident(true)) // Keep in notification center
-            .timeout(0) // Persistent until user dismisses
+            .timeout(5000) // Auto-dismiss after 5s
             .action("default", "Open Arcane")
             .show();
 
