@@ -2,7 +2,6 @@
 //!
 //! A lightweight daemon that listens for GitHub/GitLab webhooks and triggers deploys.
 
-use crate::ops::config::OpsConfig;
 use axum::{
     body::Bytes,
     extract::State,
@@ -11,8 +10,10 @@ use axum::{
     Router,
 };
 use hmac::{Hmac, Mac};
+use serde::Deserialize;
 use sha2::Sha256;
 use std::collections::HashMap;
+use std::fs;
 use std::process::Command;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
@@ -28,11 +29,24 @@ pub struct SparkConfig {
     pub repos: HashMap<String, RepoConfig>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Deserialize)]
 pub struct RepoConfig {
+    pub url: String,
     pub branch: String,
     pub deploy_target: String,
     pub env: String,
+}
+
+#[derive(Deserialize)]
+struct SparkToml {
+    repos: Vec<RepoEntry>,
+}
+
+#[derive(Deserialize)]
+struct RepoEntry {
+    name: String,
+    #[serde(flatten)]
+    config: RepoConfig,
 }
 
 /// Build state for debounce + latest wins
@@ -62,6 +76,7 @@ struct AppState {
 
 struct DeployJob {
     repo_name: String,
+    repo_url: String,
     commit: String,
     target: String,
     env: String,
@@ -190,6 +205,7 @@ async fn handle_webhook(
                 .deploy_tx
                 .send(DeployJob {
                     repo_name: repo_name_clone,
+                    repo_url: repo_config.url.clone(),
                     commit,
                     target: repo_config.deploy_target,
                     env: repo_config.env,
@@ -206,6 +222,11 @@ async fn deploy_worker(
     mut rx: mpsc::Receiver<DeployJob>,
     builds: Arc<RwLock<HashMap<String, BuildState>>>,
 ) {
+    // Create base repos directory
+    let home = std::env::var("HOME").expect("HOME not set");
+    let base_dir = std::path::Path::new(&home).join(".arcane/spark/repos");
+    std::fs::create_dir_all(&base_dir).expect("Failed to create repos dir");
+
     while let Some(job) = rx.recv().await {
         println!(
             "🚀 Starting deploy for {} ({})",
@@ -213,8 +234,47 @@ async fn deploy_worker(
             &job.commit[..7.min(job.commit.len())]
         );
 
-        // Run arcane deploy
+        let repo_dir = base_dir.join(&job.repo_name);
+
+        // 1. Git Sync
+        let git_res = if repo_dir.exists() {
+            // Reset and Pull
+            println!("   🔄 Updating repo in {}", repo_dir.display());
+            let status = Command::new("git")
+                .current_dir(&repo_dir)
+                .args(["fetch", "--all"])
+                .status()
+                .and_then(|_| {
+                    Command::new("git")
+                        .current_dir(&repo_dir)
+                        .args(["reset", "--hard", &job.commit])
+                        .status()
+                });
+            status
+        } else {
+            // Clone
+            println!("   📥 Cloning {} to {}", job.repo_url, repo_dir.display());
+            Command::new("git")
+                .current_dir(&base_dir)
+                .args(["clone", &job.repo_url, &job.repo_name])
+                .status()
+        };
+
+        if let Ok(status) = git_res {
+            if !status.success() {
+                eprintln!("❌ Git sync failed");
+                mark_complete(&builds, &job.repo_name);
+                continue;
+            }
+        } else {
+            eprintln!("❌ Git command failed");
+            mark_complete(&builds, &job.repo_name);
+            continue;
+        }
+
+        // 2. Arcane Deploy
         let result = Command::new("arcane")
+            .current_dir(&repo_dir) // Run inside the repo
             .args(["deploy", "--target", &job.target, "--env", &job.env])
             .status();
 
@@ -234,24 +294,36 @@ async fn deploy_worker(
             }
         }
 
-        // Mark build as complete
-        {
-            let mut builds = builds.write().unwrap();
-            if let Some(state) = builds.get_mut(&job.repo_name) {
-                state.build_in_progress = false;
-            }
-        }
+        mark_complete(&builds, &job.repo_name);
+    }
+}
+
+fn mark_complete(builds: &Arc<RwLock<HashMap<String, BuildState>>>, repo_name: &str) {
+    let mut builds = builds.write().unwrap();
+    if let Some(state) = builds.get_mut(repo_name) {
+        state.build_in_progress = false;
     }
 }
 
 /// Start the Spark server
 pub async fn start_server(port: u16, secret: String) -> anyhow::Result<()> {
-    // Load repo config from servers.toml or spark.toml
-    let _ops_config = OpsConfig::load();
-    let repos = HashMap::new();
+    // Load repo config from spark.toml
+    let mut repos = HashMap::new();
 
-    // For MVP, allow all repos with default config
-    // TODO: Load from spark.toml
+    match fs::read_to_string("spark.toml") {
+        Ok(content) => match toml::from_str::<SparkToml>(&content) {
+            Ok(config) => {
+                println!("📄 Loaded spark.toml with {} repos", config.repos.len());
+                for entry in config.repos {
+                    println!("   - {}", entry.name);
+                    repos.insert(entry.name, entry.config);
+                }
+            }
+            Err(e) => eprintln!("❌ Failed to parse spark.toml: {}", e),
+        },
+        Err(_) => println!("⚠️  spark.toml not found, running with empty whitelist"),
+    }
+
     println!("⚡ Arcane Spark starting on port {}", port);
     println!("   Webhook URL: http://0.0.0.0:{}/webhook", port);
     println!(

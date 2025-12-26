@@ -77,7 +77,7 @@
 | Feature                        | Description                                     | Status     |
 | ------------------------------ | ----------------------------------------------- | ---------- |
 | **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done    |
-| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | 🔲 Planned |
+| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done    |
 | Domain support                 | Auto-configure Caddy with domain from env       | 🔲 Planned |
 
 ### Priority 3: Networking
@@ -117,7 +117,15 @@ jobs:
 -   Arcane only handles the push + secrets
 -   No Spark server to maintain
 
-### 2. `arcane status` Command
+### 2. GitHub API Synergies
+
+Automate the setup process using GitHub API since we likely have keys:
+
+-   `arcane repo init-hook`: Automatically adds the Spark webhook to your GitHub repo.
+-   **Status Checks**: Report deployment status back to the PR/Commit on GitHub.
+-   **Deployments API**: Create "Deployment" events in GitHub for tracking.
+
+### 3. `arcane status` Command
 
 Show what's running on each server:
 
