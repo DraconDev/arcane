@@ -145,6 +145,17 @@ async fn main() {
                             "Environment to load (config/envs/<env>.env). Defaults to 'staging'.",
                         ),
                 )
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Simulate deployment without executing commands remotely"),
+                )
+                .arg(
+                    Arg::new("compose")
+                        .long("compose")
+                        .help("Path to docker-compose.yaml file (replaces image arg)"),
+                )
                 .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
                 .subcommand(
                     Command::new("allow")
