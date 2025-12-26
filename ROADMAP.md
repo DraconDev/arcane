@@ -78,14 +78,17 @@
 | ------------------------------ | ----------------------------------------------- | ---------- |
 | **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done    |
 | **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done    |
-| Domain support                 | Auto-configure Caddy with domain from env       | 🔲 Planned |
+| Traefik Setup Script           | Auto-discovery reverse proxy                    | ✅ Done    |
+| Traefik Label Generation       | Auto-generate labels in compose                 | 🔄 Next    |
+| GitHub Status API              | Report deploy pass/fail to commit               | 🔲 Planned |
 
 ### Priority 3: Networking
 
-| Feature                  | Description               | Effort |
-| ------------------------ | ------------------------- | ------ |
-| Custom domains in config | Map domains to containers | Medium |
-| Wildcard certs           | `*.app.com` via Caddy     | Low    |
+| Feature                  | Description               | Status     |
+| ------------------------ | ------------------------- | ---------- |
+| Custom domains in config | Map domains to containers | 🔄 Next    |
+| Wildcard certs           | `*.app.com` via Traefik   | 🔲 Planned |
+| Auto subdomain routing   | Project name → subdomain  | 🔄 Next    |
 
 ---
 
