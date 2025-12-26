@@ -364,7 +364,9 @@ impl FileWatcher {
         }
         // -------------------------------------------------
 
-        let commit_message = self.ai_service.generate_commit_message(&final_diff).await?;
+        // Use 'diff' (original code changes) instead of 'final_diff' (which includes the version bump)
+        // so the AI describes what the USER did, not what the DAEMON did.
+        let commit_message = self.ai_service.generate_commit_message(&diff).await?;
 
         // Perform the commit (shadow or regular)
         self.git_operations
