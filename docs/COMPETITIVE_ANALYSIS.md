@@ -56,17 +56,17 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 
 **What it is:** Install on server, `git push dokku main` to deploy. Uses Buildpacks.
 
-| Feature                       | Arcane Stance | Reasoning                                                                      |
-| ----------------------------- | ------------- | ------------------------------------------------------------------------------ |
-| **Buildpacks (Heroku-style)** | **Kill**      | "Magic" detection fails. Explicit Dockerfiles are reliable.                    |
-| **Plugins (Redis, Postgres)** | **Kill**      | Plugin ecosystem = maintenance nightmare. Use Docker images.                   |
-| **Git Push to Deploy**        | **Adapt**     | We use git for versioning, but `arcane deploy` as the action. Better feedback. |
-| **Process Types (Procfile)**  | **Kill**      | Docker is our process model. No Procfile parsing.                              |
-| **Config:set**                | **Adapt**     | We encrypt env vars in git, not set them on server.                            |
-| **Zero-Downtime (Checks)**    | **Keep**      | Dokku does this well. We need it.                                              |
-| **SSL via Let's Encrypt**     | **Keep**      | Caddy does this automatically.                                                 |
-| **Custom Domains**            | **Keep**      | Map domains to containers.                                                     |
-| **Network Isolation**         | **Keep**      | Containers on same network can talk; external can't.                           |
+| Feature                       | Arcane Stance | Reasoning                                                                              |
+| ----------------------------- | ------------- | -------------------------------------------------------------------------------------- |
+| **Buildpacks (Heroku-style)** | **Kill**      | "Magic" detection fails. Explicit Dockerfiles are reliable.                            |
+| **Plugins (Redis, Postgres)** | **Kill**      | Plugin ecosystem = maintenance nightmare. Use Docker images.                           |
+| **Git Push to Deploy**        | **Adapt**     | We use git for versioning, but `arcane deploy` command as the action. Better feedback. |
+| **Process Types (Procfile)**  | **Kill**      | Docker is our process model. No Procfile parsing.                                      |
+| **Config:set**                | **Adapt**     | We encrypt env vars in git, not set them on server.                                    |
+| **Zero-Downtime (Checks)**    | **Keep**      | Dokku does this well. We need it.                                                      |
+| **SSL via Let's Encrypt**     | **Keep**      | Caddy does this automatically.                                                         |
+| **Custom Domains**            | **Keep**      | Map domains to containers.                                                             |
+| **Network Isolation**         | **Keep**      | Containers on same network can talk; external can't.                                   |
 
 ---
 
@@ -74,14 +74,14 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 
 **What it is:** Web UI for Docker Swarm. One-click apps.
 
-| Feature                         | Arcane Stance       | Reasoning                                                     |
-| ------------------------------- | ------------------- | ------------------------------------------------------------- |
-| **Docker Swarm**                | **Kill**            | Swarm is dead. Compose is standard. K8s is overkill for most. |
-| **One-Click Apps Marketplace**  | **Kill**            | We don't want to maintain app definitions.                    |
-| **Webhooks for CI**             | **Adapt (Spark)**   | Reserved for Build Server mode. Not core.                     |
-| **Wildcard SSL**                | **Keep**            | Caddy supports this. `*.app.com` certs.                       |
-| **Force HTTPS**                 | **Keep**            | Automatic with Caddy.                                         |
-| **Persistent Apps (Databases)** | **Adapt (Compose)** | Define in compose, we handle volumes.                         |
+| Feature                         | Arcane Stance       | Reasoning                                                                                 |
+| ------------------------------- | ------------------- | ----------------------------------------------------------------------------------------- |
+| **Docker Swarm**                | **Kill**            | Swarm is dead. Compose is standard. K8s is overkill.                                      |
+| **One-Click Apps Marketplace**  | **Kill**            | We don't want to maintain app definitions.                                                |
+| **Webhooks for CI**             | **Adapt (Spark)**   | They rely on webhooks for everything. We reserve this for the Build Server (Spark) model. |
+| **Wildcard SSL**                | **Keep**            | Caddy supports this. `*.app.com` certs.                                                   |
+| **Force HTTPS**                 | **Keep**            | Automatic with Caddy.                                                                     |
+| **Persistent Apps (Databases)** | **Adapt (Compose)** | Define in compose, we handle volumes.                                                     |
 
 ---
 
@@ -224,15 +224,3 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 3. **Build Locally, Push Artifacts** - Use your beefy dev machine.
 4. **Encrypted Git as Single Source of Truth** - No secret sprawl.
 5. **Scales from Solo to Enterprise** - Same tool, just add machine keys.
-
----
-
-## Part 5: Implementation Priority
-
-| Phase | Features                                    | Unlocks                        |
-| ----- | ------------------------------------------- | ------------------------------ |
-| **1** | Environment Management (staging/prod)       | Real-world deploys             |
-| **2** | Docker Compose, Blue/Green, Locks, Rollback | Multi-container apps (Chimera) |
-| **3** | Server Groups, Parallel Deploy              | Scale to many servers          |
-| **4** | Health Checks, Logs, Exec                   | Observability                  |
-| **5** | Arcane Spark (Build Server)                 | Team workflows                 |
