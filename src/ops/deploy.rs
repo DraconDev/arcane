@@ -99,54 +99,26 @@ impl ArcaneDeployer {
         println!("   Image: {}", image);
         println!("   Secrets Environment: {}", env_name);
 
-        // 2. Decrypt Secrets in Memory
-        println!("🔓 Decrypting secrets...");
+        // 2. Decrypt Secrets & Load Environment
+        println!("🔓 Decrypting environment '{}'...", env_name);
         let security = ArcaneSecurity::new(None)?;
         let repo_key = security.load_repo_key()?;
 
-        let env_path = Path::new("config")
-            .join("envs")
-            .join(format!("{}.env", env_name));
+        // Find repo root to locate config/
+        let project_root = ArcaneSecurity::find_repo_root()?;
 
-        let env_str = if !env_path.exists() {
-            println!(
-                "   ⚠️  Environment file not found: {} (Deploying without extra secrets)",
-                env_path.display()
-            );
-            String::new()
-        } else {
-            let content = std::fs::read(&env_path)?;
-            // Hybrid Mode: Try decrypt, fallback to plaintext if checking local file
-            match security.decrypt_with_repo_key(&repo_key, &content) {
-                Ok(decrypted) => String::from_utf8(decrypted)?,
-                Err(_) => {
-                    // If decryption fails, check if it's already plain text (UTF-8)
-                    if let Ok(plaintext) = String::from_utf8(content.clone()) {
-                        println!("   ⚠️  Using Plain Text .env file (Not encrypted on disk).");
-                        plaintext
-                    } else {
-                        return Err(anyhow::anyhow!(
-                            "Failed to decrypt .env and it is not valid text."
-                        ));
-                    }
-                }
-            }
-        };
+        // Load the environment (handles base.env + specific.env + encryption)
+        let env =
+            crate::config::env::Environment::load(env_name, &project_root, &security, &repo_key)?;
 
         // 3. Construct Docker Flags
         let mut env_flags = String::new();
         let mut count = 0;
-        for line in env_str.lines() {
-            if let Some((k, v)) = line.split_once('=') {
-                let k = k.trim();
-                let v = v.trim();
-                if !k.is_empty() && !k.starts_with('#') {
-                    // Escape single quotes for shell safety
-                    let safe_v = v.replace("'", "'\\''");
-                    env_flags.push_str(&format!(" -e {}='{}'", k, safe_v));
-                    count += 1;
-                }
-            }
+        for (k, v) in env.variables {
+            // Escape single quotes for shell safety
+            let safe_v = v.replace("'", "'\\''");
+            env_flags.push_str(&format!(" -e {}='{}'", k, safe_v));
+            count += 1;
         }
         println!("   Injected {} secrets into RAM payload.", count);
 
