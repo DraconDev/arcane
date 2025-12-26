@@ -174,24 +174,62 @@ No secret rotation. No service restarts. No downtime. They never had the actual 
 For solo developers, Arcane is so simple it feels like cheating:
 
 ```bash
-# Setup (once)
+# Setup (once, on your laptop)
 arcane identity new
 arcane init
 
-# Daily work
-# ... edit code ...
+# Daily work - literally just code
+# ... edit files ...
 # Daemon auto-commits with AI messages
-git push  # Optional: auto-push enabled
+# Auto-push sends to git
 
-# Deploy
+# Deploy - one command
 arcane deploy myapp
+# Done. Live in seconds.
 ```
 
-That's it. No Kubernetes. No Docker Swarm. No CI/CD pipelines. No secret managers. No cloud accounts.
+### What You DON'T Do
 
-Just you, your code, and your servers.
+**No server setup:**
 
-**The feeling:** You're writing code in 2024 with the simplicity of 2005 `scp` deployments, but with enterprise-grade encryption and zero-downtime deploys.
+-   No SSH in to configure environment variables
+-   No `.env` files to manually create
+-   No "did I set the right value?" anxiety
+-   Secrets are baked into the deploy automatically
+
+**No configuration hell:**
+
+-   No YAML files
+-   No Docker Compose to maintain separately
+-   No CI/CD pipeline to debug
+-   No "works on my machine" issues
+
+**No waiting:**
+
+-   Build locally (fast)
+-   Compress and push (seconds)
+-   Container starts (instant)
+-   Zero-downtime swap (seamless)
+
+### The Timeline
+
+| What                 | Traditional                 | Arcane            |
+| -------------------- | --------------------------- | ----------------- |
+| First deploy setup   | Hours (CI/CD, secrets, env) | 5 minutes         |
+| Each deploy          | Minutes (pipeline runs)     | ~10 seconds       |
+| Add a secret         | Update CI, redeploy         | Edit file, deploy |
+| Debug deploy failure | Check 5 different systems   | Check one log     |
+
+### The Feeling
+
+You're writing code in 2024 with the simplicity of 2005 `scp` deployments, but with:
+
+-   Enterprise-grade encryption
+-   Zero-downtime deploys
+-   AI-generated commit messages
+-   Automatic secret injection
+
+It feels like you're getting away with something.
 
 ---
 
