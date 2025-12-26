@@ -1,6 +1,6 @@
 [[repos]]
 name = "arcane"
-url = "/home/dracon/_Dev/arcane"
+url = "/home/dracon/_Dev/arcane-test"
 branch = "master"
 deploy_target = "local"
 env = "local"
