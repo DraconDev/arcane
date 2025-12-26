@@ -172,12 +172,7 @@ async fn main() {
         .subcommand(
             Command::new("logs")
                 .about("Stream logs from a remote container")
-                .arg(
-                    Arg::new("target")
-                        .short('t')
-                        .required(true)
-                        .help("Server name"),
-                )
+                .arg(Arg::new("target").required(true).help("Server name"))
                 .arg(
                     Arg::new("app")
                         .short('a')
@@ -207,12 +202,7 @@ async fn main() {
         .subcommand(
             Command::new("exec")
                 .about("Execute an interactive command in a remote container")
-                .arg(
-                    Arg::new("target")
-                        .short('t')
-                        .required(true)
-                        .help("Server name"),
-                )
+                .arg(Arg::new("target").required(true).help("Server name"))
                 .arg(
                     Arg::new("app")
                         .short('a')
