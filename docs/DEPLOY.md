@@ -1,113 +1,123 @@
-# Sovereign Deployment (Garage Mode) 🚀
+# Arcane Deployment Guide 🚀
 
 > "The direct path is often the most sovereign."
 
-Arcane implements a deployment strategy known as **Garage Mode**. Unlike modern DevOps pipelines that rely on complex chains of third-party services (GitHub Actions -> Docker Hub -> Kubernetes), Arcane believes in **Direct Action**.
-
-## The Philosophy: Caveman or Genius?
-
-It feels primitive because it uses raw tools (`ssh`, `tar`, `zstd`, `docker`).
-It is genius because it removes all "Rent-Seeking" middlemen.
-
-**The Pipeline:**
-
-1.  **You** (Laptop) -> **Tunnel** (SSH) -> **Production** (VPS)
-
-**Benefits:**
-
--   **Zero Rent**: No CI minutes, no private registry fees.
--   **Zero Leakage**: Code and secrets never leave your encrypted tunnel.
--   **Zero Downtime**: If GitHub goes down, you can still ship.
+Arcane provides a powerful, agentless deployment system that encrypts secrets locally and pushes everything through SSH tunnels. No cloud registry, no CD pipeline, no Kubernetes. Just you and your servers.
 
 ---
 
-## 🏗️ The Garage Workflow
+## 🏗️ Core Philosophies
 
-When you run `arcane deploy`, the following pipeline executes entirely on your machine (and the target):
-
-### 1. Local Build
-
-Arcane builds your Docker image locally using your `Dockerfile`.
-
-```bash
-docker build -t <app>:latest .
-```
-
-### 2. Smoke Test (The "Ignition Check")
-
-Before uploading, Arcane runs a transient container for 3 seconds to ensure it doesn't crash on boot.
-
--   If it dies? **Abort**. (Bad code never leaves your laptop).
--   If it lives? **Proceed**.
-
-### 3. Ram Injection (Secrets)
-
-Arcane decrypts your local `.env` file (or uses the plaintext one if you are in development) and injects the secrets directly into the simple deployment command.
-
--   **Security Note**: Secrets are NEVER baked into the image. They exist only in the RAM of the running container.
-
-### 4. Warp Drive (The Transport)
-
-We don't "push" to a registry. We stream the image directly to the server.
-
-```bash
-docker save <image> | zstd -T0 -3 | ssh <host> 'zstd -d | docker load'
-```
-
--   **Speed**: Zstd compression makes this comparable to (or faster than) a registry pull, especially for updates (Docker layers).
--   **Note**: Ensure your `.dockerignore` excludes `target/` and `.git/` to keep uploads fast!
-
-### 5. Smart Swap (Zero Downtime)
-
-Once the image is on the server, Arcane performs a **Hot Swap**:
-
-#### Standard Mode (Renaming)
-
-1.  Rename existing container `app` -> `app_old`.
-2.  Start new container `app` (with new secrets).
-3.  Health Check (HTTP/Docker Status).
-4.  If Healthy: Kill `app_old`.
-5.  If Failed: Kill `app`, Rename `app_old` -> `app`. (Instant Rollback).
-
-#### Enterprise Mode (Caddy / Blue-Green)
-
-If you provide `--ports 8001,8002`, Arcane orchestrates a Blue/Green deploy with Caddy.
-
-1.  Determine which color is active (Blue).
-2.  Deploy to Green.
-3.  Verify Health.
-4.  Update Caddyfile (`sed -i ...`) to point to Green.
-5.  Reload Caddy (Traffic swaps instantly).
-6.  Kill Blue.
+1.  **Garage Mode (Push-to-Deploy)**: We build locally, test locally, and stream binaries/images directly to the server. Secrets are decrypted in RAM only.
+2.  **Environment Isolation**: Separate credentials for Staging and Production, handled seamlessly via `config/envs/`.
+3.  **Zero Trust**: Servers only see the secrets they need, at the moment of deployment.
 
 ---
 
-## Usage
+## 🛠️ Usage
 
-### 1. Prerequisites
+### 1. Single Image Deployment (Garage Mode)
 
--   A `Dockerfile` in your repo root.
--   A server configured in `~/.arcane/servers.toml`.
--   (Optional) An `.env` file in `config/envs/<server_name>.env`.
-
-### 2. Deploy
+Ideal for simple microservices or monoliths. Supports Zero Downtime.
 
 ```bash
-# Deploy 'chimera' app to 'micro1' server
-arcane deploy -t micro1 -a chimera
+# Basic Deploy (Staging default)
+arcane deploy --target micro1 --app chimera
+
+# Production Deploy (Prompts for confirmation)
+arcane deploy --target micro1 --app chimera --env production
 ```
 
-### 3. Deploy with Zero Downtime (Blue/Green)
+**Workflow:**
+
+1.  **Build**: `docker build` locally.
+2.  **Smoke Test**: Runs transient container to verify boot.
+3.  **Warp Drive**: Streams image via `zstd | ssh | docker load`.
+4.  **Encrypt/Inject**: Decrypts `.env` and passes vars to container securely.
+5.  **Swap**: Hot-swaps the container.
+
+### 2. Docker Compose Deployment (Stack Mode)
+
+For complex stacks (e.g. App + Redis + Sidecar).
 
 ```bash
-# Deploy 'chimera' using ports 8001 and 8002 for traffic swapping
-arcane deploy -t micro1 -a chimera --ports 8001,8002
+arcane deploy --target micro1 --compose docker-compose.yaml --env production
+```
+
+**Workflow:**
+
+1.  **Generate**: Decrypts env vars to a temporary `.env` on remote.
+2.  **Upload**: SCPs plain `docker-compose.yaml` and the generated `.env`.
+3.  **Execute**: `docker compose up -d --remove-orphans` (Rolling Update).
+
+### 3. Server Groups (Mass Deployment)
+
+Deploy to clusters defined in specific groups.
+
+```bash
+# In ~/.arcane/servers.toml:
+# [[groups]]
+# name = "web-cluster"
+# servers = ["web1", "web2", "web3"]
+
+# Deploy to all concurrently (Max 4 parallel)
+arcane deploy --target web-cluster --parallel
+```
+
+### 4. Simulation (Dry Run)
+
+Validate configuration and keys without touching the server.
+
+```bash
+arcane deploy --target micro1 --dry-run
+```
+
+Output:
+
+```
+[DRY RUN] Decryption successful. Loaded 12 variables.
+[DRY RUN] Would hold lock.
+[DRY RUN] Would build image...
 ```
 
 ---
 
-## Troubleshooting
+## 🌍 Environment Management
 
--   **"Upload is slow"**: Check your `.dockerignore`. You usually want to ignore `target/` and `.git/`.
--   **"Decryption failed"**: If your `.env` file is plain text, Arcane will auto-detect and use it (logging a warning).
--   **"Smoke Test Failed"**: Check `docker logs` output. Your container likely crashed immediately (missing env var?).
+Arcane uses a layered configuration system in `project_root/config/envs/`:
+
+-   `base.env`: Shared defaults (e.g. `PORT=3000`). Commit as plaintext.
+-   `staging.env`: Staging secrets. **Encrypted** by Arcane.
+-   `production.env`: Production secrets. **Encrypted** by Arcane.
+
+Use `arcane init` to set up encryption keys.
+
+---
+
+## 🚦 Zero Downtime Strategies
+
+### Standard (Rename Swap)
+
+Default for single images.
+
+1.  Start `new_container`.
+2.  Wait for health check.
+3.  Stop `old_container`.
+4.  If fail: Kill `new`, keep `old` running.
+
+### Blue/Green (Caddy)
+
+Requires `--ports 8001,8002`.
+
+1.  Deploy to inactive color (Green).
+2.  Verify health.
+3.  Update Caddy upstream to Green.
+4.  Kill Blue.
+
+---
+
+## 🧩 Troubleshooting
+
+-   **"Upload is slow"**: Check `.dockerignore`. Exclude `target/`, `node_modules/`, and `.git/`.
+-   **"SSH Error"**: Ensure your SSH agent has the key loaded (`ssh-add ~/.ssh/id_ed25519`).
+-   **"Deployment Locked"**: Arcane places a lock directory on the server. If a deploy crashes, you may need to manually run `rmdir /var/lock/arcane.deploy` on the server.
