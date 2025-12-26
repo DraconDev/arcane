@@ -13,7 +13,6 @@ use axum::{
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
@@ -248,8 +247,8 @@ async fn deploy_worker(
 /// Start the Spark server
 pub async fn start_server(port: u16, secret: String) -> anyhow::Result<()> {
     // Load repo config from servers.toml or spark.toml
-    let ops_config = OpsConfig::load();
-    let mut repos = HashMap::new();
+    let _ops_config = OpsConfig::load();
+    let repos = HashMap::new();
 
     // For MVP, allow all repos with default config
     // TODO: Load from spark.toml
