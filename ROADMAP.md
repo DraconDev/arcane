@@ -63,23 +63,22 @@
 
 ## 🔲 Remaining Features
 
-### Priority 1: Core Gaps
+### Priority 1: Core Gaps (DONE ✅)
 
-| Feature           | Description                                  | Effort |
-| ----------------- | -------------------------------------------- | ------ |
-| `arcane rollback` | Keep last N images, instant revert           | Medium |
-| `arcane validate` | Pre-deploy config check (DNS, SSH, env vars) | Medium |
-| `arcane stop`     | Kill switch for all containers on a server   | Low    |
-| `arcane status`   | Show what's running on which port            | Low    |
+| Feature           | Description                                | Status  |
+| ----------------- | ------------------------------------------ | ------- |
+| `arcane rollback` | Swap current with backup container         | ✅ Done |
+| `arcane validate` | Pre-deploy config check (SSH, Docker, env) | ✅ Done |
+| `arcane halt`     | Kill switch for all containers on server   | ✅ Done |
+| `arcane ps`       | Show running containers on server          | ✅ Done |
 
 ### Priority 2: Build Automation
 
-| Feature                        | Description                                  | Effort |
-| ------------------------------ | -------------------------------------------- | ------ |
-| **GitHub Actions Integration** | Use GitHub as build server (no Spark needed) | Low    |
-| Arcane Spark (self-hosted)     | Webhook listener for push-to-deploy          | Medium |
-| Git polling mode               | Alternative to webhooks                      | Low    |
-| Status notifications           | Discord/Slack on deploy                      | Low    |
+| Feature                        | Description                                     | Status     |
+| ------------------------------ | ----------------------------------------------- | ---------- |
+| **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done    |
+| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | 🔲 Planned |
+| Domain support                 | Auto-configure Caddy with domain from env       | 🔲 Planned |
 
 ### Priority 3: Networking
 
