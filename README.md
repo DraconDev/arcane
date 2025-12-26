@@ -44,6 +44,8 @@ git add .env && git commit -m "Add secrets"  # Encrypted in Git!
 | `arcane deploy allow <key>`     | Authorize a server to decrypt               |
 | `arcane team add <alias> <key>` | Add a teammate                              |
 | `arcane run -- <cmd>`           | Run command with decrypted secrets          |
+| `arcane logs <target>`          | Stream remote logs                          |
+| `arcane exec <target> -- <cmd>` | Execute SSH command                         |
 | `arcane scan <file>`            | Scan for leaked secrets                     |
 | `arcane daemon ...`             | Auto-init new repos in background           |
 | `arcane dashboard`              | Launch the Sovereign Terminal (TUI)         |
@@ -124,6 +126,7 @@ arcane/
 | Docker Compose Support | ✅ Stable |
 | AI-powered commits | ✅ Beta |
 | Sovereign Terminal (TUI) | ✅ Stable |
+| Observability (Logs/Exec) | ✅ Stable |
 | Smart Squash (AI Git History) | ✅ Beta |
 
 ## License
