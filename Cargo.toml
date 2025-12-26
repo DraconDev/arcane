@@ -70,7 +70,4 @@ ansi-to-tui = "7.0.0"
 
 # Arcane Ops Dependencies
 bollard = "0.15"
-russh = "0.40"
-russh-keys = "0.40"
-futures = "0.3"
 
