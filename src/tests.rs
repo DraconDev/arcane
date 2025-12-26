@@ -381,6 +381,7 @@ mod daemon_status_tests {
             last_commit: Some("2024-01-01T00:00:00Z".to_string()),
             watching: vec!["/path/to/repo".to_string()],
             branch: Some("main".to_string()),
+            last_alert: None,
         };
 
         assert_eq!(status.pid, 12345);
@@ -395,6 +396,7 @@ mod daemon_status_tests {
             last_commit: None,
             watching: vec![],
             branch: None,
+            last_alert: None,
         };
 
         let save_result = status.save();
@@ -414,6 +416,7 @@ mod daemon_status_tests {
             last_commit: None,
             watching: vec!["repo1".to_string()],
             branch: None,
+            last_alert: None,
         };
 
         let cloned = status.clone();
