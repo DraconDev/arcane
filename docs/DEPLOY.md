@@ -116,6 +116,48 @@ Requires `--ports 8001,8002`.
 
 ---
 
+## 📡 Observability
+
+Arcane provides direct SSH-based observability tools to inspect your running deployments without leaving your terminal.
+
+### Remote Logs
+
+Stream logs from any container on any managed server.
+
+```bash
+# Stream logs (follow)
+arcane logs micro1 -f
+
+# Show last 100 lines
+arcane logs micro1 -n 100
+
+# Specify app/container name (Default is 'app')
+arcane logs micro1 --app redis -f
+```
+
+### Interactive Shell
+
+Open a secure, interactive shell session inside a running container.
+
+```bash
+# Bash session
+arcane exec micro1 -- /bin/bash
+
+# Run a one-off command (e.g., Rails console/migration)
+arcane exec micro1 -- rails db:migrate
+```
+
+### Dry Run
+
+All observability commands support `--dry-run` to see exactly what SSH command would be executed.
+
+```bash
+arcane exec micro1 --dry-run -- rm -rf /
+# Output: [DRY RUN] Would SSH to ... and run: 'docker exec -it app rm -rf /'
+```
+
+---
+
 ## 🧩 Troubleshooting
 
 -   **"Upload is slow"**: Check `.dockerignore`. Exclude `target/`, `node_modules/`, and `.git/`.
