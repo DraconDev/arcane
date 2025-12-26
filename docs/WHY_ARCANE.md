@@ -169,6 +169,88 @@ No secret rotation. No service restarts. No downtime. They never had the actual 
 
 ---
 
+## Arcane vs The Alternatives
+
+### Coolify / CapRover / Dokku
+
+These tools install a **massive control plane on your server**:
+
+| Issue                      | What Happens                                           |
+| -------------------------- | ------------------------------------------------------ |
+| **Building ON the server** | Your $5 VPS trying to compile Rust/Go. Good luck.      |
+| **Resource overhead**      | The control plane eats RAM your app needs              |
+| **Port conflicts**         | "Wait, is Traefik on 80 or is Nginx?"                  |
+| **Secret management**      | Web UI where you type secrets. Hope no one's watching. |
+| **Updates**                | "Coolify update broke my deploys" - every month        |
+| **Crashes**                | Control plane goes down = can't deploy anything        |
+
+**Arcane:**
+
+-   Builds **locally** (your beefy dev machine)
+-   Pushes **pre-built images** (server just runs them)
+-   **Zero overhead** (no control plane, just Docker)
+-   **No port conflicts** (Caddy handles routing cleanly)
+-   **Secrets encrypted in git** (not typed into a web UI)
+-   **Nothing to update on server** (it's just Docker)
+
+### Vercel / Railway / Render
+
+Cloud platforms that do everything for you:
+
+| Issue                | What Happens                                   |
+| -------------------- | ---------------------------------------------- |
+| **Vendor lock-in**   | Your app only works on their platform          |
+| **Pricing**          | Free tier lures you, then $20/mo per service   |
+| **Cold starts**      | Serverless = slow first request                |
+| **Limited control**  | Can't SSH in, can't see what's happening       |
+| **Data sovereignty** | Your data on their servers, their jurisdiction |
+
+**Arcane:**
+
+-   **Your servers** (any VPS, any provider, any country)
+-   **Fixed cost** ($5/mo VPS runs multiple apps)
+-   **Always warm** (containers run 24/7)
+-   **Full SSH access** (debug anything)
+-   **Your data stays yours**
+
+### Kubernetes
+
+The enterprise answer to everything:
+
+| Issue                     | What Happens                                 |
+| ------------------------- | -------------------------------------------- |
+| **Complexity**            | YAML files longer than your app code         |
+| **Learning curve**        | Months to understand pods, services, ingress |
+| **Resource requirements** | 3-node cluster minimum for HA                |
+| **Overkill**              | You have 2 apps. K8s has 47 concepts.        |
+
+**Arcane:**
+
+-   **One command**: `arcane deploy myapp`
+-   **Learning curve**: 5 minutes
+-   **Resources**: One $5 VPS is enough
+-   **Concepts**: Build. Push. Run.
+
+### GitHub Actions / GitLab CI
+
+Pipeline-based CI/CD:
+
+| Issue               | What Happens                                           |
+| ------------------- | ------------------------------------------------------ |
+| **YAML debugging**  | "Why did the pipeline fail?" (1 hour later)            |
+| **Secret sprawl**   | Secrets in GitHub, secrets in AWS, secrets in Vault... |
+| **Slow feedback**   | Push, wait 5 min, see it failed, push again            |
+| **Minutes billing** | Free tier runs out, now you're paying                  |
+
+**Arcane:**
+
+-   **No YAML** (it's a CLI tool)
+-   **Secrets in one place** (encrypted in repo)
+-   **Instant feedback** (build locally, see errors immediately)
+-   **Free forever** (runs on your machine)
+
+---
+
 ## Solo Workflow: Embarrassingly Simple
 
 For solo developers, Arcane is so simple it feels like cheating:
