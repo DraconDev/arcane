@@ -291,6 +291,17 @@ async fn main() {
                 .arg(Arg::new("hook_name").required(true))
                 .hide(true),
         )
+        .subcommand(
+            Command::new("ps")
+                .about("Show running containers on a remote server")
+                .arg(Arg::new("target").required(true).help("Server name"))
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Show command without executing"),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand() {
@@ -736,6 +747,28 @@ async fn main() {
                     crate::ops::shell::Shell::passthrough(server, &remote_cmd, true, dry_run)
                 {
                     eprintln!("❌ Exec failed: {}", e);
+                    std::process::exit(1);
+                }
+            } else {
+                eprintln!("❌ Server '{}' not found in servers.toml", target);
+                std::process::exit(1);
+            }
+        }
+        Some(("ps", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let dry_run = sub_matches.get_flag("dry-run");
+
+            let config = crate::ops::config::OpsConfig::load();
+            if let Some(server) = config.find_server(target) {
+                let cmd = r#"docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}""#;
+                if !dry_run {
+                    println!("📊 Containers on {} ({})", target, server.host);
+                    println!();
+                }
+                if let Err(e) = crate::ops::shell::Shell::passthrough(server, cmd, false, dry_run) {
+                    eprintln!("❌ Failed to get status: {}", e);
                     std::process::exit(1);
                 }
             } else {

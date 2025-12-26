@@ -21,3 +21,10 @@
 
 -   Chimera uses gRPC and multiple ports -> Caddy handles this better than Traefik.
 -   "Arcane Spark" (build server) is deferred. The security model is ready when we need it.
+
+
+- would there be an easy way to see what running on what port
+
+- can we use github as a build server, this is very exciting cause we even skip over the arcane spark, we just add a machine key to github and tell them where to build and push 
+
+- we need to expore github features more see if we have more synergies 

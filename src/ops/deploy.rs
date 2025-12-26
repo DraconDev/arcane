@@ -223,9 +223,12 @@ impl ArcaneDeployer {
 
         // 2. Upload Directory Context
         let compose_file_path = std::path::Path::new(&compose_path);
-        let context_dir = compose_file_path
+        let mut context_dir = compose_file_path
             .parent()
             .unwrap_or(std::path::Path::new("."));
+        if context_dir.as_os_str().is_empty() {
+            context_dir = std::path::Path::new(".");
+        }
 
         Self::log(
             prefix,

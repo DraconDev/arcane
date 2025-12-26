@@ -150,9 +150,9 @@ services:
                     "CMD-SHELL",
                     "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}",
                 ]
-            interval: 5s
-            timeout: 5s
-            retries: 5
+            interval: 15s
+            timeout: 10s
+            retries: 10
         restart: always
         networks:
             - backend-net
@@ -193,9 +193,9 @@ services:
             - rabbitmq_data:/var/lib/rabbitmq
         healthcheck:
             test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-            interval: 10s
-            timeout: 10s
-            retries: 5
+            interval: 30s
+            timeout: 20s
+            retries: 10
         restart: always
         networks:
             - backend-net

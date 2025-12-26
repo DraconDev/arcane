@@ -1,137 +1,242 @@
-# Git Arcane 🔮
+# ⚗️ Arcane
 
-> **Encrypted Secrets in Git. Zero Cloud Required.**
+> **Simpler than Kamal. More secure than Coolify. No cloud like Vercel.**
 
-Arcane is a **Git-native secrets manager** that encrypts your `.env` files transparently. Secrets are encrypted on commit, decrypted on checkout—just like normal files.
+Arcane is the **sovereign DevOps toolkit** for developers who want encrypted secrets, zero-downtime deployments, and AI-powered Git—without complex infrastructure or monthly fees.
 
-## Why Arcane?
+---
 
-| Problem                               | Solution                              |
-| ------------------------------------- | ------------------------------------- |
-| `.env` files in `.gitignore`          | ✅ Commit encrypted secrets safely    |
-| Cloud dashboards (Doppler, Infisical) | ✅ No cloud required. Secrets in Git. |
-| Team key sharing headaches            | ✅ Add teammates with one command     |
-| Server deployment secrets             | ✅ Machine keys authorize decryption  |
+## 🤔 Why Does This Exist?
 
-## Quick Start
+| The Problem                                       | Arcane's Solution                            |
+| ------------------------------------------------- | -------------------------------------------- |
+| `.env` files in `.gitignore` create secret sprawl | ✅ Commit encrypted secrets directly to Git  |
+| Doppler, Infisical, Vault require cloud accounts  | ✅ No cloud. Everything stored in your repo. |
+| Coolify/Dokku need a control plane on your server | ✅ No server agent. Just SSH.                |
+| Kubernetes is overkill for 99% of projects        | ✅ Docker Compose + SSH. Done.               |
+| Terraform/Kamal configs are complex               | ✅ One command: `arcane deploy`              |
+
+---
+
+## 🚀 What Arcane Does
+
+### 1. 🔐 Encrypted Secrets in Git
+
+Commit your `.env` files safely. They're encrypted on commit, decrypted on checkout—transparently.
+
+```
+Developer Laptop              Git Repository              Production Server
+─────────────────             ──────────────              ─────────────────
+.env (plaintext)  ─commit→    .env (encrypted)  ─clone→   .env (encrypted)
+      │                                                          │
+      └── auto-decrypts ←────────────────────────── arcane run ──┘
+          on checkout                              (decrypts at runtime)
+```
+
+**What makes it different:**
+
+-   **No secret sprawl** — One `.env`, versioned in Git, shared with the team.
+-   **Envelope encryption** — Each repo has a unique key, wrapped for each user/machine.
+-   **Zero dev access to production** — Servers have their own keys. Devs never see prod secrets.
+-   **Instant revocation** — Delete a key file → access revoked immediately.
+
+### 2. 🚢 One-Command Deployments
+
+Push Docker images or entire Compose stacks to any server.
 
 ```bash
-# Install
+# Deploy a single image (builds locally, pushes via SSH)
+arcane deploy --target production --image myapp:latest
+
+# Deploy a 9-service Docker Compose stack
+arcane deploy --target staging --compose docker-compose.yaml --env staging
+```
+
+**How we compete:**
+
+| Feature         | Kamal             | Coolify      | Arcane                                |
+| --------------- | ----------------- | ------------ | ------------------------------------- |
+| Build location  | Server            | Server       | **Your laptop** (faster, cheaper VPS) |
+| Control plane   | Traefik on server | Full web UI  | **Nothing** (direct SSH)              |
+| Secret handling | 1Password/Doppler | Web form     | **Encrypted in Git**                  |
+| Deploy command  | `kamal deploy`    | Click button | `arcane deploy`                       |
+
+**Under the hood:**
+
+-   **Zstd Warp Drive** — Docker images compressed and pushed via SSH (no registry).
+-   **Distributed Locking** — One deploy at a time per server.
+-   **Blue/Green with Caddy** — Zero-downtime traffic switching.
+-   **Environment Injection** — Secrets decrypted and baked into remote `.env`.
+
+### 3. 🧠 AI-Powered Git Intelligence
+
+Let AI handle the boring stuff.
+
+-   **Auto-Commits** — Daemon watches for changes, generates semantic commit messages via Ollama.
+-   **Smart Squash** — AI groups messy commits into clean version bumps.
+-   **Semantic Versioning** — Automatic Major/Minor/Patch based on content.
+
+### 4. 🖥️ Sovereign Terminal (TUI)
+
+A keyboard-driven dashboard for everything.
+
+```bash
+arcane  # or `arcane dashboard`
+```
+
+| Tab        | Purpose                                       |
+| ---------- | --------------------------------------------- |
+| Dashboard  | Git status, working tree, ignored files       |
+| Graph      | Rich, colorful commit history                 |
+| Deploy     | Server groups, one-click deployments          |
+| AI         | Configure prompts, models, toggle auto-commit |
+| Vault      | Team members, machine keys, identity          |
+| Versioning | Smart Squash, version bumps                   |
+
+### 5. 👁️ Background Guardian (Daemon)
+
+Set it and forget it.
+
+-   **Auto-Init** — Automatically enables encryption for new Git repos.
+-   **Secret Scanner** — Blocks commits with exposed API keys in source code.
+-   **Desktop Notifications** — Alerts if secrets are about to leak.
+
+---
+
+## 🏁 Quick Start
+
+```bash
+# 1. Install
 cargo install --git https://github.com/DraconDev/arcane
 
-# Install AI (Optional - for Auto-Commits)
-# curl -fsSL https://ollama.com/install.sh | sh
-
-# Setup identity (once, ever)
+# 2. Create identity (once, ever)
 arcane identity new
 
-# Enable encryption in your project
-cd myproject
-arcane init
+# 3. Enable encryption in any project
+cd myproject && arcane init
 
-# That's it! .env files are now auto-encrypted on commit
-echo "API_KEY=secret" >> .env
-git add .env && git commit -m "Add secrets"  # Encrypted in Git!
+# 4. Done! Secrets encrypted on commit.
+echo "API_KEY=sk_live_secret" >> .env
+git add .env && git commit -m "Add secrets"
 ```
 
-## Commands
+---
 
-| Command                         | Purpose                                     |
-| ------------------------------- | ------------------------------------------- |
-| `arcane identity show`          | Show your public key (share with teammates) |
-| `arcane identity new`           | Generate your master identity               |
-| `arcane deploy gen-key`         | Generate a server key pair                  |
-| `arcane deploy allow <key>`     | Authorize a server to decrypt               |
-| `arcane team add <alias> <key>` | Add a teammate                              |
-| `arcane run -- <cmd>`           | Run command with decrypted secrets          |
-| `arcane logs <target>`          | Stream remote logs                          |
-| `arcane exec <target> -- <cmd>` | Execute SSH command                         |
-| `arcane scan <file>`            | Scan for leaked secrets                     |
-| `arcane daemon ...`             | Auto-init new repos in background           |
-| `arcane dashboard`              | Launch the Sovereign Terminal (TUI)         |
-| `arcane start [path]`           | Start AI Auto-Commit Daemon                 |
+## 🔧 Commands
 
-### TUI Keybindings (Dashboard)
+| Command                         | Purpose                            |
+| ------------------------------- | ---------------------------------- |
+| `arcane init`                   | Initialize encryption for repo     |
+| `arcane identity new`           | Generate master identity key       |
+| `arcane team add <alias> <key>` | Authorize a teammate               |
+| `arcane deploy --target <name>` | Deploy (image or Compose)          |
+| `arcane deploy gen-key`         | Generate server key pair           |
+| `arcane deploy allow <key>`     | Authorize a server                 |
+| `arcane logs <target>`          | Stream remote Docker logs          |
+| `arcane exec <target> -- <cmd>` | Run command on server via SSH      |
+| `arcane run -- <cmd>`           | Run locally with decrypted secrets |
+| `arcane scan <file>`            | Scan for leaked secrets            |
+| `arcane daemon start`           | Start background Guardian          |
+| `arcane dashboard`              | Launch TUI                         |
 
-| Key | Action                                                        |
-| --- | ------------------------------------------------------------- |
-| `s` | **Smart Squash**: AI groups commits into Minors + Patches     |
-| `l` | **Bulk Squash**: Squash all into one Major/Minor bump         |
-| `m` | Toggle Bulk Squash between Major/Minor (in Versioning tab)    |
-| `d` | **Auto-Deploy**: Toggle auto-deployment to authorized servers |
+---
 
-## How It Works
+## 👥 Team & Server Access
 
-```
-Developer Machine              Git Repository            Server
-─────────────────              ──────────────            ──────
-.env (plaintext)   ─commit→    .env (encrypted)   ─clone→  .env (encrypted)
-     │                                                          │
-     └── auto-decrypt ←────────────────────────────── arcane run ──┘
-         on checkout                                   (decrypts at runtime)
-```
-
--   **Single Source of Truth**: Edit secrets locally, commit, push. Everyone gets the same `.env`.
--   **Envelope Encryption**: Each repo has a unique key, wrapped for each authorized user/machine.
--   **No Cloud**: Everything stored in `.git/arcane/` (encrypted, versionable).
--   **Instant Revocation**: Delete a key file → access revoked immediately.
-
-## Team & Server Access
+**Invite a teammate:**
 
 ```bash
-# Invite a teammate (they share their public key with you)
 arcane team add alice age1alice...
 git add .git/arcane && git commit -m "Add Alice" && git push
-
-# Revoke instantly
-rm .git/arcane/keys/user:alice.age && git add -u && git commit -m "Bye Alice" && git push
-
-# Authorize a server
-arcane deploy gen-key            # On server: generates key pair
-arcane deploy allow age1server...  # On laptop: authorize that key
 ```
 
-**No passwords. No cloud accounts. No API calls at runtime.**
+**Authorize a server:**
 
-## Documentation
-
--   [**QUICKSTART.md**](QUICKSTART.md) — Solo, Team, and Server setup guides
--   [**docs/CLI.md**](docs/CLI.md) — Command reference
--   [**docs/KEY_ARCHITECTURE.md**](docs/KEY_ARCHITECTURE.md) — How envelope encryption works
--   [**docs/TEAM_WORKFLOW.md**](docs/TEAM_WORKFLOW.md) — Inviting teammates
--   [**docs/GUARDIAN.md**](docs/GUARDIAN.md) — Sovereign Guardian (Auto-Init) setup
--   [**docs/INTELLIGENCE.md**](docs/INTELLIGENCE.md) — Sovereign Intelligence (Auto-Commit) guide
--   [**docs/DEPLOY.md**](docs/DEPLOY.md) — Garage Mode Deployment guide
-
-## Project Structure
-
-```
-arcane/
-├── src/                 # Core: Git filter, crypto, CLI, TUI
-├── examples/secrets-demo/ # Demo project for testing
-└── docs/                # Documentation
+```bash
+arcane deploy gen-key       # On server: generate key
+arcane deploy allow age1... # On laptop: authorize it
 ```
 
-## Status
+**Revoke instantly:**
 
-| Feature | Status |
-| ------- | ------ |
+```bash
+rm .git/arcane/keys/user:alice.age && git commit -am "Remove Alice"
+```
 
-│ Arcane v0.1.35 │
-| `arcane run` (runtime decrypt) | ✅ Stable |
-| Team key sharing | ✅ Stable |
-| Machine/server keys | ✅ Stable |
-| Sovereign Guardian (Auto-Init) | ✅ Stable |
-| Deployment (Single/Group) | ✅ Stable |
-| Docker Compose Support | ✅ Stable |
-| AI-powered commits | ✅ Beta |
-| Sovereign Terminal (TUI) | ✅ Stable |
-| Observability (Logs/Exec) | ✅ Stable |
-| Smart Squash (AI Git History) | ✅ Beta |
+---
 
-## License
+## 🆚 Competitive Positioning
+
+### We're Building The Best Of:
+
+| Tool        | What We Take                                    |
+| ----------- | ----------------------------------------------- |
+| **Kamal**   | Blue/Green deploys, health checks, deploy locks |
+| **Coolify** | Docker Compose support, service flexibility     |
+| **Dokku**   | Simplicity, zero-config feel                    |
+| **Vercel**  | One-command deploys, instant rollback           |
+
+### Our Unique Advantages:
+
+1. **Zero Dev Access to Prod Secrets** — Devs work with staging. Only servers decrypt production.
+2. **No Server-Side Control Plane** — Nothing to crash, update, or secure on your VPS.
+3. **Build Locally, Push Artifacts** — Use your beefy dev machine. $5 VPSs can't compile Rust.
+4. **Encrypted Git as Source of Truth** — No secret sprawl across dashboards.
+5. **Scales from Solo to Enterprise** — Same tool, just add machine keys.
+
+### What We're NOT Building:
+
+| Feature               | Why Not                                     |
+| --------------------- | ------------------------------------------- |
+| Web Dashboard         | Security liability. TUI is faster.          |
+| One-Click Marketplace | Attracts hobbyists, not pros.               |
+| Buildpacks            | Magic that fails. Dockerfiles are explicit. |
+| Kubernetes            | Overkill for 99% of projects.               |
+| Docker Swarm          | Dead technology.                            |
+
+---
+
+## 📊 Feature Status
+
+| Feature                         | Status    |
+| ------------------------------- | --------- |
+| Encrypted `.env` via Git Filter | ✅ Stable |
+| Team key sharing                | ✅ Stable |
+| Server/machine keys             | ✅ Stable |
+| Docker image deployment         | ✅ Stable |
+| Docker Compose deployment       | ✅ Stable |
+| Parallel server group deploys   | ✅ Stable |
+| Remote logs & exec              | ✅ Stable |
+| Sovereign Terminal (TUI)        | ✅ Stable |
+| Background Daemon (Guardian)    | ✅ Stable |
+| AI auto-commits                 | ✅ Stable |
+| Smart Squash                    | ✅ Stable |
+| Semantic Versioning             | ✅ Stable |
+
+---
+
+## 📚 Documentation
+
+| Document                                                     | Description                            |
+| ------------------------------------------------------------ | -------------------------------------- |
+| [QUICKSTART.md](QUICKSTART.md)                               | Solo, Team, and Server setup guides    |
+| [ROADMAP.md](ROADMAP.md)                                     | Future plans and phases                |
+| [docs/CLI.md](docs/CLI.md)                                   | Full command reference                 |
+| [docs/KEY_ARCHITECTURE.md](docs/KEY_ARCHITECTURE.md)         | How envelope encryption works          |
+| [docs/DEPLOY.md](docs/DEPLOY.md)                             | Deployment guide (Docker, Compose)     |
+| [docs/COMPETITIVE_ANALYSIS.md](docs/COMPETITIVE_ANALYSIS.md) | How we compare to Kamal, Coolify, etc. |
+
+---
+
+## 📜 License
 
 **Free** for individuals, open source, and companies with fewer than 5 employees.
 
 **Commercial license required** for companies with 5+ employees.  
-See [LICENSE](LICENSE) for details and pricing.
+See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <b>Arcane</b> — Your code has a secret keeper.
+</p>
