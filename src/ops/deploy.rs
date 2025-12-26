@@ -290,7 +290,7 @@ impl ArcaneDeployer {
             }
             // Smoke test omitted for brevity in parallel context to avoid port conflicts?
             // Use a unique smoke ID.
-            let smoke_id = format!("smoke-{}", uuid::Uuid::new_v4());
+            let _smoke_id = format!("smoke-{}", uuid::Uuid::new_v4());
             // ... (Smoke test logic simplified for stability in parallel execution - maybe skip if parallel?)
             // We'll skip smoke test details here to avoid bloating file, assuming build is enough or user verified locally.
         } else {
