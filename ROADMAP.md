@@ -104,7 +104,26 @@ Multi-container apps (Chimera) and zero-downtime needs.
 
 ## Phase 3: Server Groups
 
-(Unchanged - see below)
+### The Problem
+
+Deploying to 10 web servers sequentially takes 10x the time.
+
+### Solution
+
+**1. Parallel Deployment:**
+
+-   `arcane deploy web-cluster` deploys to all members concurrently.
+-   Configurable concurrency (e.g. batch size).
+
+**2. Rolling Strategy:**
+
+-   Option to deploy to X% of fleet at a time.
+-   Halt on failure to prevent fleet-wide outage.
+
+**3. Group Config:**
+
+-   Defined in `servers.toml`.
+-   Can contain specific overrides (future).
 
 ---
 
