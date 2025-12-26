@@ -105,16 +105,17 @@ async fn handle_webhook(
     headers: HeaderMap,
     body: Bytes,
 ) -> Result<&'static str, StatusCode> {
-    // Get signature header
-    let signature = headers
-        .get("x-hub-signature-256")
-        .and_then(|v| v.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
+    // Verify signature (only if secret is configured)
+    if !state.config.secret.is_empty() {
+        let signature = headers
+            .get("x-hub-signature-256")
+            .and_then(|v| v.to_str().ok())
+            .ok_or(StatusCode::UNAUTHORIZED)?;
 
-    // Verify signature
-    if !verify_signature(&state.config.secret, signature, &body) {
-        eprintln!("❌ Invalid webhook signature");
-        return Err(StatusCode::UNAUTHORIZED);
+        if !verify_signature(&state.config.secret, signature, &body) {
+            eprintln!("❌ Invalid webhook signature");
+            return Err(StatusCode::UNAUTHORIZED);
+        }
     }
 
     // Parse payload
