@@ -7,7 +7,12 @@ pub struct Shell;
 
 impl Shell {
     /// Execute a command locally and return output
-    pub fn exec_local(cmd: &str) -> Result<String> {
+    pub fn exec_local(cmd: &str, dry_run: bool) -> Result<String> {
+        if dry_run {
+            println!("   [DRY RUN] Local: {}", cmd);
+            return Ok(String::new());
+        }
+
         let parts: Vec<&str> = cmd.split_whitespace().collect();
         if parts.is_empty() {
             return Ok(String::new());
@@ -27,7 +32,12 @@ impl Shell {
     }
 
     /// Execute a command on a remote server via SSH
-    pub fn exec_remote(server: &ServerConfig, cmd: &str) -> Result<String> {
+    pub fn exec_remote(server: &ServerConfig, cmd: &str, dry_run: bool) -> Result<String> {
+        if dry_run {
+            println!("   [DRY RUN] {}@{}: {}", server.user, server.host, cmd);
+            return Ok(String::new());
+        }
+
         // Build SSH command: ssh -p <port> -i <key> <user>@<host> <cmd>
         let mut ssh = Command::new("ssh");
 
@@ -68,6 +78,9 @@ impl Shell {
     /// Returns a Receiver channel that yields lines.
     pub fn stream_remote(server: &ServerConfig, cmd: &str) -> std::sync::mpsc::Receiver<String> {
         let (tx, rx) = std::sync::mpsc::channel();
+        // Streaming usually implies read-only viewing, so we might not need dry_run here?
+        // Or if used for long running commands, we should probably support it.
+        // For Phase 2, let's leave stream_remote as is (it's for logs/monitoring, not mutating state usually).
 
         // Build SSH command (simple version for stdbuf)
         // We'll trust the caller provided valid server details to exec_remote logic
@@ -108,7 +121,12 @@ impl Shell {
 
     /// Push a local Docker image to a remote server using Zstd compression.
     /// Pipeline: docker save <image> | zstd -T0 -3 | ssh <server> 'zstd -d | docker load'
-    pub fn push_compressed_image(server: &ServerConfig, image: &str) -> Result<()> {
+    pub fn push_compressed_image(server: &ServerConfig, image: &str, dry_run: bool) -> Result<()> {
+        if dry_run {
+            println!("   [DRY RUN] Would push image {} to {}", image, server.host);
+            return Ok(());
+        }
+
         // 1. Check local zstd
         if Command::new("zstd").arg("--version").output().is_err() {
             return Err(anyhow::anyhow!("'zstd' not found locally. Please install it: sudo apt install zstd / brew install zstd"));
