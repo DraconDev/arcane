@@ -1,87 +1,43 @@
-# Arcane License
-
-## Summary
-
-Arcane is **free for individuals and small teams**. Companies with 5 or more
-employees must purchase a commercial license.
-
----
-
-## License Terms
-
-### 1. Free Use
-
-You may use, copy, modify, and distribute this software **at no cost** if:
-
--   You are an individual using it for personal projects
--   You are using it for open source projects
--   You are a company or organization with **fewer than 5 employees**
--   You are evaluating the software for potential purchase
-
-### 2. Commercial License Required
-
-A commercial license is required if:
-
--   You are a company or organization with **5 or more employees**
--   You are using Arcane in production systems
-
-### 3. Commercial License Pricing
-
-| Company Size      | Annual License |
-| ----------------- | -------------- |
-| 5-25 employees    | $2,000/year    |
-| 26-100 employees  | $5,000/year    |
-| 101-500 employees | $10,000/year   |
-| 500+ employees    | $20,000/year   |
-
-Purchase at: **https://arcane.dev/license** (or contact: license@arcane.dev)
-
-### 4. What You Get
-
--   Legal permission to use Arcane in your organization
--   All features (there are no "enterprise" restrictions)
--   License is per-organization, not per-seat
-
-### 5. What This Is NOT
-
--   This is not a SaaS subscription (no cloud services included)
--   This is not a support contract (community support only)
--   This is not a warranty (software provided as-is)
-
----
-
-## Additional Terms
-
-### Definitions
-
--   **"Employee"** includes full-time, part-time, and contract workers who work
-    for the organization regularly.
--   **"Organization"** means the legal entity (company, LLC, etc.) using the
-    software, including all subsidiaries and affiliates.
-
-### Enforcement
-
-Violation of this license may result in legal action. If you are unsure whether
-your use requires a commercial license, please contact us.
-
-### Updates
-
-This license applies to all versions of Arcane. Future versions may have
-different terms, but your license covers the version you purchased for.
-
----
-
-## The Fine Print
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
-ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
----
+# Dracon License v1.0
 
 Copyright (c) 2024 Dracon
 
-Questions? license@arcane.dev
+## Summary
+
+**Free** for individuals and small teams (under 5 employees).  
+**Paid** for companies with 5 or more employees.  
+**Forbidden** to use for building competing products.
+
+---
+
+## 1. Free Use
+
+You may use, copy, modify, and distribute this software for **free** if:
+
+-   You are an individual or sole proprietor
+-   You are a team or company with **fewer than 5 employees/contractors**
+-   You are a non-profit or educational institution
+-   You are evaluating the software (non-production)
+
+## 2. Commercial License Required
+
+A commercial license is required if you are a company or organization with **5 or more employees/contractors**, regardless of how the software is used.
+
+**Purchase a license:** https://dracon.uk/arcane/license
+
+## 3. Competitive Use Prohibited
+
+You may **not** use this software to build, develop, or distribute a product that competes directly with this software.
+
+## 4. No Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.
+
+## 5. Contributions
+
+By submitting contributions to this project, you grant Dracon a perpetual, worldwide license to use, modify, and distribute your contributions under any terms.
+
+---
+
+**Full terms & pricing:** https://dracon.uk/arcane/license  
+**Contact:** license@dracon.uk
