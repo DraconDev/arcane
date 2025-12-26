@@ -1274,8 +1274,15 @@ impl App {
         self.events.push(events_msg);
 
         tokio::spawn(async move {
-            match crate::ops::deploy::ArcaneDeployer::deploy(&server_name, &image, &env_name, None)
-                .await
+            match crate::ops::deploy::ArcaneDeployer::deploy(
+                &server_name,
+                &image,
+                &env_name,
+                None,
+                None,
+                false,
+            )
+            .await
             {
                 Ok(_) => {
                     println!("✅ TUI Deploy Complete: {} -> {}", image, server_name);
