@@ -129,12 +129,12 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 
 | Feature                        | Source    | Priority    | Notes                            |
 | ------------------------------ | --------- | ----------- | -------------------------------- |
-| **Docker Compose Support**     | Coolify   | **Phase 2** | Multi-container apps             |
-| **Blue/Green Deploy**          | Kamal     | **Phase 2** | Zero-downtime switching          |
-| **Health Checks (HTTP)**       | Kamal/K8s | **Phase 4** | Wait for `/health` before switch |
-| **Deploy Locks**               | Kamal     | **Phase 2** | Prevent collision                |
-| **Rollback (Keep N Versions)** | All       | **Phase 2** | `arcane rollback citadel`        |
-| **Multi-Server Deploy**        | Kamal     | **Phase 3** | Server groups                    |
+| **Docker Compose Support**     | Coolify   | ✅ Done     | Multi-container apps             |
+| **Blue/Green Deploy**          | Kamal     | ✅ Done     | Zero-downtime switching          |
+| **Health Checks (HTTP)**       | Kamal/K8s | ✅ Done     | Wait for `/health` before switch |
+| **Deploy Locks**               | Kamal     | ✅ Done     | Prevent collision                |
+| **Rollback (Keep N Versions)** | All       | **Phase 2** | `arcane rollback` (Pending)      |
+| **Multi-Server Deploy**        | Kamal     | ✅ Done     | Server groups                    |
 | **Preview Deployments**        | Vercel    | **Spark**   | Requires build server            |
 
 ### Secret Management (Priority: High - DONE)
@@ -158,13 +158,13 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 
 ### Observability (Priority: Medium)
 
-| Feature            | Source     | Priority    | Notes                         |
-| ------------------ | ---------- | ----------- | ----------------------------- |
-| **Remote Logs**    | Kamal      | **Phase 4** | `arcane logs citadel`         |
-| **Container Exec** | Kamal      | **Phase 4** | `arcane exec citadel -- bash` |
-| **Resource Stats** | Coolify    | **Low**     | SSH + `docker stats`          |
-| **Deploy History** | All        | **Phase 3** | Git + deploy log              |
-| **Audit Trail**    | Enterprise | **Defer**   | Build server logs it          |
+| Feature            | Source     | Priority  | Notes                         |
+| ------------------ | ---------- | --------- | ----------------------------- |
+| **Remote Logs**    | Kamal      | ✅ Done   | `arcane logs citadel`         |
+| **Container Exec** | Kamal      | ✅ Done   | `arcane exec citadel -- bash` |
+| **Resource Stats** | Coolify    | **Low**   | SSH + `docker stats`          |
+| **Deploy History** | All        | ✅ Done   | Git history (`arcane log`)    |
+| **Audit Trail**    | Enterprise | **Defer** | Build server logs it          |
 
 ### Developer Experience (Priority: High)
 
@@ -181,11 +181,11 @@ This document defines what we **Keep**, **Adapt**, or **Kill** from the entire e
 
 | Feature                    | Source        | Priority    | Notes                             |
 | -------------------------- | ------------- | ----------- | --------------------------------- |
-| **Server Groups**          | Kamal         | **Phase 3** | `--group prod`                    |
-| **Environment Separation** | All           | **Phase 1** | `staging.env` vs `production.env` |
+| **Server Groups**          | Kamal         | ✅ Done     | `--group prod`                    |
+| **Environment Separation** | All           | ✅ Done     | `staging.env` vs `production.env` |
 | **Build Server (Spark)**   | Arcane-unique | **Phase 5** | Webhook listener                  |
-| **Parallel Deploys**       | Kamal         | **Phase 3** | `--parallel` flag                 |
-| **Sequential (Rolling)**   | Kamal         | **Phase 3** | Default for safety                |
+| **Parallel Deploys**       | Kamal         | ✅ Done     | `--parallel` flag                 |
+| **Sequential (Rolling)**   | Kamal         | ✅ Done     | Default for safety                |
 
 ---
 
