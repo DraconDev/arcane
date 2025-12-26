@@ -86,7 +86,18 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                 Style::default().fg(Color::Green),
             );
 
-            vec![Line::from(pid_span)]
+            let mut lines = vec![Line::from(pid_span)];
+
+            if let Some(alert) = &status.last_alert {
+                lines.push(Line::from(Span::styled(
+                    format!(" 🛑 ALERT: {} ", alert),
+                    Style::default()
+                        .bg(Color::Red)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                )));
+            }
+            lines
         } else {
             vec![Line::from(Span::styled(
                 " Daemon: STOPPED ",
