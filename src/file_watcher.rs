@@ -448,6 +448,7 @@ impl FileWatcher {
             last_commit: Some(self.last_commit_time.lock().await.to_rfc3339()),
             watching: vec![self.root_path.to_string_lossy().to_string()],
             branch,
+            last_alert: None,
         };
 
         // Broadcast to in-memory listeners
