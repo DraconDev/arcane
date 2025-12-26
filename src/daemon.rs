@@ -259,7 +259,7 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         let mut action_msg = format!(
             "🤖 Auto-committed in {:?}: {}",
             repo_path.file_name().unwrap_or_default(),
-            final_message
+            commit_msg
         );
 
         if auto_push {
