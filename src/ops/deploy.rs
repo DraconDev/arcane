@@ -156,10 +156,14 @@ impl ArcaneDeployer {
             &format!("🔓 Decrypting environment '{}'...", env_name),
         );
         let security = ArcaneSecurity::new(None)?;
-        let repo_key = security.load_repo_key()?;
+        let repo_key = security.load_repo_key().ok();
         let project_root = ArcaneSecurity::find_repo_root()?;
-        let env =
-            arcane::config::env::Environment::load(env_name, &project_root, &security, &repo_key)?;
+        let env = arcane::config::env::Environment::load(
+            env_name,
+            &project_root,
+            &security,
+            repo_key.as_ref(),
+        )?;
 
         if dry_run {
             Self::log(
