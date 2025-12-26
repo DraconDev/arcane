@@ -582,6 +582,7 @@ async fn main() {
 
                     let compose_path = sub_matches.get_one::<String>("compose").cloned();
                     let dry_run = sub_matches.get_flag("dry-run");
+                    let parallel = sub_matches.get_flag("parallel");
 
                     let deployment_ref = if compose_path.is_some() {
                         // For compose, use app name as the project key
@@ -598,6 +599,7 @@ async fn main() {
                         ports,
                         compose_path,
                         dry_run,
+                        parallel,
                     )
                     .await
                     {
