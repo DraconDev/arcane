@@ -204,16 +204,13 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
             .await
             .unwrap_or_else(|_| format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S")));
 
-        if final_message.is_empty() {
+        if response.trim().is_empty() {
             return Ok(());
         }
 
         // Check for specific alert protocols
-        if final_message.starts_with("SECURITY_ALERT:") {
-            let reason = final_message
-                .replace("SECURITY_ALERT:", "")
-                .trim()
-                .to_string();
+        if response.starts_with("SECURITY_ALERT:") {
+            let reason = response.replace("SECURITY_ALERT:", "").trim().to_string();
             let alert_msg = format!(
                 "🛑 AI SECURITY ALERT: Blocked commit for {:?}. Reason: {}",
                 repo_path.file_name().unwrap_or_default(),
@@ -239,10 +236,10 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
             return Ok(());
         }
 
-        let commit_msg = if let Some(stripped) = final_message.strip_prefix("COMMIT_MESSAGE:") {
+        let commit_msg = if let Some(stripped) = response.strip_prefix("COMMIT_MESSAGE:") {
             stripped.trim().to_string()
         } else {
-            final_message
+            response
         };
 
         if commit_msg.is_empty() {
