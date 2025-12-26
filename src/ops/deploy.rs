@@ -222,20 +222,70 @@ impl ArcaneDeployer {
         let mkdir_cmd = format!("mkdir -p {}", remote_dir);
         Shell::exec_remote(server, &mkdir_cmd, dry_run)?;
 
-        // 2. Copy Docker Compose File
-        Self::log(prefix, &format!("   📄 Uploading {}...", compose_path));
+        // 2. Upload Directory Context
+        let compose_file_path = std::path::Path::new(&compose_path);
+        let context_dir = compose_file_path
+            .parent()
+            .unwrap_or(std::path::Path::new("."));
+
+        Self::log(
+            prefix,
+            &format!("   📁 Uploading context from {}...", context_dir.display()),
+        );
+
         if dry_run {
             Self::log(
                 prefix,
-                &format!("   [DRY RUN] Would scp {}...", compose_path),
+                "   [DRY RUN] Would tar and upload context directory.",
             );
         } else {
-            let content = fs::read(&compose_path).context("Failed to read local compose file")?;
-            Self::copy_bytes_to_remote(
-                server,
-                &content,
-                &format!("{}/docker-compose.yaml", remote_dir),
-            )?;
+            // We use tar to upload the whole directory
+            // Note: We avoid uploading the .git directory and other large common noise
+            let tar_cmd = Command::new("tar")
+                .arg("-cz")
+                .arg("--exclude=.git")
+                .arg("--exclude=node_modules")
+                .arg("--exclude=target")
+                .arg("-C")
+                .arg(context_dir)
+                .arg(".")
+                .stdout(Stdio::piped())
+                .spawn()
+                .context("Failed to spawn local tar process")?;
+
+            let mut ssh_child = Command::new("ssh")
+                .arg(&server.host)
+                .arg(format!("tar -xz -C {}", remote_dir))
+                .stdin(Stdio::from(tar_cmd.stdout.unwrap()))
+                .spawn()
+                .context("Failed to spawn remote ssh/tar process")?;
+
+            let status = ssh_child
+                .wait()
+                .context("Failed to wait for ssh/tar upload")?;
+            if !status.success() {
+                return Err(anyhow::anyhow!(
+                    "Failed to upload context directory via tar"
+                ));
+            }
+        }
+
+        // Ensure docker-compose.yaml is specifically named (in case it was named differently locally)
+        if !dry_run {
+            let local_name = compose_file_path
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy();
+            if local_name != "docker-compose.yaml" {
+                Shell::exec_remote(
+                    server,
+                    &format!(
+                        "mv {}/{} {}/docker-compose.yaml",
+                        remote_dir, local_name, remote_dir
+                    ),
+                    false,
+                )?;
+            }
         }
 
         // 3. Helper: Create .env content
