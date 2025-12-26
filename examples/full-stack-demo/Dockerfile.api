@@ -1,0 +1,14 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install curl for healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Simple Flask API
+RUN pip install flask gunicorn redis psycopg2-binary pika
+
+COPY api.py .
+
+EXPOSE 8080
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "-w", "4", "api:app"]

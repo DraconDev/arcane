@@ -11,7 +11,7 @@ mod security_tests {
         let content = "AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE";
         let found = scanner.scan(content);
         assert!(
-            found.iter().any(|s| s.contains("AWS")),
+            found.iter().any(|s| s.name.contains("AWS")),
             "Should detect AWS key"
         );
     }
@@ -29,7 +29,7 @@ mod security_tests {
 
         let found = scanner.scan(&live_key);
         assert!(
-            found.iter().any(|s| s.contains("Stripe")),
+            found.iter().any(|s| s.name.contains("Stripe")),
             "Should detect Stripe LIVE key"
         );
 
@@ -38,7 +38,7 @@ mod security_tests {
         let test_key = format!("STRIPE_SECRET_KEY={}{}{}", prefix, test_env, suffix);
         let test_found = scanner.scan(&test_key);
         assert!(
-            !test_found.iter().any(|s| s.contains("Stripe")),
+            !test_found.iter().any(|s| s.name.contains("Stripe")),
             "Should NOT detect Stripe TEST key - those are safe for development"
         );
     }
@@ -49,7 +49,7 @@ mod security_tests {
         let content = "-----BEGIN RSA PRIVATE KEY-----\nMIIE...";
         let found = scanner.scan(content);
         assert!(
-            found.iter().any(|s| s.contains("Private Key")),
+            found.iter().any(|s| s.name.contains("Private Key")),
             "Should detect private key"
         );
     }

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Arcane Full-Stack Demo</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, sans-serif;
+                background: linear-gradient(
+                    135deg,
+                    #1a1a2e 0%,
+                    #16213e 50%,
+                    #0f3460 100%
+                );
+                min-height: 100vh;
+                color: #fff;
+                padding: 40px;
+            }
+            .container {
+                max-width: 800px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 3rem;
+                background: linear-gradient(90deg, #00d4ff, #7b2ff7);
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 20px;
+            }
+            .status-card {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 16px;
+                padding: 24px;
+                margin: 20px 0;
+                backdrop-filter: blur(10px);
+            }
+            .status-card h2 {
+                color: #00d4ff;
+                margin-bottom: 16px;
+            }
+            .service-list {
+                list-style: none;
+            }
+            .service-list li {
+                padding: 8px 0;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                display: flex;
+                justify-content: space-between;
+            }
+            .badge {
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: bold;
+            }
+            .badge-green {
+                background: #00c853;
+            }
+            .badge-blue {
+                background: #2196f3;
+            }
+            .footer {
+                margin-top: 40px;
+                text-align: center;
+                opacity: 0.6;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>🔮 Arcane Full-Stack Demo</h1>
+            <p style="font-size: 1.2rem; opacity: 0.8; margin-bottom: 30px">
+                A production-like deployment with 9 services and 45+ secrets.
+            </p>
+
+            <div class="status-card">
+                <h2>📦 Deployed Services</h2>
+                <ul class="service-list">
+                    <li>
+                        <span>Frontend (Nginx)</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>API Server (Flask)</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>Background Worker</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>PostgreSQL Database</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>Redis Cache</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>RabbitMQ Queue</span>
+                        <span class="badge badge-green">Running</span>
+                    </li>
+                    <li>
+                        <span>Prometheus</span>
+                        <span class="badge badge-blue">Monitoring</span>
+                    </li>
+                    <li>
+                        <span>Grafana</span>
+                        <span class="badge badge-blue">Dashboards</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="status-card">
+                <h2>🔐 Secrets Configured</h2>
+                <p>45+ environment variables securely deployed via Arcane</p>
+                <ul class="service-list" style="margin-top: 16px">
+                    <li><span>Database Credentials</span> <span>✅</span></li>
+                    <li><span>Redis Password</span> <span>✅</span></li>
+                    <li><span>RabbitMQ Auth</span> <span>✅</span></li>
+                    <li><span>Stripe Keys</span> <span>✅</span></li>
+                    <li><span>SendGrid API Key</span> <span>✅</span></li>
+                    <li><span>Twilio Credentials</span> <span>✅</span></li>
+                    <li><span>AWS Keys</span> <span>✅</span></li>
+                    <li><span>OAuth Secrets</span> <span>✅</span></li>
+                    <li><span>AI API Keys</span> <span>✅</span></li>
+                </ul>
+            </div>
+
+            <div class="footer">
+                <p>Deployed with 🔮 Arcane</p>
+            </div>
+        </div>
+    </body>
+</html>

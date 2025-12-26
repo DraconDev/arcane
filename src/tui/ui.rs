@@ -309,7 +309,22 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let separator = Span::raw("   ");
 
     // Daemon Button
-    let daemon_btn = if app.status.is_some() {
+    let daemon_btn = if app.daemon_starting {
+        // Animated loading state with cycling dots
+        let dots = match app.tick_counter % 4 {
+            0 => "   ",
+            1 => ".  ",
+            2 => ".. ",
+            _ => "...",
+        };
+        Span::styled(
+            format!(" Starting{} ", dots),
+            Style::default()
+                .bg(Color::Yellow)
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        )
+    } else if app.status.is_some() {
         Span::styled(
             " [s] Stop Daemon ",
             Style::default()

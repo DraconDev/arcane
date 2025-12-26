@@ -479,7 +479,11 @@ async fn main() {
                     } else {
                         println!("🚫 SECRETS DETECTED in {}:", path.display());
                         for secret in secrets {
-                            println!("   - Found potential {}", secret);
+                            println!(
+                                "   - Line {}: Found potential '{}'",
+                                secret.line, secret.name
+                            );
+                            println!("     Code: {}", secret.snippet.trim());
                         }
                         std::process::exit(1);
                     }

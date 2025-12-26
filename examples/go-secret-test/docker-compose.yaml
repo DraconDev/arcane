@@ -1,0 +1,15 @@
+services:
+    go-app:
+        build: .
+        ports:
+            - "8081:8080"
+        environment:
+            - API_TOKEN=${API_TOKEN}
+            - PORT=8080
+        healthcheck:
+            test:
+                ["CMD", "wget", "-q", "-O", "-", "http://localhost:8080/health"]
+            interval: 5s
+            timeout: 3s
+            retries: 3
+        restart: always

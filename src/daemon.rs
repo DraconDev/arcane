@@ -188,33 +188,76 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
         // 1. FAST REGEX SCAN (Local)
         // We scan the diff content to catch secrets *before* sending to AI (privacy + speed)
         // Only scan ADDED lines (starting with '+') to avoid false positives on removed secrets
-        let added_lines: String = diff
-            .lines()
-            .filter(|line| line.starts_with('+') && !line.starts_with("+++"))
-            .collect::<Vec<_>>()
-            .join("\n");
+        // Skip lines from examples/ directories (demo files with fake secrets)
+
+        // Parse diff to find current file being modified
+        let mut current_file = String::new();
+        let mut added_lines = Vec::new();
+
+        for line in diff.lines() {
+            if line.starts_with("+++ ") {
+                // Extract file path from diff header line: +++ b/path/to/file
+                current_file = line
+                    .trim_start_matches("+++ ")
+                    .trim_start_matches("b/")
+                    .to_string();
+            } else if line.starts_with('+') && !line.starts_with("+++") {
+                // Skip scanning for:
+                // - examples/ directories (demo files with fake secrets)
+                // - config/envs/ (managed by Arcane encryption)
+                // - .env files (will be encrypted by Arcane)
+                let is_arcane_managed = current_file.starts_with("examples/")
+                    || current_file.starts_with("config/envs/")
+                    || current_file.ends_with(".env")
+                    || current_file.contains("/examples/")
+                    || current_file.contains("demo");
+
+                if !is_arcane_managed {
+                    added_lines.push(line.to_string());
+                }
+            }
+        }
+
+        let added_content = added_lines.join("\n");
 
         let scanner = crate::security::SecretScanner::new();
-        let matches = scanner.scan(&added_lines);
+        let matches = scanner.scan(&added_content);
         if !matches.is_empty() {
-            let reason = format!("Found secrets: {:?}", matches);
-            crate::daemon::log_event(&format!(
-                "🛑 SECURITY ALERT: Blocked commit for {:?}. {}",
-                repo_path.file_name().unwrap_or_default(),
-                reason
-            ));
+            // Build detailed, actionable alert
+            let secret_list: Vec<String> = matches
+                .iter()
+                .take(3) // Show max 3 to keep readable
+                .map(|m| format!("• Line {}: {} - \"{}\"", m.line, m.name, 
+                    if m.snippet.len() > 40 { format!("{}...", &m.snippet[..40]) } else { m.snippet.clone() }
+                ))
+                .collect();
+            
+            let more_msg = if matches.len() > 3 {
+                format!("\n  ...and {} more", matches.len() - 3)
+            } else {
+                String::new()
+            };
+            
+            // Log detailed alert
+            let log_msg = format!(
+                "🛑 BLOCKED: Secrets detected in source code!\n  {}{}\n  \n  ⚠️  Move secrets to .env (encrypted by Arcane)\n  ⚠️  Or use test keys (sk_test_* not sk_live_*)",
+                secret_list.join("\n  "),
+                more_msg
+            );
+            crate::daemon::log_event(&log_msg);
 
+            // Desktop notification (brief)
             notify_user(
-                "Arcane Security Alert",
-                &format!("Blocked commit: {}", reason),
+                "🛑 Secret Detected - Commit Blocked",
+                &format!("{} secret(s) found in source code. Check TUI for details.", matches.len()),
             );
 
             // Persist Alert to Status
             if let Some(mut status) = crate::DaemonStatus::load() {
                 status.last_alert = Some(format!(
-                    "{} - {}",
+                    "{} - {} secret(s) blocked",
                     chrono::Local::now().format("%H:%M:%S"),
-                    reason
+                    matches.len()
                 ));
                 let _ = status.save();
             }

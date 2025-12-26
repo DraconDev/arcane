@@ -276,20 +276,41 @@ impl SecretScanner {
         Self { patterns: compiled }
     }
 
-    pub fn scan(&self, content: &str) -> Vec<String> {
+    pub fn scan(&self, content: &str) -> Vec<SecretFinding> {
         let mut found = Vec::new();
-        for (name, re) in &self.patterns {
-            if re.is_match(content) {
-                found.push(name.clone());
+        // Split by lines to provide line numbers
+        for (line_idx, line) in content.lines().enumerate() {
+            let line_num = line_idx + 1;
+            for (name, re) in &self.patterns {
+                if re.is_match(line) {
+                    // Truncate snippet if too long
+                    let snippet = if line.len() > 60 {
+                        format!("{}...", &line[..60])
+                    } else {
+                        line.to_string()
+                    };
+
+                    found.push(SecretFinding {
+                        name: name.clone(),
+                        line: line_num,
+                        snippet,
+                    });
+                }
             }
         }
         found
     }
-
     /// Returns the number of patterns loaded
     pub fn pattern_count(&self) -> usize {
         self.patterns.len()
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SecretFinding {
+    pub name: String,
+    pub line: usize,
+    pub snippet: String,
 }
 
 #[derive(Zeroize, ZeroizeOnDrop)]
@@ -1224,7 +1245,7 @@ impl ArcaneSecurity {
     }
 
     /// Recursively scan the repository for secrets (respecting .gitignore)
-    pub fn scan_repo(&self) -> Result<Vec<(PathBuf, Vec<String>)>> {
+    pub fn scan_repo(&self) -> Result<Vec<(PathBuf, Vec<SecretFinding>)>> {
         let repo_root = self.get_repo_root()?;
         let mut findings = Vec::new();
 
@@ -1263,7 +1284,7 @@ impl ArcaneSecurity {
     }
 
     /// Scan content for secrets
-    pub fn scan_content(&self, content: &str) -> Vec<String> {
+    pub fn scan_content(&self, content: &str) -> Vec<SecretFinding> {
         self.scanner.scan(content)
     }
 

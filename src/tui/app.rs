@@ -132,6 +132,8 @@ pub struct App {
 
     // Graph State
     pub graph_branch_mode: u8, // 0=All, 1=Current, 2=Main/Master
+    pub daemon_starting: bool,
+    pub tick_counter: u64,
 }
 
 impl App {
@@ -232,6 +234,8 @@ impl App {
 
             // Graph
             graph_branch_mode: 0, // Default: All branches
+            daemon_starting: false,
+            tick_counter: 0,
 
             sub_tab_focused: false,
             ai_config_sub_tab: 0,
@@ -326,6 +330,9 @@ impl App {
     }
 
     pub fn on_tick(&mut self) {
+        // Increment tick counter for animations
+        self.tick_counter = self.tick_counter.wrapping_add(1);
+
         // Poll Connectivity Results
         if self.testing_connectivity {
             while let Ok((slot, result)) = self.connectivity_rx.try_recv() {
@@ -367,6 +374,13 @@ impl App {
         if self.last_tick.elapsed().as_secs() >= 1 {
             self.status = DaemonStatus::load();
             self.last_tick = std::time::Instant::now();
+
+            // Clear daemon_starting state when daemon is detected running
+            if self.daemon_starting && self.status.is_some() {
+                self.daemon_starting = false;
+                self.events
+                    .push("✅ Daemon started successfully".to_string());
+            }
 
             // Get unpushed commit hashes for highlighting
             let unpushed_hashes: Vec<String> = std::process::Command::new("git")
@@ -760,7 +774,10 @@ impl App {
                 .stderr(std::process::Stdio::null())
                 .spawn()
             {
-                Ok(_) => self.events.push("▶️ Daemon starting...".to_string()),
+                Ok(_) => {
+                    self.daemon_starting = true;
+                    self.events.push("▶️ Starting daemon...".to_string());
+                }
                 Err(e) => self
                     .events
                     .push(format!("❌ Failed to start daemon: {}", e)),
@@ -961,7 +978,11 @@ impl App {
                     self.scan_results = results
                         .iter()
                         .map(|(path, secrets)| {
-                            (path.to_string_lossy().to_string(), secrets.clone())
+                            let formatted: Vec<String> = secrets
+                                .iter()
+                                .map(|s| format!("Line {}: {}", s.line, s.name))
+                                .collect();
+                            (path.to_string_lossy().to_string(), formatted)
                         })
                         .collect();
 
