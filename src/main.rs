@@ -338,6 +338,17 @@ async fn main() {
                         .help("Show command without executing"),
                 ),
         )
+        .subcommand(
+            Command::new("validate")
+                .about("Validate deployment configuration before deploy")
+                .arg(Arg::new("target").required(true).help("Server name"))
+                .arg(
+                    Arg::new("env")
+                        .long("env")
+                        .short('e')
+                        .help("Environment to validate (config/envs/<env>.env)"),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand() {
