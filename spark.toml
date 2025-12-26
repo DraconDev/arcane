@@ -2,5 +2,5 @@
 name = "arcane-test"
 url = "/home/dracon/_Dev/arcane-test"
 branch = "master"
-deploy_target = "local"
-env = "local"
+deploy_target = "micro2"
+env = "micro2"
