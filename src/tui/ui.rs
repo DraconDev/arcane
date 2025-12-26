@@ -343,7 +343,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         .split(rows[2]);
 
     // Daemon Button
-    let daemon_span = if app.daemon_starting {
+    let (daemon_text, daemon_style) = if app.daemon_starting {
         // Animated loading state
         let dots = match app.tick_counter % 4 {
             0 => "   ",
@@ -351,7 +351,7 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
             2 => ".. ",
             _ => "...",
         };
-        Span::styled(
+        (
             format!(" Starting{} ", dots),
             Style::default()
                 .bg(Color::Yellow)
@@ -359,16 +359,16 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
                 .add_modifier(Modifier::BOLD),
         )
     } else if app.status.is_some() {
-        Span::styled(
-            " [s] Stop Daemon ",
+        (
+            " [s] Stop Daemon ".to_string(),
             Style::default()
                 .bg(Color::Red)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(
-            " [s] Start Daemon ",
+        (
+            " [s] Start Daemon ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
@@ -377,107 +377,122 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     };
 
     // Auto-Commit Button
-    let auto_commit_span = if app.ai_auto_commit {
-        Span::styled(
-            " [a] Auto-Commit: ON ",
+    let (commit_text, commit_style) = if app.ai_auto_commit {
+        (
+            " [a] Auto-Commit: ON ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(
-            " [a] Auto-Commit: OFF ",
+        (
+            " [a] Auto-Commit: OFF ".to_string(),
             Style::default().fg(Color::DarkGray),
         )
     };
 
     // Auto-Push Button
-    let auto_push_span = if app.ai_auto_push {
-        Span::styled(
-            " [p] Auto-Push: ON ",
+    let (push_text, push_style) = if app.ai_auto_push {
+        (
+            " [p] Auto-Push: ON ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(" [p] Auto-Push: OFF ", Style::default().fg(Color::DarkGray))
+        (
+            " [p] Auto-Push: OFF ".to_string(),
+            Style::default().fg(Color::DarkGray),
+        )
     };
 
     // Row 2
     // Auto-Version
-    let version_span = if app.version_bumping {
-        Span::styled(
-            " [v] Auto-Version: ON ",
+    let (version_text, version_style) = if app.version_bumping {
+        (
+            " [v] Auto-Version: ON ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(
-            " [v] Auto-Version: OFF ",
+        (
+            " [v] Auto-Version: OFF ".to_string(),
             Style::default().fg(Color::DarkGray),
         )
     };
 
     // Auto-Deploy
-    let deploy_span = if app.ai_auto_deploy {
-        Span::styled(
-            " [d] Auto-Deploy: ON ",
+    let (deploy_text, deploy_style) = if app.ai_auto_deploy {
+        (
+            " [d] Auto-Deploy: ON ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(
-            " [d] Auto-Deploy: OFF ",
+        (
+            " [d] Auto-Deploy: OFF ".to_string(),
             Style::default().fg(Color::DarkGray),
         )
     };
 
     // Shadow Branches
-    let shadow_span = if app.shadow_branches {
-        Span::styled(
-            " [b] Shadow Branches: ON ",
+    let (shadow_text, shadow_style) = if app.shadow_branches {
+        (
+            " [b] Shadow Branches: ON ".to_string(),
             Style::default()
                 .bg(Color::Green)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD),
         )
     } else {
-        Span::styled(
-            " [b] Shadow Branches: OFF ",
+        (
+            " [b] Shadow Branches: OFF ".to_string(),
             Style::default().fg(Color::DarkGray),
         )
     };
 
     // Render Widgets
     f.render_widget(
-        Paragraph::new(daemon_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(daemon_text)
+            .style(daemon_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row1_cols[0],
     );
     f.render_widget(
-        Paragraph::new(auto_commit_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(commit_text)
+            .style(commit_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row1_cols[1],
     );
     f.render_widget(
-        Paragraph::new(auto_push_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(push_text)
+            .style(push_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row1_cols[2],
     );
 
     f.render_widget(
-        Paragraph::new(version_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(version_text)
+            .style(version_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row2_cols[0],
     );
     f.render_widget(
-        Paragraph::new(deploy_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(deploy_text)
+            .style(deploy_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row2_cols[1],
     );
     f.render_widget(
-        Paragraph::new(shadow_span).alignment(ratatui::layout::Alignment::Center),
+        Paragraph::new(shadow_text)
+            .style(shadow_style)
+            .alignment(ratatui::layout::Alignment::Center),
         row2_cols[2],
     );
 }
