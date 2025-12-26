@@ -60,25 +60,6 @@ impl ArcaneDeployer {
                     .buffer_unordered(4)
                     .collect::<Vec<_>>()
                     .await;
-// ...
-            // Note: Build/Smoke is LOCAL. If running in parallel for 10 servers, we don't want to build 10 times concurrently on localhost!
-            // However, iterating groups spawns parallel tasks. 
-            // Ideally building should be done ONCE before the loop. 
-            // BUT, deploy_single_image is inside the loop. 
-            // Optimization: Move build outside?
-            // For now, allow redundancy (or user runs 'arcane build' first? No such command).
-            // Actually, if image is same, docker build is cached.
-            
-            Self::log(prefix, &format!("🏗️  Garage Mode: Building '{}' locally...", image));
-            if let Err(e) = Shell::exec_local(&format!("docker build -t {} .", image), false) {
-                return Err(anyhow::anyhow!("❌ Build Failed: {}", e));
-            }
-            // Smoke test omitted for brevity in parallel context to avoid port conflicts?
-            // Use a unique smoke ID.
-            let _smoke_id = format!("smoke-{}", uuid::Uuid::new_v4());
-            // ... (Smoke test logic simplified for stability in parallel execution - maybe skip if parallel?)
-            // We'll skip smoke test details here to avoid bloating file, assuming build is enough or user verified locally.
-         } else {
 
                 // Check for errors
                 let mut failed = false;
