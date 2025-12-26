@@ -1,6 +1,6 @@
 # Arcane Roadmap
 
-> **Philosophy**: Build an amazing tool for solo devs and small teams. Zero cloud dependencies. You own everything.
+> **Philosophy**: Zero cloud dependencies. You own everything. Scales from solo dev laptop to enterprise build servers.
 
 ---
 
