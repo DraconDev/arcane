@@ -168,7 +168,12 @@ impl Shell {
 
     /// Execute a command on a remote server, passing through Stdin/Stdout/Stderr.
     /// Useful for interactive commands (exec) or streaming logs (logs -f).
-    pub fn passthrough(server: &ServerConfig, cmd: &str, use_tty: bool) -> Result<()> {
+    pub fn passthrough(
+        server: &ServerConfig,
+        cmd: &str,
+        use_tty: bool,
+        dry_run: bool,
+    ) -> Result<()> {
         let mut ssh = Command::new("ssh");
 
         // Port
@@ -192,6 +197,14 @@ impl Shell {
 
         // Command
         ssh.arg(cmd);
+
+        if dry_run {
+            println!(
+                "   [DRY RUN] Would SSH to {} and run: '{}' (TTY: {})",
+                target, cmd, use_tty
+            );
+            return Ok(());
+        }
 
         // Inherit IO
         let mut child = ssh
