@@ -113,7 +113,7 @@ impl ArcaneDeployer {
             arcane::config::env::Environment::load(env_name, &project_root, &security, &repo_key)?;
 
         // 3. Construct Docker Flags
-        let mut env_flags = String::new();
+        let mut env_flags: String = String::new();
         let mut count = 0;
         for (k, v) in env.variables {
             // Escape single quotes for shell safety
