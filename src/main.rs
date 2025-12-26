@@ -569,15 +569,27 @@ async fn main() {
                             .read_line(&mut input)
                             .expect("Failed to read input");
                         if input.trim().to_lowercase() != "y" {
-                            println!("🚫 Aborted.");
-                            std::process::exit(0);
-                        }
-                    }
 
-                    match crate::ops::deploy::ArcaneDeployer::deploy(
-                        target, &image, env_name, ports,
-                    )
-                    .await
+                    let compose_path = sub_matches.get_one::<String>("compose").cloned();
+            let dry_run = sub_matches.get_flag("dry-run");
+
+            let deployment_ref = if compose_path.is_some() {
+                // For compose, use app name as the project key
+                app.to_string()
+            } else {
+                // For single image, use full image reference
+                image
+            };
+
+            match crate::ops::deploy::ArcaneDeployer::deploy(
+                target,
+                &deployment_ref,
+                env_name,
+                ports,
+                compose_path,
+                dry_run,
+            )
+            .await
                     {
                         Ok(_) => println!("✅ Deploy Successful"),
                         Err(e) => {
