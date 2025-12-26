@@ -204,26 +204,60 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
             .await
             .unwrap_or_else(|_| format!("Auto-save: {}", chrono::Local::now().format("%H:%M:%S")));
 
-        // 3. CHECK AI VERDICT
-        let final_message = if response.starts_with("SECURITY_ALERT:") {
-            crate::daemon::log_event(&format!(
-                "🛑 AI SECURITY ALERT: Blocked commit for {:?}. Reason: {}",
-                repo_path.file_name().unwrap_or_default(),
-                response.replace("SECURITY_ALERT:", "").trim()
-            ));
-            return Ok(());
-        } else if let Some(stripped) = response.strip_prefix("COMMIT_MESSAGE:") {
-            stripped.trim().to_string()
-        } else {
-            // Fallback for models that ignore instructions or old prompts
-            response
-        };
-
         if final_message.is_empty() {
             return Ok(());
         }
 
-        git.commit(repo_path, &final_message).await?;
+        // Check for specific alert protocols
+        if final_message.starts_with("SECURITY_ALERT:") {
+            let reason = final_message
+                .replace("SECURITY_ALERT:", "")
+                .trim()
+                .to_string();
+            let alert_msg = format!(
+                "🛑 AI SECURITY ALERT: Blocked commit for {:?}. Reason: {}",
+                repo_path.file_name().unwrap_or_default(),
+                reason
+            );
+
+            crate::daemon::log_event(&alert_msg);
+            notify_user(
+                "Arcane Security Alert",
+                &format!("Blocked commit: {}", reason),
+            );
+
+            // Persist Alert to Status
+            if let Some(mut status) = crate::DaemonStatus::load() {
+                status.last_alert = Some(format!(
+                    "{} - {}",
+                    chrono::Local::now().format("%H:%M:%S"),
+                    reason
+                ));
+                let _ = status.save();
+            }
+
+            return Ok(());
+        }
+
+        let commit_msg = if let Some(stripped) = final_message.strip_prefix("COMMIT_MESSAGE:") {
+            stripped.trim().to_string()
+        } else {
+            final_message
+        };
+
+        if commit_msg.is_empty() {
+            return Ok(());
+        }
+
+        git.commit(repo_path, &commit_msg).await?;
+
+        // Clear Alert on success
+        if let Some(mut status) = crate::DaemonStatus::load() {
+            if status.last_alert.is_some() {
+                status.last_alert = None;
+                let _ = status.save();
+            }
+        }
 
         let mut action_msg = format!(
             "🤖 Auto-committed in {:?}: {}",
