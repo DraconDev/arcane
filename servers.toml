@@ -1,0 +1,5 @@
+[[servers]]
+name = "micro2"
+host = "micro2"
+user = "ubuntu"
+env = "micro2"
