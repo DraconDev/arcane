@@ -2,7 +2,6 @@ use crate::ops::config::OpsConfig;
 use crate::ops::shell::Shell;
 use crate::security::ArcaneSecurity;
 use anyhow::{Context, Result};
-use arcane::config::env::Environment;
 
 pub struct ArcaneDeployer;
 
