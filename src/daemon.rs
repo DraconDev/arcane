@@ -311,3 +311,16 @@ pub fn add_watch_root(path: PathBuf) -> Result<()> {
     manager.add_watch_root(path)?;
     Ok(())
 }
+
+fn notify_user(title: &str, body: &str) {
+    #[cfg(target_os = "linux")]
+    {
+        use notify_rust::Notification;
+        let _ = Notification::new()
+            .summary(title)
+            .body(body)
+            .appname("Arcane")
+            .icon("dialog-warning")
+            .show();
+    }
+}
