@@ -20,13 +20,22 @@ pub struct ContainerStats {
     pub mem: String,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ServerStatus {
+    pub name: String,
+    pub is_online: bool,
+    pub docker_version: Option<String>,
+    pub load_avg: Option<String>,
+    pub last_updated: String,
+}
+
 pub struct Monitor;
 
 impl Monitor {
     pub fn list_containers(server: &ServerConfig) -> Result<Vec<ContainerInfo>> {
         // format: {{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}|{{.Ports}}
         let cmd = "docker ps --format '{{.ID}}|{{.Image}}|{{.Names}}|{{.Status}}|{{.Ports}}'";
-        let output = Shell::exec_remote(server, cmd)?;
+        let output = Shell::exec_remote(server, cmd, false)?;
 
         let mut containers = Vec::new();
         for line in output.lines() {
@@ -48,7 +57,7 @@ impl Monitor {
         // docker stats --no-stream --format "{{.ID}}|{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}"
         let cmd =
             "docker stats --no-stream --format '{{.ID}}|{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}'";
-        let output = Shell::exec_remote(server, cmd)?;
+        let output = Shell::exec_remote(server, cmd, false)?;
 
         let mut stats = Vec::new();
         for line in output.lines() {
