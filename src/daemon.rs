@@ -413,7 +413,7 @@ pub fn add_watch_root(path: PathBuf) -> Result<()> {
 fn notify_user(title: &str, body: &str) {
     #[cfg(target_os = "linux")]
     {
-        use notify_rust::{Hint, Notification, Urgency};
+        use notify_rust::{Notification, Urgency};
         use std::process::Command;
         use std::sync::atomic::{AtomicU64, Ordering};
         use std::time::{SystemTime, UNIX_EPOCH};
