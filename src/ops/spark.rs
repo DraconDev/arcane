@@ -274,10 +274,18 @@ async fn deploy_worker(
         }
 
         // 2. Arcane Deploy
-        let result = Command::new("arcane")
-            .current_dir(&repo_dir) // Run inside the repo
-            .args(["deploy", "--target", &job.target, "--env", &job.env])
-            .status();
+        let mut cmd = Command::new("arcane");
+        cmd.current_dir(&repo_dir)
+            .args(["deploy", "--target", &job.target, "--env", &job.env]);
+
+        // Auto-detect compose file
+        if repo_dir.join("compose.yml").exists() {
+            cmd.args(["--compose-file", "compose.yml"]);
+        } else if repo_dir.join("docker-compose.yml").exists() {
+            cmd.args(["--compose-file", "docker-compose.yml"]);
+        }
+
+        let result = cmd.status();
 
         match result {
             Ok(status) if status.success() => {
