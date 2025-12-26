@@ -3,7 +3,6 @@ use crate::ops::shell::Shell;
 use crate::security::ArcaneSecurity;
 use anyhow::{Context, Result};
 use arcane::config::env::Environment;
-use std::path::Path;
 
 pub struct ArcaneDeployer;
 
@@ -60,6 +59,14 @@ impl ArcaneDeployer {
                 "Server '{}' not found in configuration",
                 server_name
             ))?;
+
+        if let Some(server_env) = &server.env {
+            if server_env != env_name {
+                println!("⚠️  WARNING: Server '{}' is configured for environment '{}', but you are deploying '{}'.", server.name, server_env, env_name);
+                println!("   Proceeding in 3 seconds... (Ctrl+C to cancel)");
+                std::thread::sleep(std::time::Duration::from_secs(3));
+            }
+        }
 
         // 1.5 Auto-Build & Smoke Test (Garage Mode)
         println!("🏗️  Garage Mode: Building '{}' locally...", image);
