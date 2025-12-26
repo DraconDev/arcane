@@ -193,7 +193,7 @@ impl Shell {
 
         // Target
         let target = format!("{}@{}", server.user, server.host);
-        ssh.arg(target);
+        ssh.arg(&target);
 
         // Command
         ssh.arg(cmd);
