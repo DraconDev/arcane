@@ -28,6 +28,7 @@ pub struct DaemonStatus {
     pub last_commit: Option<String>,
     pub watching: Vec<String>,
     pub branch: Option<String>,
+    pub last_alert: Option<String>,
 }
 
 impl DaemonStatus {

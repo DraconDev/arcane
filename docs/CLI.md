@@ -48,10 +48,12 @@ This guide details every command available in the `arcane` CLI.
 
 ## 🚀 Deployment (Zero-Trust)
 
+-   `arcane deploy -t <server>`: Deploy current code to target server.
+-   `arcane deploy gen-key`: Generate a Machine Identity for a server.
+-   `arcane deploy allow <pub_key>`: Whitelist a machine key.
+
 ### `arcane deploy gen-key`
 
-**Usage**: `arcane deploy gen-key`
-**Purpose**: Generate a new identity for a server (e.g., Coolify, VPS).
 **Details**:
 
 -   Outputs a Public Key (`age1...`) and a Private Key (`AGE-SECRET-KEY...`).
@@ -60,7 +62,6 @@ This guide details every command available in the `arcane` CLI.
 
 ### `arcane deploy allow <public_key>`
 
-**Usage**: `arcane deploy allow age1...`
 **Purpose**: Authorize a specific server to access this repo's secrets.
 **Details**:
 

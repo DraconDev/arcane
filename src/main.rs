@@ -110,30 +110,20 @@ async fn main() {
         )
         .subcommand(
             Command::new("deploy")
-                .about("Arcane Ops deployment commands")
-                .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
-                .subcommand(
-                    Command::new("allow")
-                        .about("Whitelist a Machine Key")
-                        .arg(Arg::new("pub_key").required(true)),
-                ),
-        )
-        .subcommand(
-            Command::new("push")
-                .about("Push deployment to remote server (Sovereign Cloud)")
+                .about("Deploy to Sovereign Cloud")
                 .arg(
                     Arg::new("target")
                         .short('t')
                         .long("target")
-                        .required(true)
+                        .required(false) // Optional if using subcommands like gen-key
                         .help("Target server name (from servers.toml)"),
                 )
                 .arg(
                     Arg::new("app")
                         .short('a')
                         .long("app")
-                        .required(true)
-                        .help("App name (e.g. 'chimera')"),
+                        .required(false)
+                        .help("App name (e.g. 'chimera') - Optional for simple push"),
                 )
                 .arg(
                     Arg::new("tag")
@@ -145,6 +135,12 @@ async fn main() {
                     Arg::new("ports")
                         .long("ports")
                         .help("Comma-separated ports for Blue/Green deploy (e.g. '8001,8002')"),
+                )
+                .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
+                .subcommand(
+                    Command::new("allow")
+                        .about("Whitelist a Machine Key")
+                        .arg(Arg::new("pub_key").required(true)),
                 ),
         )
         .subcommand(
@@ -497,8 +493,9 @@ async fn main() {
             }
             _ => println!("Use 'arcane team --help'"),
         },
-        Some(("deploy", sub_matches)) => match sub_matches.subcommand() {
-            Some(("gen-key", _)) => {
+        Some(("deploy", sub_matches)) => {
+            // Check for subcommands first
+            if let Some(("gen-key", _)) = sub_matches.subcommand() {
                 let (priv_key, pub_key) = security::ArcaneSecurity::generate_machine_identity();
                 println!("🤖 Generated Machine Identity");
                 println!("");
@@ -509,8 +506,7 @@ async fn main() {
                 println!("{}", priv_key);
                 println!("");
                 println!("⚠️  Keep the Private Key secret! Do not commit it.");
-            }
-            Some(("allow", args)) => {
+            } else if let Some(("allow", args)) = sub_matches.subcommand() {
                 let pub_key = args
                     .get_one::<String>("pub_key")
                     .expect("Public Key required");
@@ -522,35 +518,35 @@ async fn main() {
                         std::process::exit(1);
                     }
                 }
-            }
-            Some(("push", args)) => {
-                let target = args.get_one::<String>("target").unwrap();
-                let _app = args.get_one::<String>("app").unwrap();
-                let _tag = args.get_one::<String>("tag").unwrap();
-                let _ports = args.get_one::<String>("ports").map(|s| s.as_str());
+            } else {
+                // Default action: Image Push (Container Garage)
+                if let Some(target) = sub_matches.get_one::<String>("target") {
+                    let app = sub_matches
+                        .get_one::<String>("app")
+                        .map(|s| s.as_str())
+                        .unwrap_or("app");
+                    let tag = sub_matches
+                        .get_one::<String>("tag")
+                        .map(|s| s.as_str())
+                        .unwrap_or("latest");
+                    let image = format!("{}:{}", app, tag);
 
-                match crate::ops::push::PushDeploy::deploy(target) {
-                    Ok(_) => println!("✅ Push Successful"),
-                    Err(e) => {
-                        eprintln!("❌ Push Failed: {}", e);
-                        std::process::exit(1);
+                    let ports: Option<Vec<u16>> = sub_matches
+                        .get_one::<String>("ports")
+                        .map(|p| p.split(',').filter_map(|s| s.trim().parse().ok()).collect());
+
+                    // Re-use target name as env_name (e.g. 'prod' -> 'prod.env')
+                    match crate::ops::deploy::ArcaneDeployer::deploy(target, &image, target, ports)
+                        .await
+                    {
+                        Ok(_) => println!("✅ Deploy Successful"),
+                        Err(e) => {
+                            eprintln!("❌ Deploy Failed: {}", e);
+                            std::process::exit(1);
+                        }
                     }
-                }
-            }
-            _ => println!("Use 'arcane deploy --help'"),
-        },
-        Some(("push", args)) => {
-            let target = args.get_one::<String>("target").unwrap();
-            let _app = args.get_one::<String>("app").unwrap();
-            let _tag = args.get_one::<String>("tag").unwrap();
-            let _ports = args.get_one::<String>("ports").map(|s| s.as_str());
-
-            // Use new Source Push logic (Simple Shell)
-            match crate::ops::push::PushDeploy::deploy(target) {
-                Ok(_) => println!("✅ Push Successful"),
-                Err(e) => {
-                    eprintln!("❌ Push Failed: {}", e);
-                    std::process::exit(1);
+                } else {
+                    println!("Use 'arcane deploy --target <server>' or 'arcane deploy --help'");
                 }
             }
         }

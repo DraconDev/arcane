@@ -45,6 +45,7 @@ pub fn start_daemon() -> Result<()> {
         last_commit: None,
         watching: roots.iter().map(|p| p.display().to_string()).collect(),
         branch: None,
+        last_alert: None,
     };
     if let Err(e) = status.save() {
         log_event(&format!("❌ Failed to save daemon status: {}", e));

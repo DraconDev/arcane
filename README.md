@@ -99,6 +99,7 @@ arcane deploy allow age1server...  # On laptop: authorize that key
 -   [**docs/TEAM_WORKFLOW.md**](docs/TEAM_WORKFLOW.md) — Inviting teammates
 -   [**docs/GUARDIAN.md**](docs/GUARDIAN.md) — Sovereign Guardian (Auto-Init) setup
 -   [**docs/INTELLIGENCE.md**](docs/INTELLIGENCE.md) — Sovereign Intelligence (Auto-Commit) guide
+-   [**docs/DEPLOY.md**](docs/DEPLOY.md) — Garage Mode Deployment guide
 
 ## Project Structure
 

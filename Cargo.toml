@@ -10,6 +10,7 @@ members = ["."]
 [dependencies]
 notify-debouncer-mini = "0.4.1"
 notify = "6.1.1"
+notify-rust = "4"
 
 # Async runtime
 tokio = { version = "1", features = ["full"] }

@@ -1,7 +1,5 @@
 -   STRIPE_PRIVATE_KEY=sk_live_1234567890abcdef (THIS IS A TEST LEAK)
 
--   ai scan the diff for vulnerabilities too, when we are making a commit message too, this instead the scan repo for secrets
-
 -   I also had an idea as an alternative to the signup to git on your vps, a webhook listens for push, then the server downloads it, and they build it slowlsy, then you setup carefully, likley causing a discord between server and local state, i think you cna see my strategy too, what if we before even along with pushing to git also pushed to the server with secrets baked in? that is the plan isn't it? of course would be fast too
 
 -   we can also keep tack of what goes where and how so like citadel got on main oracle as stage and prod, while something else might go on both micros
@@ -13,3 +11,5 @@
 -   but many crap we don't need like github login on the servers, who cares, we cna just push there, and looking at coolifies feature set but its most tied to tring to be on the server
 
 -   we can have arcane auto or arcane spark, that actually does listen to github and webhooks if we must, but this doesn't make sense for a solo guy, but lets say you had a build server, and no one builds ever, only this server, so you don't have individuals pushing when they feel like it, but literally this server has the keys it can even push to itself i suppose, and listen to commits and do so, this way we don't neeqd a super complex who is pushing and how we lock it, if you are solo you live the easy life, if you are team, you should have a build server, it can still be your laptop, and you push when you make a change, and you pull it when others then arcane push it
+
+-

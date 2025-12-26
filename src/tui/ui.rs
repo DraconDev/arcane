@@ -52,7 +52,7 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
         .block(
             Block::default()
                 .borders(Borders::ALL)
-                .title(" Arcane v0.1.17 ")
+                .title(format!(" Arcane v{} ", env!("CARGO_PKG_VERSION")))
                 .border_style(if views_focused {
                     Style::default().fg(Color::Magenta)
                 } else {
