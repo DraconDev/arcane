@@ -170,15 +170,26 @@ timeout = 30
 
 **What it is:** A daemon that listens for GitHub webhooks and auto-deploys.
 
-**When we need it:**
+**Security Model: ✅ ALREADY COMPLETE**
 
--   Team workflows where individuals shouldn't deploy directly
--   CI-like functionality without GitHub Actions
+The machine key infrastructure is ready. See [TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md#build-servers--ci-arcane-spark):
 
-**Why defer:**
+-   `arcane deploy gen-key` - Generate machine identity for build server
+-   `arcane deploy allow <pubkey>` - Authorize the build server
+-   `ARCANE_MACHINE_KEY` env var - Build server uses this to decrypt
 
--   Solo devs push from laptop (current flow works)
--   Adds complexity (webhook auth, queuing, logs)
+**What's missing:**
+
+-   Webhook listener (HTTP server for GitHub/GitLab push events)
+-   Git polling mode (alternative to webhooks)
+-   Build queue (handle concurrent pushes)
+-   Status notifications (Discord/Slack on deploy)
+
+**When to build it:**
+
+-   When you have a dedicated build server
+-   When team members shouldn't deploy directly
+-   When you want push-to-deploy automation
 
 ---
 
