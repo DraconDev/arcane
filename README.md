@@ -97,7 +97,6 @@ arcane deploy allow age1server...  # On laptop: authorize that key
 -   [**docs/CLI.md**](docs/CLI.md) — Command reference
 -   [**docs/KEY_ARCHITECTURE.md**](docs/KEY_ARCHITECTURE.md) — How envelope encryption works
 -   [**docs/TEAM_WORKFLOW.md**](docs/TEAM_WORKFLOW.md) — Inviting teammates
--   [**docs/COMPETITORS.md**](docs/COMPETITORS.md) — Arcane vs Infisical, Doppler, SOPS, etc.
 -   [**docs/GUARDIAN.md**](docs/GUARDIAN.md) — Sovereign Guardian (Auto-Init) setup
 -   [**docs/INTELLIGENCE.md**](docs/INTELLIGENCE.md) — Sovereign Intelligence (Auto-Commit) guide
 
@@ -112,16 +111,17 @@ arcane/
 
 ## Status
 
-| Feature                        | Status    |
-| ------------------------------ | --------- |
-| Git filter encryption          | ✅ Stable |
+| Feature | Status |
+| ------- | ------ |
+
+│ Arcane v0.1.35 │
 | `arcane run` (runtime decrypt) | ✅ Stable |
-| Team key sharing               | ✅ Stable |
-| Machine/server keys            | ✅ Stable |
+| Team key sharing | ✅ Stable |
+| Machine/server keys | ✅ Stable |
 | Sovereign Guardian (Auto-Init) | ✅ Stable |
-| AI-powered commits             | ✅ Beta   |
-| Sovereign Terminal (TUI)       | ✅ Stable |
-| Smart Squash (AI Git History)  | ✅ Beta   |
+| AI-powered commits | ✅ Beta |
+| Sovereign Terminal (TUI) | ✅ Stable |
+| Smart Squash (AI Git History) | ✅ Beta |
 
 ## License
 
@@ -129,4 +129,3 @@ arcane/
 
 **Commercial license required** for companies with 5+ employees.  
 See [LICENSE](LICENSE) for details and pricing.
-
