@@ -37,7 +37,7 @@
 
 ---
 
-## Phase 1: Stage/Prod Environments
+## Phase 1: Environment Management
 
 ### The Problem
 
@@ -45,7 +45,12 @@ Currently deploying to one server at a time. Real apps need staging vs productio
 
 ### Solution
 
-**Environment files (layered):**
+**1. Config Validation (Kamal-style):**
+
+-   `arcane validate` command to check config correctness before deploy.
+-   Checks: env vars present, DNS resolves, SSH accessible.
+
+**2. Environment files (layered):**
 
 ```
 config/envs/
@@ -54,115 +59,76 @@ config/envs/
 └── production.env   # Prod overrides + secrets (encrypted)
 ```
 
-**Server registry:**
-
-```toml
-# config/servers.toml
-[servers.micro1]
-host = "micro1.dracon.uk"
-env = "staging"
-
-[servers.oracle]
-host = "oracle.dracon.uk"
-env = "production"
-```
+**3. Server Registry:** -> see `servers.toml`
 
 **Commands:**
 
-```bash
-arcane deploy citadel --env staging    # Deploy to all staging servers
-arcane deploy citadel --env production # Deploy to all prod servers
-arcane deploy citadel                  # Default = staging (safe default)
-```
-
-**Safety:**
-
--   `--env production` prompts: "Deploy to PRODUCTION? [y/N]"
--   Or flag: `arcane deploy citadel --env production --yes`
+-   `arcane deploy citadel --env staging`
+-   `arcane deploy citadel --env production` (with confirmation prompt)
 
 ---
 
-## Phase 2: Docker Compose Support
+## Phase 2: Docker Compose & Deploy Logic
 
 ### The Problem
 
-Multi-container apps need compose, not just single Dockerfile.
+Multi-container apps (Chimera) and zero-downtime needs.
 
 ### Solution
 
-**Auto-detect:**
+**1. Compose Support (Coolify-style):**
 
--   If `docker-compose.yml` exists → compose mode
--   Else → Dockerfile mode
+-   Auto-detect `docker-compose.yaml`.
+-   Build locally -> Push images/compose file -> Up remotely.
+-   **Persistent Volumes:** Explicitly defined to survive redeploys.
 
-**Compose Flow:**
+**2. Blue/Green Deployment (Kamal-style):**
 
-1. Build images locally (or use pre-built)
-2. Copy compose file to server
-3. Push images to server (or pull from registry)
-4. `docker compose up -d` on server
+-   1. Spin up new container (Green)
+-   2. Wait for health check (Green is healthy?)
+-   3. Switch traffic (Update Caddy/Traefik)
+-   4. Kill old container (Blue)
+-   _Result: Zero downtime._
 
-**Environment integration:**
+**3. Deploy Locks (Kamal-style):**
 
--   Compose uses env files from Phase 1
--   `docker compose --env-file staging.env up -d`
+-   Create `.arcane.lock` on server during deploy.
+-   Prevents concurrent deployments from different devs.
+-   `arcane lock release` to override.
+
+**4. Dry Run:**
+
+-   `arcane deploy --dry-run` to see exactly what would execute.
 
 ---
 
 ## Phase 3: Server Groups
 
-### The Problem
-
-Deploying to 10 servers one by one is tedious.
-
-### Solution
-
-```toml
-# config/servers.toml
-[groups.prod]
-servers = ["oracle", "micro2", "micro3"]
-env = "production"
-
-[groups.stage]
-servers = ["micro1"]
-env = "staging"
-```
-
-**Commands:**
-
-```bash
-arcane deploy citadel --group prod   # All prod servers
-arcane deploy citadel --group stage  # All stage servers
-```
-
-**Rolling Deploy:**
-
--   Default: Sequential (one at a time)
--   `--parallel`: Simultaneous (faster, riskier)
+(Unchanged - see below)
 
 ---
 
-## Phase 4: Health Checks
+## Phase 4: Observability (The "Missing Link")
 
 ### The Problem
 
-Deploy succeeds but app crashes on startup.
+"It crashed, why?" -> currently requires manual SSH.
 
 ### Solution
 
-```toml
-# In project config or servers.toml
-[deploy.health]
-url = "/health"
-port = 3000
-timeout = 30
-```
+**1. Remote Logs:**
 
-**Flow:**
+-   `arcane logs citadel --tail` -> Streams `docker logs` from remote via SSH.
+-   Supports multi-server log streaming (merged output).
 
-1. Deploy completes
-2. Wait up to 30s for `http://container:3000/health` to return 200
-3. If fails: Log error, optionally rollback
+**2. Container Exec:**
+
+-   `arcane exec citadel -- /bin/bash` -> Interactive shell.
+-   `arcane exec citadel -- rails db:migrate` -> One-off commands.
+
+**3. Health Checks:**
+
+-   (Moved from Phase 2) - HTTP probes to ensure deployment success.
 
 ---
 
