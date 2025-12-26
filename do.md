@@ -1,5 +1,3 @@
-- SUPER_SECRET=
-
 -   I also had an idea as an alternative to the signup to git on your vps, a webhook listens for push, then the server downloads it, and they build it slowlsy, then you setup carefully, likley causing a discord between server and local state, i think you cna see my strategy too, what if we before even along with pushing to git also pushed to the server with secrets baked in? that is the plan isn't it? of course would be fast too
 
 -   we can also keep tack of what goes where

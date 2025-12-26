@@ -742,17 +742,28 @@ impl App {
                 let _ = std::process::Command::new("kill")
                     .arg(status.pid.to_string())
                     .output();
+
+                // Also delete the status file to prevent stale status
+                if let Some(home) = home::home_dir() {
+                    let _ = std::fs::remove_file(home.join(".arcane").join("daemon.json"));
+                }
             }
             self.status = None; // Optimistic update
+            self.events.push("⏹️ Daemon stopped".to_string());
         } else {
-            // Start Daemon
-            if let Ok(exe) = std::env::current_exe() {
-                let _ = std::process::Command::new(exe)
-                    .arg("daemon")
-                    .arg("run")
-                    .stdout(std::process::Stdio::null())
-                    .stderr(std::process::Stdio::null())
-                    .spawn();
+            // Start Daemon - use absolute path for reliability
+            let arcane_bin = std::path::PathBuf::from("/home/dracon/.cargo/bin/arcane");
+            match std::process::Command::new(&arcane_bin)
+                .arg("daemon")
+                .arg("run")
+                .stdout(std::process::Stdio::null())
+                .stderr(std::process::Stdio::null())
+                .spawn()
+            {
+                Ok(_) => self.events.push("▶️ Daemon starting...".to_string()),
+                Err(e) => self
+                    .events
+                    .push(format!("❌ Failed to start daemon: {}", e)),
             }
         }
     }
