@@ -196,6 +196,7 @@ dependencies = [
  "dashmap",
  "dirs",
  "dotenv",
+ "futures",
  "getrandom 0.2.16",
  "glob",
  "home",
