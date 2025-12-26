@@ -170,6 +170,58 @@ async fn main() {
                 ),
         )
         .subcommand(
+            Command::new("logs")
+                .about("Stream logs from a remote container")
+                .arg(
+                    Arg::new("target")
+                        .short('t')
+                        .required(true)
+                        .help("Server name"),
+                )
+                .arg(
+                    Arg::new("app")
+                        .short('a')
+                        .long("app")
+                        .help("App/Container name (Default: app)"),
+                )
+                .arg(
+                    Arg::new("lines")
+                        .short('n')
+                        .long("lines")
+                        .help("Number of lines to show"),
+                )
+                .arg(
+                    Arg::new("follow")
+                        .short('f')
+                        .long("follow")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Follow log output"),
+                ),
+        )
+        .subcommand(
+            Command::new("exec")
+                .about("Execute an interactive command in a remote container")
+                .arg(
+                    Arg::new("target")
+                        .short('t')
+                        .required(true)
+                        .help("Server name"),
+                )
+                .arg(
+                    Arg::new("app")
+                        .short('a')
+                        .long("app")
+                        .help("App/Container name (Default: app)"),
+                )
+                .arg(
+                    Arg::new("command")
+                        .required(true)
+                        .last(true)
+                        .num_args(1..)
+                        .help("Command to run (e.g. /bin/bash)"),
+                ),
+        )
+        .subcommand(
             Command::new("pull")
                 .about("Pull state or logs from remote server (Placeholder)")
                 .arg(Arg::new("target").short('t').required(true)),
