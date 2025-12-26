@@ -73,3 +73,8 @@ ansi-to-tui = "7.0.0"
 # Arcane Ops Dependencies
 bollard = "0.15"
 
+# Arcane Spark (HTTP server for webhooks)
+axum = "0.7"
+tower = "0.4"
+hmac = "0.12"
+hex = "0.4"
