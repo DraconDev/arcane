@@ -1,6 +1,6 @@
 [[repos]]
 name = "arcane"
-url = "https://github.com/DraconDev/arcane"
-branch = "main"
-deploy_target = "micro1"
-env = "micro1"
+url = "/home/dracon/_Dev/arcane"
+branch = "master"
+deploy_target = "local"
+env = "local"
