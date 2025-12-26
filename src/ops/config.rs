@@ -61,4 +61,8 @@ impl OpsConfig {
         fs::write(config_path, content)?;
         Ok(())
     }
+
+    pub fn find_server(&self, name: &str) -> Option<&ServerConfig> {
+        self.servers.iter().find(|s| s.name == name)
+    }
 }
