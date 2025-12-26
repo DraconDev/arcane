@@ -1,14 +1,16 @@
--   I also had an idea as an alternative to the signup to git on your vps, a webhook listens for push, then the server downloads it, and they build it slowlsy, then you setup carefully, likley causing a discord between server and local state, i think you cna see my strategy too, what if we before even along with pushing to git also pushed to the server with secrets baked in? that is the plan isn't it? of course would be fast too
+# Arcane Next Phase
 
--   we can also keep tack of what goes where
-    and how so like citadel got on main oracle as stage and prod, while something else might go on both micros
+## Strategy
 
--   like imagine 100 servers, how would you update them, what is the strat in coolify and even others, but for us we just build and push, we can even have multiple recipes and server groups, we we have 99 for prod and 1 for stage, and i don't think we can need more types, but essentially instealdd just pushing to micro1, we might remember all the micros or even set them up as a group we use auto or with an alias
+-   [x] Document the "Why" and "Roadmap" (Philosophy, Solo vs Enterprise)
+-   [x] Fix Security Alerts & TUI Daemon control
+-   [ ] Implement Stage/Prod Environments (Phase 1)
+-   [ ] Implement Server Groups / Aliases (Phase 3)
+-   [ ] Add Health Checks (Phase 4)
+-   [ ] Deployment Tracking ("what goes where")
 
--   we can also keep track of what goes where and how, and we can consider setting it some kind of tiny health check no? Not what what exists that we can use, but would love to see it, or what other features could be nice
+## Notes
 
--   but many crap we don't need like github login on the servers, who cares, we cna just push there, and looking at coolifies feature set but its most tied to tring to be on the server
-
--   we can have arcane auto or arcane spark, that actually does listen to github and webhooks if we must, but this doesn't make sense for a solo guy, but lets say you had a build server, and no one builds ever, only this server, so you don't have individuals pushing when they feel like it, but literally this server has the keys it can even push to itself i suppose, and listen to commits and do so, this way we don't neeqd a super complex who is pushing and how we lock it, if you are solo you live the easy life, if you are team, you should have a build server, it can still be your laptop, and you push when you make a change, and you pull it when others then arcane push it
-
--
+-   "Arcane Spark" (build server) is designed but deferred (Phase 5).
+-   Focusing on **Env Management** first as it unlocks everything else.
+-   Servers like 'oracle' might host both Stage and Prod, or different servers for each.
