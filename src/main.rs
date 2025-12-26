@@ -266,8 +266,8 @@ async fn main() {
                             Arg::new("secret")
                                 .short('s')
                                 .long("secret")
-                                .env("SPARK_WEBHOOK_SECRET")
-                                .help("Webhook secret for signature verification"),
+                                .required(true)
+                                .help("Webhook secret for signature verification (or set SPARK_WEBHOOK_SECRET env var)"),
                         ),
                 )
                 .subcommand(Command::new("status").about("Check Spark status")),
