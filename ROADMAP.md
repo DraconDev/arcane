@@ -214,11 +214,15 @@ The machine key infrastructure is ready. See [TEAM_WORKFLOW.md](docs/TEAM_WORKFL
 
 ---
 
-## Licensing
+## Enterprise Considerations (The "Dragons")
 
-| User                    | License    |
-| ----------------------- | ---------- |
-| Solo devs               | Free       |
-| Open source             | Free       |
-| Companies < 5 employees | Free       |
-| Companies 5+ employees  | Commercial |
+For large enterprises, Arcane consciously avoids these features (use specialized tools if you need them):
+
+| Feature           | Enterprise Need                        | Arcane's Stance                                       |
+| ----------------- | -------------------------------------- | ----------------------------------------------------- |
+| **Observability** | Centralized logging (ELK/Splunk)       | SSH in + `docker logs`. Or run a logging container.   |
+| **Migrations**    | Zero-downtime DB schema changes        | You manage migrations manually or in startup scripts. |
+| **Networking**    | Service Mesh (Istio), complex policies | Standard Docker networking. Keep it simple.           |
+| **Audit**         | Immutable deploy logs                  | Git is your audit log. Build server logs deploys.     |
+
+We optimize for **99% of teams**, not the 1% who need Istio.
