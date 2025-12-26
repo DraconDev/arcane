@@ -79,7 +79,9 @@ impl AIService {
             - Major: Breaking API changes (incompatible).\n\
             - Minor: New features (backward compatible functionality).\n\
             - Patch: Bug fixes, refactoring, docs, performance, chores (backward compatible).\n\
-            - None: No version bump needed (e.g. CI config only, no code).\n\
+            - None: No version bump needed (e.g. CI config only, no code, or ONLY version numbers).\n\
+            \n\
+            CRITICAL: If the ONLY change is a version number in Cargo.toml/package.json, return 'None'.\n\
             \n\
             Diff:\n\
             {}\n\

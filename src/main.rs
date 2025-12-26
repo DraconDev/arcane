@@ -525,21 +525,34 @@ async fn main() {
             }
             Some(("push", args)) => {
                 let target = args.get_one::<String>("target").unwrap();
-                let app = args.get_one::<String>("app").unwrap();
-                let tag = args.get_one::<String>("tag").unwrap();
-                let ports = args.get_one::<String>("ports").map(|s| s.as_str());
+                let _app = args.get_one::<String>("app").unwrap();
+                let _tag = args.get_one::<String>("tag").unwrap();
+                let _ports = args.get_one::<String>("ports").map(|s| s.as_str());
 
-                run_push_command(target, app, tag, ports).await;
+                match crate::ops::push::PushDeploy::deploy(target) {
+                    Ok(_) => println!("✅ Push Successful"),
+                    Err(e) => {
+                        eprintln!("❌ Push Failed: {}", e);
+                        std::process::exit(1);
+                    }
+                }
             }
             _ => println!("Use 'arcane deploy --help'"),
         },
         Some(("push", args)) => {
             let target = args.get_one::<String>("target").unwrap();
-            let app = args.get_one::<String>("app").unwrap();
-            let tag = args.get_one::<String>("tag").unwrap();
-            let ports = args.get_one::<String>("ports").map(|s| s.as_str());
+            let _app = args.get_one::<String>("app").unwrap();
+            let _tag = args.get_one::<String>("tag").unwrap();
+            let _ports = args.get_one::<String>("ports").map(|s| s.as_str());
 
-            run_push_command(target, app, tag, ports).await;
+            // Use new Source Push logic (Simple Shell)
+            match crate::ops::push::PushDeploy::deploy(target) {
+                Ok(_) => println!("✅ Push Successful"),
+                Err(e) => {
+                    eprintln!("❌ Push Failed: {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
         Some(("pull", _)) => {
             println!("📥 Arcane Pull: Not implemented yet (Coming soon: Logs/State sync)");
@@ -863,24 +876,6 @@ async fn start_arcane_daemon(paths: Vec<&str>) {
         .expect("Failed to listen for Ctrl+C");
     println!("👋 Arcane daemon stopped");
     std::process::exit(0);
-}
-
-async fn run_push_command(target: &str, app: &str, tag: &str, ports: Option<&str>) {
-    println!("🚀 Arcane Ops: Deploying {}@{} to {}...", app, tag, target);
-
-    let image = format!("{}:{}", app, tag);
-
-    let ports_vec: Option<Vec<u16>> =
-        ports.map(|p| p.split(',').filter_map(|s| s.trim().parse().ok()).collect());
-
-    // We assume target name matches environment name for now (e.g. "prod")
-    match crate::ops::deploy::ArcaneDeployer::deploy(target, &image, target, ports_vec).await {
-        Ok(_) => println!("✅ Deployment Successful"),
-        Err(e) => {
-            eprintln!("❌ Deployment Failed: {}", e);
-            std::process::exit(1);
-        }
-    }
 }
 
 fn is_git_repository(path: &Path) -> bool {
