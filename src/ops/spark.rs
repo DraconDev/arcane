@@ -282,7 +282,7 @@ async fn deploy_worker(
         if repo_dir.join("compose.yml").exists() {
             cmd.args(["--compose", "compose.yml"]);
         } else if repo_dir.join("docker-compose.yml").exists() {
-            cmd.args(["--compose-file", "docker-compose.yml"]);
+            cmd.args(["--compose", "docker-compose.yml"]);
         }
 
         let result = cmd.status();
