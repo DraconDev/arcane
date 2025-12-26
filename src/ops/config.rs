@@ -10,6 +10,7 @@ pub struct ServerConfig {
     #[serde(default)]
     pub port: u16,
     pub key_path: Option<String>,
+    pub env: Option<String>,
     #[serde(default = "default_docker_socket")]
     pub docker_socket: String,
 }
