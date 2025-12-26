@@ -919,6 +919,77 @@ async fn main() {
                 std::process::exit(1);
             }
         }
+        Some(("validate", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let env_name = sub_matches.get_one::<String>("env");
+
+            println!(
+                "🔍 Validating deployment configuration for '{}'...\n",
+                target
+            );
+
+            let config = crate::ops::config::OpsConfig::load();
+            let mut all_passed = true;
+
+            // Check 1: Server exists in config
+            print!("   ├─ Server in servers.toml... ");
+            if let Some(server) = config.find_server(target) {
+                println!("✅ ({})", server.host);
+
+                // Check 2: SSH connectivity
+                print!("   ├─ SSH connectivity... ");
+                match crate::ops::shell::Shell::exec_remote(server, "echo ok", false) {
+                    Ok(_) => println!("✅"),
+                    Err(e) => {
+                        println!("❌ ({})", e);
+                        all_passed = false;
+                    }
+                }
+
+                // Check 3: Docker available
+                print!("   ├─ Docker available... ");
+                match crate::ops::shell::Shell::exec_remote(server, "docker --version", false) {
+                    Ok(_) => println!("✅"),
+                    Err(_) => {
+                        println!("❌ (docker not found)");
+                        all_passed = false;
+                    }
+                }
+
+                // Check 4: Docker Compose available
+                print!("   ├─ Docker Compose... ");
+                match crate::ops::shell::Shell::exec_remote(server, "docker compose version", false)
+                {
+                    Ok(_) => println!("✅"),
+                    Err(_) => println!("⚠️ (not required for single image deploys)"),
+                }
+
+                // Check 5: Environment file
+                if let Some(env) = env_name {
+                    let env_path = format!("config/envs/{}.env", env);
+                    print!("   ├─ Environment file ({})... ", env_path);
+                    if std::path::Path::new(&env_path).exists() {
+                        println!("✅");
+                    } else {
+                        println!("❌ (not found)");
+                        all_passed = false;
+                    }
+                }
+            } else {
+                println!("❌ (not found)");
+                all_passed = false;
+            }
+
+            println!();
+            if all_passed {
+                println!("✅ All checks passed! Ready to deploy.");
+            } else {
+                println!("❌ Some checks failed. Fix issues before deploying.");
+                std::process::exit(1);
+            }
+        }
         Some(("pull", _)) => {
             println!("📥 Arcane Pull: Not implemented yet (Coming soon: Logs/State sync)");
         }
