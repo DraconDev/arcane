@@ -249,6 +249,29 @@ async fn main() {
                     ),
                 ),
         )
+        .subcommand(
+            Command::new("spark")
+                .about("Arcane Spark - Push-to-deploy webhook server")
+                .subcommand(
+                    Command::new("start")
+                        .about("Start the Spark webhook server")
+                        .arg(
+                            Arg::new("port")
+                                .short('p')
+                                .long("port")
+                                .default_value("7777")
+                                .help("Port to listen on"),
+                        )
+                        .arg(
+                            Arg::new("secret")
+                                .short('s')
+                                .long("secret")
+                                .env("SPARK_WEBHOOK_SECRET")
+                                .help("Webhook secret for signature verification"),
+                        ),
+                )
+                .subcommand(Command::new("status").about("Check Spark status")),
+        )
         .subcommand(Command::new("status").about("Check daemon status"))
         .subcommand(Command::new("stop").about("Stop the daemon"))
         .subcommand(
