@@ -39,16 +39,19 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
     };
 
     // Calculate Hints (formerly footer)
-    let hint_text = match app.current_tab {
+    let (left_hint, right_hint) = match app.current_tab {
         1 => {
             let mode = match app.graph_branch_mode {
                 0 => "All",
                 1 => "Current",
                 _ => "Main",
             };
-            format!(" s: Smart | l: Bulk | b: Branch ({}) | q: Quit ", mode)
+            (
+                format!(" s: Smart | l: Bulk | b: Branch ({}) ", mode),
+                " ←/→: Nav | q: Quit ".to_string(),
+            )
         }
-        _ => " ←/→: Nav | q: Quit ".to_string(),
+        _ => ("".to_string(), " ←/→: Nav | q: Quit ".to_string()),
     };
 
     // 1. Tabs
@@ -64,7 +67,8 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
             Block::default()
                 .borders(Borders::ALL)
                 .title(format!(" Arcane v{} ", env!("CARGO_PKG_VERSION")))
-                .title_top(Line::from(hint_text).alignment(Alignment::Right))
+                .title_top(Line::from(left_hint).alignment(Alignment::Left))
+                .title_top(Line::from(right_hint).alignment(Alignment::Right))
                 .border_style(if views_focused {
                     Style::default().fg(Color::Magenta)
                 } else {
@@ -323,9 +327,13 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let row1_cols = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
         ])
         .split(rows[0]);
 
@@ -333,9 +341,13 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
     let row2_cols = Layout::default()
         .direction(Direction::Horizontal)
         .constraints([
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
             Constraint::Ratio(1, 3),
+            Constraint::Length(1), // Spacer
         ])
         .split(rows[2]);
 
@@ -459,38 +471,38 @@ fn render_dashboard(f: &mut Frame, app: &mut App, area: ratatui::layout::Rect) {
         Paragraph::new(daemon_text)
             .style(daemon_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row1_cols[0],
+        row1_cols[1],
     );
     f.render_widget(
         Paragraph::new(commit_text)
             .style(commit_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row1_cols[1],
+        row1_cols[3],
     );
     f.render_widget(
         Paragraph::new(push_text)
             .style(push_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row1_cols[2],
+        row1_cols[5],
     );
 
     f.render_widget(
         Paragraph::new(version_text)
             .style(version_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row2_cols[0],
+        row2_cols[1],
     );
     f.render_widget(
         Paragraph::new(deploy_text)
             .style(deploy_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row2_cols[1],
+        row2_cols[3],
     );
     f.render_widget(
         Paragraph::new(shadow_text)
             .style(shadow_style)
             .alignment(ratatui::layout::Alignment::Center),
-        row2_cols[2],
+        row2_cols[5],
     );
 }
 
