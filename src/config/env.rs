@@ -19,7 +19,7 @@ impl Environment {
         name: &str,
         project_root: &Path,
         security: &ArcaneSecurity,
-        repo_key: &RepoKey,
+        repo_key: Option<&RepoKey>,
     ) -> Result<Self> {
         let envs_dir = project_root.join("config").join("envs");
 
@@ -55,14 +55,18 @@ impl Environment {
 fn load_and_decrypt(
     path: &Path,
     security: &ArcaneSecurity,
-    repo_key: &RepoKey,
+    repo_key: Option<&RepoKey>,
 ) -> Result<HashMap<String, String>> {
     let content = fs::read(path).with_context(|| format!("Failed to read env file: {:?}", path))?;
 
-    // Hybrid Mode: Try decrypt, fallback to plaintext
-    let decrypted_bytes = match security.decrypt_with_repo_key(repo_key, &content) {
-        Ok(d) => d,
-        Err(_) => content, // Assume plaintext if decryption fails
+    // Hybrid Mode: Try decrypt (if key exists), fallback to plaintext
+    let decrypted_bytes = if let Some(key) = repo_key {
+        match security.decrypt_with_repo_key(key, &content) {
+            Ok(d) => d,
+            Err(_) => content, // Assume plaintext if decryption fails
+        }
+    } else {
+        content // No key, assume plaintext
     };
 
     let content_str = String::from_utf8(decrypted_bytes)
