@@ -812,6 +812,102 @@ async fn main() {
                 std::process::exit(1);
             }
         }
+        Some(("halt", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let force = sub_matches.get_flag("force");
+            let dry_run = sub_matches.get_flag("dry-run");
+
+            let config = crate::ops::config::OpsConfig::load();
+            if let Some(server) = config.find_server(target) {
+                if !force && !dry_run {
+                    println!(
+                        "⚠️  This will stop ALL containers on {} ({})",
+                        target, server.host
+                    );
+                    print!("   Type 'yes' to confirm: ");
+                    use std::io::{self, Write};
+                    io::stdout().flush().unwrap();
+                    let mut input = String::new();
+                    io::stdin().read_line(&mut input).unwrap();
+                    if input.trim().to_lowercase() != "yes" {
+                        println!("❌ Aborted");
+                        std::process::exit(1);
+                    }
+                }
+
+                if !dry_run {
+                    println!("🛑 Stopping all containers on {}...", target);
+                }
+                let cmd = "docker stop $(docker ps -q) 2>/dev/null || echo 'No containers running'";
+                if let Err(e) = crate::ops::shell::Shell::passthrough(server, cmd, false, dry_run) {
+                    eprintln!("❌ Halt failed: {}", e);
+                    std::process::exit(1);
+                }
+                if !dry_run {
+                    println!("✅ All containers stopped on {}", target);
+                }
+            } else {
+                eprintln!("❌ Server '{}' not found in servers.toml", target);
+                std::process::exit(1);
+            }
+        }
+        Some(("rollback", sub_matches)) => {
+            let target = sub_matches
+                .get_one::<String>("target")
+                .expect("Target required");
+            let app = sub_matches
+                .get_one::<String>("app")
+                .map(|s| s.as_str())
+                .unwrap_or("app");
+            let dry_run = sub_matches.get_flag("dry-run");
+
+            let config = crate::ops::config::OpsConfig::load();
+            if let Some(server) = config.find_server(target) {
+                let backup_name = format!("{}_old", app);
+
+                if !dry_run {
+                    println!("🔄 Rolling back {} on {}...", app, target);
+                }
+
+                // Check if backup exists
+                let check_cmd = format!(
+                    "docker inspect --type container {} 2>/dev/null",
+                    backup_name
+                );
+                if crate::ops::shell::Shell::exec_remote(server, &check_cmd, dry_run).is_err() {
+                    eprintln!(
+                        "❌ No backup container '{}' found. Nothing to rollback.",
+                        backup_name
+                    );
+                    std::process::exit(1);
+                }
+
+                // Stop current, rename backup to current
+                let rollback_script = format!(
+                    "docker stop {} 2>/dev/null || true && \
+                     docker rm {} 2>/dev/null || true && \
+                     docker rename {} {} && \
+                     docker start {}",
+                    app, app, backup_name, app, app
+                );
+
+                if let Err(e) =
+                    crate::ops::shell::Shell::exec_remote(server, &rollback_script, dry_run)
+                {
+                    eprintln!("❌ Rollback failed: {}", e);
+                    std::process::exit(1);
+                }
+
+                if !dry_run {
+                    println!("✅ Rolled back to previous version of {}", app);
+                }
+            } else {
+                eprintln!("❌ Server '{}' not found in servers.toml", target);
+                std::process::exit(1);
+            }
+        }
         Some(("pull", _)) => {
             println!("📥 Arcane Pull: Not implemented yet (Coming soon: Logs/State sync)");
         }
