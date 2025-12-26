@@ -165,4 +165,51 @@ impl Shell {
 
         Ok(())
     }
+
+    /// Execute a command on a remote server, passing through Stdin/Stdout/Stderr.
+    /// Useful for interactive commands (exec) or streaming logs (logs -f).
+    pub fn passthrough(server: &ServerConfig, cmd: &str, use_tty: bool) -> Result<()> {
+        let mut ssh = Command::new("ssh");
+
+        // Port
+        if server.port > 0 {
+            ssh.arg("-p").arg(server.port.to_string());
+        }
+
+        // Identity file
+        if let Some(key) = &server.key_path {
+            ssh.arg("-i").arg(key);
+        }
+
+        // TTY for interactive sessions
+        if use_tty {
+            ssh.arg("-t");
+        }
+
+        // Target
+        let target = format!("{}@{}", server.user, server.host);
+        ssh.arg(target);
+
+        // Command
+        ssh.arg(cmd);
+
+        // Inherit IO
+        let mut child = ssh
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .spawn()
+            .context("Failed to spawn SSH process")?;
+
+        let status = child.wait().context("Failed to wait for SSH process")?;
+
+        if !status.success() {
+            return Err(anyhow::anyhow!(
+                "Remote command failed with status: {}",
+                status
+            ));
+        }
+
+        Ok(())
+    }
 }
