@@ -169,3 +169,139 @@ Delete their `.age` file and push. Instant revocation.
 
 **Q: Do I need to re-encrypt secrets when adding/removing people?**
 No. The secrets themselves don't change. You just add/remove the "envelopes" (`.age` files) that protect the repo key.
+
+---
+
+## Build Servers & CI (Arcane Spark)
+
+The same machine key system works for **automated deployments**.
+
+### The Setup
+
+Instead of individual developers deploying, a **build server** (your laptop in CI mode, or a dedicated machine) holds the deploy keys:
+
+```
+Developers → git push → Build Server (has machine key) → arcane deploy → Servers
+```
+
+### Step 1: Generate Machine Identity
+
+**On the build server:**
+
+```bash
+arcane deploy gen-key
+```
+
+**Output:**
+
+```
+🔑 Machine Identity Generated
+
+Public Key (add this to repo):
+age1buildserver1234567890abcdef...
+
+Private Key (keep this secret):
+AGE-SECRET-KEY-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+Note: Send the public key to a maintainer for authorization.
+```
+
+### Step 2: Authorize the Build Server
+
+**A maintainer runs:**
+
+```bash
+arcane deploy allow age1buildserver1234567890abcdef...
+git add .git/arcane/keys/
+git commit -m "Authorize build server"
+git push
+```
+
+### Step 3: Configure Build Server
+
+**On the build server, set environment:**
+
+```bash
+export ARCANE_MACHINE_KEY="AGE-SECRET-KEY-XXXXXXXXXX..."
+```
+
+Now the build server can decrypt secrets and deploy.
+
+### Step 4: Deploy
+
+```bash
+# On the build server (triggered by webhook, cron, or manual)
+git pull
+arcane deploy citadel --env production
+```
+
+### Why This Works
+
+| Entity             | Has Access? | How?                                     |
+| ------------------ | ----------- | ---------------------------------------- |
+| Developer laptops  | ❌          | No machine key                           |
+| Build server       | ✅          | Has authorized machine key               |
+| Production servers | ✅          | Received decrypted secrets during deploy |
+
+**Benefits:**
+
+-   Developers don't need production secrets
+-   One place to revoke (delete the `machine:*.age` file)
+-   Same security model as teammates
+
+### Revoking Build Server Access
+
+```bash
+rm .git/arcane/keys/machine:*.age  # Find the right one first
+git add -u .git/arcane/keys/
+git commit -m "Revoke build server"
+git push
+```
+
+---
+
+## Architecture: How It All Fits Together
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         Your Laptop                             │
+│  ~/.arcane/identity.age (your private key)                      │
+│  Can: decrypt, deploy, add teammates/machines                   │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                        git push │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                        Git Repository                           │
+│  .git/arcane/keys/                                              │
+│    ├── owner.age           (repo key for you)                   │
+│    ├── user:alice.age      (repo key for teammate)              │
+│    └── machine:build1.age  (repo key for build server)          │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                          git pull │ (Build server watches)
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Build Server (Arcane Spark)                │
+│  ARCANE_MACHINE_KEY="AGE-SECRET-KEY-XXX..."                     │
+│  Can: decrypt secrets, build, deploy                            │
+│  Cannot: add new teammates/machines (not the owner)             │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+                    arcane deploy │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Production Servers                          │
+│  Receives decrypted secrets via SSH during deploy               │
+│  Runs: docker compose up with injected env vars                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Scale Story
+
+| Team Size  | Workflow                                         |
+| ---------- | ------------------------------------------------ |
+| Solo       | Deploy from laptop                               |
+| Small team | Each dev can deploy (all have machine keys)      |
+| Large team | Only build server deploys (devs push, it builds) |
+| Enterprise | Multiple build servers for stage/prod            |
