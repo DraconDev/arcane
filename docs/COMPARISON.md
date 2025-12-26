@@ -67,16 +67,16 @@ A brutally honest comparison of deployment tools.
 
 ### 4. Complexity
 
-| Tool               | Config Files                      | Learning Curve    |
-| ------------------ | --------------------------------- | ----------------- |
-| **Arcane**         | `servers.toml` + Dockerfile       | Low               |
-| **Kamal**          | `deploy.yml` (proprietary format) | Medium            |
-| **Coolify**        | Web UI                            | Low (but fragile) |
-| **Dokku**          | Procfile + buildpacks             | Medium            |
-| **Vercel**         | Zero (magic)                      | Lowest            |
-| **GitHub Actions** | Workflow YAML                     | High (YAML hell)  |
+| Tool               | Config Files                      | Learning Curve | Reality                       |
+| ------------------ | --------------------------------- | -------------- | ----------------------------- |
+| **Arcane**         | `servers.toml` + Dockerfile       | Low            | Works for everything          |
+| **Kamal**          | `deploy.yml` (proprietary format) | Medium         | Rails-focused                 |
+| **Coolify**        | Web UI                            | Low            | ...until something breaks     |
+| **Dokku**          | Procfile + buildpacks             | Medium         | Magic that fails              |
+| **Vercel**         | Zero (magic)                      | Lowest\*       | \*Only for Next.js happy path |
+| **GitHub Actions** | Workflow YAML                     | High           | YAML hell                     |
 
-**Winner: Vercel** (for simplicity) / **Arcane** (for control)
+**Winner: Arcane** — Vercel is "simpler" only if you're deploying a vanilla Next.js app with zero custom config. The moment you need environment variables, custom domains, or anything non-standard, Vercel becomes a maze of dashboard clicks. Arcane is one command for everything.
 
 ---
 
