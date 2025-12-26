@@ -302,6 +302,42 @@ async fn main() {
                         .help("Show command without executing"),
                 ),
         )
+        .subcommand(
+            Command::new("halt")
+                .about("Stop all containers on a remote server (kill switch)")
+                .arg(Arg::new("target").required(true).help("Server name"))
+                .arg(
+                    Arg::new("force")
+                        .short('f')
+                        .long("force")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Skip confirmation prompt"),
+                )
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Show command without executing"),
+                ),
+        )
+        .subcommand(
+            Command::new("rollback")
+                .about("Rollback to the previous container version")
+                .arg(Arg::new("target").required(true).help("Server name"))
+                .arg(
+                    Arg::new("app")
+                        .short('a')
+                        .long("app")
+                        .default_value("app")
+                        .help("App/Container name"),
+                )
+                .arg(
+                    Arg::new("dry-run")
+                        .long("dry-run")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Show command without executing"),
+                ),
+        )
         .get_matches();
 
     match matches.subcommand() {
