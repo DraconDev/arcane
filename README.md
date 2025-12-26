@@ -120,6 +120,8 @@ arcane/
 | Team key sharing | ✅ Stable |
 | Machine/server keys | ✅ Stable |
 | Sovereign Guardian (Auto-Init) | ✅ Stable |
+| Deployment (Single/Group) | ✅ Stable |
+| Docker Compose Support | ✅ Stable |
 | AI-powered commits | ✅ Beta |
 | Sovereign Terminal (TUI) | ✅ Stable |
 | Smart Squash (AI Git History) | ✅ Beta |
