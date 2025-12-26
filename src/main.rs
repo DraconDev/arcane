@@ -688,6 +688,7 @@ async fn main() {
                 .unwrap_or("app");
             let follow = sub_matches.get_flag("follow");
             let lines = sub_matches.get_one::<String>("lines").map(|s| s.as_str());
+            let dry_run = sub_matches.get_flag("dry-run");
 
             let config = crate::ops::config::OpsConfig::load();
             if let Some(server) = config.find_server(target) {
@@ -699,8 +700,11 @@ async fn main() {
                     cmd.push_str(&format!(" -n {}", n));
                 }
 
-                println!("📜 Streaming logs from {}/{}...", target, app);
-                if let Err(e) = crate::ops::shell::Shell::passthrough(server, &cmd, false) {
+                if !dry_run {
+                    println!("📜 Streaming logs from {}/{}...", target, app);
+                }
+                if let Err(e) = crate::ops::shell::Shell::passthrough(server, &cmd, false, dry_run)
+                {
                     eprintln!("❌ Logs interrupted: {}", e);
                     std::process::exit(1);
                 }
@@ -723,15 +727,20 @@ async fn main() {
                 .map(|s| s.as_str())
                 .collect();
             let command = args.join(" ");
+            let dry_run = sub_matches.get_flag("dry-run");
 
             let config = crate::ops::config::OpsConfig::load();
             if let Some(server) = config.find_server(target) {
                 // Interactive exec require -it on docker side too
                 let remote_cmd = format!("docker exec -it {} {}", app, command);
-                println!("🔌 Connecting to {}/{}...", target, app);
+                if !dry_run {
+                    println!("🔌 Connecting to {}/{}...", target, app);
+                }
 
                 // use_tty = true for interactive SSH
-                if let Err(e) = crate::ops::shell::Shell::passthrough(server, &remote_cmd, true) {
+                if let Err(e) =
+                    crate::ops::shell::Shell::passthrough(server, &remote_cmd, true, dry_run)
+                {
                     eprintln!("❌ Exec failed: {}", e);
                     std::process::exit(1);
                 }
