@@ -1132,6 +1132,28 @@ async fn main() {
             }
             _ => println!("Use 'arcane daemon --help'"),
         },
+        Some(("spark", sub_matches)) => match sub_matches.subcommand() {
+            Some(("start", args)) => {
+                let port: u16 = args
+                    .get_one::<String>("port")
+                    .and_then(|s| s.parse().ok())
+                    .unwrap_or(7777);
+                let secret = args
+                    .get_one::<String>("secret")
+                    .cloned()
+                    .or_else(|| std::env::var("SPARK_WEBHOOK_SECRET").ok())
+                    .expect("Webhook secret required (--secret or SPARK_WEBHOOK_SECRET env var)");
+
+                if let Err(e) = crate::ops::spark::start_server(port, secret).await {
+                    eprintln!("❌ Spark failed: {}", e);
+                    std::process::exit(1);
+                }
+            }
+            Some(("status", _)) => {
+                println!("📊 Arcane Spark status: Not running (TODO: check PID file)");
+            }
+            _ => println!("Use 'arcane spark --help'"),
+        },
         Some(("run", sub_matches)) => {
             // POC: Just decrypt .env if it exists and run command
             let cmd_args: Vec<_> = sub_matches
