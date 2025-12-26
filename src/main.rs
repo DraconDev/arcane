@@ -136,6 +136,15 @@ async fn main() {
                         .long("ports")
                         .help("Comma-separated ports for Blue/Green deploy (e.g. '8001,8002')"),
                 )
+                .arg(
+                    Arg::new("env")
+                        .long("env")
+                        .short('e')
+                        .default_value("staging")
+                        .help(
+                            "Environment to load (config/envs/<env>.env). Defaults to 'staging'.",
+                        ),
+                )
                 .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
                 .subcommand(
                     Command::new("allow")
