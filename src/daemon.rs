@@ -187,14 +187,38 @@ fn perform_auto_commit(repo_path: &Path) -> Result<()> {
 
         // 1. FAST REGEX SCAN (Local)
         // We scan the diff content to catch secrets *before* sending to AI (privacy + speed)
+        // Only scan ADDED lines (starting with '+') to avoid false positives on removed secrets
+        let added_lines: String = diff
+            .lines()
+            .filter(|line| line.starts_with('+') && !line.starts_with("+++"))
+            .collect::<Vec<_>>()
+            .join("\n");
+
         let scanner = crate::security::SecretScanner::new();
-        let matches = scanner.scan(&diff);
+        let matches = scanner.scan(&added_lines);
         if !matches.is_empty() {
+            let reason = format!("Found secrets: {:?}", matches);
             crate::daemon::log_event(&format!(
-                "🛑 SECURITY ALERT: Blocked commit for {:?}. Found secrets: {:?}",
+                "🛑 SECURITY ALERT: Blocked commit for {:?}. {}",
                 repo_path.file_name().unwrap_or_default(),
-                matches
+                reason
             ));
+
+            notify_user(
+                "Arcane Security Alert",
+                &format!("Blocked commit: {}", reason),
+            );
+
+            // Persist Alert to Status
+            if let Some(mut status) = crate::DaemonStatus::load() {
+                status.last_alert = Some(format!(
+                    "{} - {}",
+                    chrono::Local::now().format("%H:%M:%S"),
+                    reason
+                ));
+                let _ = status.save();
+            }
+
             return Ok(());
         }
 
@@ -346,12 +370,57 @@ pub fn add_watch_root(path: PathBuf) -> Result<()> {
 fn notify_user(title: &str, body: &str) {
     #[cfg(target_os = "linux")]
     {
-        use notify_rust::Notification;
-        let _ = Notification::new()
+        use notify_rust::{Hint, Notification, Urgency};
+        use std::process::Command;
+        use std::sync::atomic::{AtomicU64, Ordering};
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        // Debounce: Only send one notification per 10 seconds
+        static LAST_NOTIFY: AtomicU64 = AtomicU64::new(0);
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_secs();
+        let last = LAST_NOTIFY.load(Ordering::Relaxed);
+
+        if now - last < 10 {
+            return; // Skip - too soon since last notification
+        }
+        LAST_NOTIFY.store(now, Ordering::Relaxed);
+
+        let result = Notification::new()
             .summary(title)
             .body(body)
             .appname("Arcane")
-            .icon("dialog-warning")
+            .icon("security-high")
+            .urgency(Urgency::Critical)
+            .hint(Hint::Resident(true)) // Keep in notification center
+            .timeout(0) // Persistent until user dismisses
+            .action("default", "Open Arcane")
             .show();
+
+        // Spawn a thread to wait for click action (non-blocking)
+        if let Ok(handle) = result {
+            std::thread::spawn(move || {
+                handle.wait_for_action(|action| {
+                    if action == "default" {
+                        // Use absolute path to ensure we run the correct binary
+                        let arcane_path = "/home/dracon/.cargo/bin/arcane";
+
+                        // Try gnome-terminal first (most common on Ubuntu)
+                        if Command::new("gnome-terminal")
+                            .args(["--", arcane_path])
+                            .spawn()
+                            .is_err()
+                        {
+                            // Fallback to x-terminal-emulator
+                            let _ = Command::new("x-terminal-emulator")
+                                .args(["-e", arcane_path])
+                                .spawn();
+                        }
+                    }
+                });
+            });
+        }
     }
 }

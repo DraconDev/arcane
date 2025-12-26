@@ -78,15 +78,23 @@ pub fn ui<B: Backend>(f: &mut Frame, app: &mut App) {
                 .map(|p| p.display().to_string())
                 .unwrap_or_else(|| "None".to_string());
 
+            // Security status indicator
+            let security_indicator = if status.last_alert.is_some() {
+                Span::styled(" 🔴 ", Style::default().fg(Color::Red))
+            } else {
+                Span::styled(" 🟢 ", Style::default().fg(Color::Green))
+            };
+
             let pid_span = Span::styled(
                 format!(
-                    " Daemon: RUNNING (PID: {}) | State: {} | Watched: {} ",
+                    "Daemon: RUNNING (PID: {}) | State: {} | Watched: {} ",
                     status.pid, status.state, watched_path
                 ),
                 Style::default().fg(Color::Green),
             );
 
-            let mut lines = vec![Line::from(pid_span)];
+            let status_line = Line::from(vec![security_indicator, pid_span]);
+            let mut lines = vec![status_line];
 
             if let Some(alert) = &status.last_alert {
                 lines.push(Line::from(Span::styled(
