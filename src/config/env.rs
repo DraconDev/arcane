@@ -10,7 +10,7 @@ pub struct Environment {
     pub variables: HashMap<String, String>,
 }
 
-use crate::security::ArcaneSecurity;
+use crate::security::{ArcaneSecurity, RepoKey};
 
 impl Environment {
     /// Load an environment by name (e.g., "staging", "production")
@@ -19,7 +19,7 @@ impl Environment {
         name: &str,
         project_root: &Path,
         security: &ArcaneSecurity,
-        repo_key: &age::x25519::Identity,
+        repo_key: &RepoKey,
     ) -> Result<Self> {
         let envs_dir = project_root.join("config").join("envs");
 
@@ -55,7 +55,7 @@ impl Environment {
 fn load_and_decrypt(
     path: &Path,
     security: &ArcaneSecurity,
-    repo_key: &age::x25519::Identity,
+    repo_key: &RepoKey,
 ) -> Result<HashMap<String, String>> {
     let content = fs::read(path).with_context(|| format!("Failed to read env file: {:?}", path))?;
 
