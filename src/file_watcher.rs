@@ -309,7 +309,6 @@ impl FileWatcher {
         let diff = self.git_operations.get_diff(&self.root_path).await?;
 
         // --- Smart Versioning Logic (Auto-Commit Hook) ---
-        let mut final_diff = diff.clone();
 
         // Re-load config to check if versioning is enabled
         let config = crate::config::ArcaneConfig::load().unwrap_or_default();
@@ -338,12 +337,6 @@ impl FileWatcher {
                                             .await
                                         {
                                             eprintln!("⚠️ Failed to stage version file: {}", e);
-                                        }
-                                        // Refresh Diff to include the version bump in the AI commit context
-                                        if let Ok(new_diff) =
-                                            self.git_operations.get_diff(&self.root_path).await
-                                        {
-                                            final_diff = new_diff;
                                         }
                                     }
                                     Err(e) => eprintln!("⚠️ Version bump failed: {}", e),
