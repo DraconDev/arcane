@@ -1,117 +1,68 @@
-# Arcane Spark Guide ⚡
+# Arcane Spark ⚡
 
-**Arcane Spark** is a self-hosted build server and webhook listener. It allows you to trigger deployments automatically when you push code to GitHub, keeping your codebase verifying signatures and executing deploys from your own infrastructure.
+> **Self-Hosted, Push-to-Deploy Build Server.**
+
+Arcane Spark is a lightweight webhook daemon that listens for GitHub push events and triggers `arcane deploy` automatically. It sits on your server (or a build box) and eliminates the need for external CI/CD services like GitHub Actions or CircleCI for simple deployment workflows.
+
+## 🚀 Features
+
+-   **Zero Config**: Works out of the box with standard GitHub webhooks.
+-   **Security**: Verifies HMAC signatures (optional but recommended) and whitelists repositories.
+-   **Debounce**: Intelligent 10s debounce to batch rapid commits.
+-   **Latest-Wins**: Automatically ignores older builds if a new commit arrives during the wait period.
+-   **Auto-Ingress**: Automatically injects Traefik labels into `compose.yml` deployments for instant routing.
+-   **Status Reporting**: Reports build status (pending/success/failure) back to the GitHub Commit UI.
 
 ---
 
-## 🚀 Quick Start
+## 🛠️ Setup
 
-### 1. Prerequisite
+### 1. Configuration (`spark.toml`)
 
-You need Arcane installed on a server that has:
-
-1.  **Public IP** (to receive webhooks).
-2.  **SSH Access** to your target servers (or be the target server itself).
-3.  **Arcane Config** (`servers.toml`, identity key) set up.
-
-### 2. Configuration (`spark.toml`)
-
-Create a `spark.toml` file in your Arcane root (or wherever you run the daemon):
+Create a `spark.toml` file in the directory where you run Arcane:
 
 ```toml
-# spark.toml
-
-# Define which repos to listen for
-[[repos]]
-name = "arcane"                     # Matches repo name in GitHub URL
-url = "https://github.com/DraconDev/arcane"
-branch = "main"                     # Branch to deploy
-deploy_target = "micro1"            # Server alias from servers.toml
-env = "micro1"                      # Environment file (config/envs/micro1.env)
+[repos.my-project]
+name = "my-project"
+url = "https://github.com/me/my-project.git"
+url_secret = "my-secret-token" # Optional: Matches GitHub Webhook Secret
 ```
 
-### 3. Start Spark
-
-Run the daemon:
+### 2. Run the Server
 
 ```bash
-# Using a flag for the secret (good for testing)
-arcane spark start --port 7777 --secret "<SECRET>"
-
-# Using an env var (better for production)
-export SPARK_WEBHOOK_SECRET="<SECRET>"
-arcane spark start --port 7777
+# Start listening on port 7777 (default)
+arcane spark
 ```
 
-### 4. Configure GitHub Webhook
+### 3. Usage with GitHub
 
-1.  Go to your Repository on GitHub.
-2.  **Settings** -> **Webhooks** -> **Add webhook**.
-3.  **Payload URL**: `http://<YOUR_SERVER_IP>:7777/webhook`
-4.  **Content type**: `application/json`
-5.  **Secret**: `<SECRET>` (Must match above!)
-6.  **Events**: Just "Push" events.
-7.  Click **Add webhook**.
+1.  Go to your GitHub Repo -> Settings -> Webhooks -> Add webhook.
+2.  **Payload URL**: `http://your-server-ip:7777/webhook`
+3.  **Content type**: `application/json`
+4.  **Secret**: (Same as `url_secret` in toml)
+5.  **Events**: Just "Push" events.
 
 ---
 
-## 🛠️ Production Deployment (Systemd)
+## 📦 How It Works
 
-To run Spark as a background service on Linux:
-
-1.  **Create unit file**: `/etc/systemd/system/arcane-spark.service`
-
-```ini
-[Unit]
-Description=Arcane Spark Webhook Listener
-After=network.target
-
-[Service]
-Type=simple
-User=ubuntu
-WorkingDirectory=/home/ubuntu/arcane
-ExecStart=/home/ubuntu/.cargo/bin/arcane spark start --port 7777
-Environment="SPARK_WEBHOOK_SECRET=<SECRET>"
-Restart=always
-RestartSec=3
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2.  **Enable and Start**:
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl enable arcane-spark
-    sudo systemctl start arcane-spark
-    sudo systemctl status arcane-spark
-    ```
+1.  **Webhook Received**: Spark receives a JSON payload from GitHub.
+2.  **Verify**: Checks if the repo is in `spark.toml` and (optionally) verifies the HMAC signature.
+3.  **Clone/Pull**: Updates a local mirror of the repository in `~/.arcane/spark/repos/`.
+4.  **Deploy**: Runs `arcane deploy` targeting the **local server** (or configured target).
+    -   If `compose.yml` exists, it runs with `--compose` and `--auto-ingress`.
+    -   If not, it attempts a single image build (Garage Mode).
+5.  **Report**: Updates GitHub commit status to "✅ Success" or "❌ Failure".
 
 ---
 
-## 🧠 How It Works (Internals)
+## 🌐 Auto-Ingress
 
-1.  **Debounce**: Spark waits **10 seconds** after a push before starting a build. If a new push arrives in that window, the timer resets.
-2.  **Latest Wins**: If a build is currently running and a new push arrives, Spark **cancels** the current build and queues the new one. This prevents "queue clogging" with obsolete commits.
-3.  **Isolation**: Builds for different repositories run in parallel and do not affect each other.
-4.  **Security**:
-    -   **HMAC-SHA256**: Every request is cryptographically signed by GitHub. Spark drops any request without a valid signature.
-    -   **Whitelist**: Spark only acts on repos explicitly defined in `spark.toml`.
+When deploying Docker Compose projects via Spark, it automatically passes the `--auto-ingress` flag. This leverages Arcane's core ability to inject Traefik V2 labels on the fly:
 
----
+-   **Host Rule**: `Host(<repo-name>.dracon.uk)`
+-   **TLS**: `certresolver=letsencrypt`
+-   **Networking**: Connects to `traefik-public`
 
-## 🔍 Troubleshooting
-
-**"Repo 'xyz' not in whitelist, ignoring"**
-
--   Add the repo to your `spark.toml`.
--   Ensure the `name` matches the GitHub repo name (last part of URL).
-
-**"Invalid webhook signature"**
-
--   Check that `SPARK_WEBHOOK_SECRET` matches the secret in GitHub settings.
-
-**Deploy fails**
-
--   Check `arcane deploy` works manually first.
--   Ensure the user running Spark has SSH access to the target.
+This means you can drop a standard `compose.yml` into your repo, push to GitHub, and have a fully secured, HTTPS-enabled endpoint in seconds.
