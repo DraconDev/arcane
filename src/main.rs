@@ -727,10 +727,8 @@ async fn main() {
 
                     let compose_path = sub_matches.get_one::<String>("compose").cloned();
                     let dry_run = sub_matches.get_flag("dry-run");
-                    let compose_path = sub_matches.get_one::<String>("compose").cloned();
-                    let dry_run = sub_matches.get_flag("dry-run");
                     let parallel = sub_matches.get_flag("parallel");
-                    let auto_ingress = sub_matches.get_flag("auto-ingress"); // Added
+                    let auto_ingress = sub_matches.get_flag("auto-ingress");
 
                     let deployment_ref = if compose_path.is_some() {
                         // For compose, use app name as the project key
@@ -744,7 +742,6 @@ async fn main() {
                         target,
                         &deployment_ref,
                         env_name,
-                        ports,
                         ports,
                         compose_path,
                         auto_ingress,
