@@ -427,3 +427,51 @@ pub async fn start_server(port: u16, secret: String) -> anyhow::Result<()> {
 
     Ok(())
 }
+
+async fn set_commit_status(
+    client: &Client,
+    token: &str,
+    repo_url: &str,
+    sha: &str,
+    state: &str,
+    desc: &str,
+) {
+    if let Some((owner, repo)) = parse_github_repo(repo_url) {
+        let url = format!(
+            "https://api.github.com/repos/{}/{}/statuses/{}",
+            owner, repo, sha
+        );
+        let body = json!({
+            "state": state,
+            "description": desc,
+            "context": "arcane/spark",
+            "target_url": ""
+        });
+
+        let _ = client
+            .post(&url)
+            .header("Authorization", format!("Bearer {}", token))
+            .header("User-Agent", "arcane-spark")
+            .header("Accept", "application/vnd.github.v3+json")
+            .json(&body)
+            .send()
+            .await;
+    }
+}
+
+fn parse_github_repo(url: &str) -> Option<(String, String)> {
+    let url = url.trim_end_matches(".git");
+    if let Some(path) = url.strip_prefix("https://github.com/") {
+        let parts: Vec<&str> = path.split('/').collect();
+        if parts.len() >= 2 {
+            return Some((parts[0].to_string(), parts[1].to_string()));
+        }
+    }
+    if let Some(path) = url.strip_prefix("git@github.com:") {
+        let parts: Vec<&str> = path.split('/').collect();
+        if parts.len() >= 2 {
+            return Some((parts[0].to_string(), parts[1].to_string()));
+        }
+    }
+    None
+}
