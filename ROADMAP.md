@@ -74,10 +74,11 @@
 
 ### Priority 2: Build Automation
 
-| Feature                        | Description                                     | Status  |
-| ------------------------------ | ----------------------------------------------- | ------- |
-| **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done |
-| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done |
+| Feature                        | Description                                     | Status     |
+| ------------------------------ | ----------------------------------------------- | ---------- |
+| **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done    |
+| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done    |
+| **Resilient Filters & Notifs** | Prevent git hangs from blocked commit filters   | 🕒 Planned |
 
 ### Priority 3: Deployment Visibility
 
