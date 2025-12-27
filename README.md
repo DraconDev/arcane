@@ -192,8 +192,9 @@ rm .git/arcane/keys/user:alice.age && git commit -am "Remove Alice"
 1. **Zero Dev Access to Prod Secrets** — Devs work with staging. Only servers decrypt production.
 2. **No Server-Side Control Plane** — Nothing to crash, update, or secure on your VPS.
 3. **Build Locally, Push Artifacts** — Use your beefy dev machine. $5 VPSs can't compile Rust.
-4. **Encrypted Git as Source of Truth** — No secret sprawl across dashboards.
-5. **Scales from Solo to Enterprise** — Same tool, just add machine keys.
+4. **One-Step Custom Domains** — Just add `arcane.domain` label to your Compose file. No UI syncing.
+5. **Encrypted Git as Source of Truth** — No secret sprawl across dashboards.
+6. **Scales from Solo to Enterprise** — Same tool, just add machine keys.
 
 ### What We're NOT Building:
 

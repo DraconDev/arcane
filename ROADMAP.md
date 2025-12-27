@@ -19,7 +19,7 @@
 
 ---
 
-## Current State (v0.1.36)
+## Current State (v0.1.37)
 
 ### ✅ Stable - Core
 
@@ -84,11 +84,11 @@
 
 ### Priority 3: Networking
 
-| Feature                  | Description               | Status     |
-| ------------------------ | ------------------------- | ---------- |
-| Custom domains in config | Map domains to containers | 🔄 Next    |
-| Wildcard certs           | `*.app.com` via Traefik   | 🔲 Planned |
-| Auto subdomain routing   | Project name → subdomain  | ✅ Done    |
+| Feature                  | Description                            | Status  |
+| ------------------------ | -------------------------------------- | ------- |
+| Custom domains in config | `arcane.domain` label in Compose       | ✅ Done |
+| Wildcard certs           | `*.app.com` via Traefik                | 🔄 Next |
+| Auto subdomain routing   | Project name → subdomain (if no label) | ✅ Done |
 
 ---
 

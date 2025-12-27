@@ -167,11 +167,27 @@ arcane exec micro1 --dry-run -- rm -rf /
 -   **"SSH Error"**: Ensure your SSH agent has the key loaded (`ssh-add ~/.ssh/id_ed25519`).
 -   **"Deployment Locked"**: Arcane places a lock directory on the server. If a deploy crashes, you may need to manually run `rmdir /var/lock/arcane.deploy` on the server.
 
----
-
 ## ⚡ Auto-Ingress (Traefik)
 
 Arcane can automatically make your services accessible via HTTPS subdomains using the `--auto-ingress` flag.
+
+### 1. Default Routing
+
+By default, Arcane routes traffic based on your repository name:
+
+-   **Host**: `<repo-name>.dracon.uk`
+
+### 2. Custom Domains (`arcane.domain`)
+
+Unlike other tools (like Coolify) that require double-setting domains in UI and config, Arcane supports a one-step label override in your `compose.yml`:
+
+```yaml
+services:
+    web:
+        image: my-app
+        labels:
+            - "arcane.domain=myapp.com"
+```
 
 **How it works:**
 
@@ -179,9 +195,10 @@ Arcane can automatically make your services accessible via HTTPS subdomains usin
 2.  It detects services with `ports` or named `web`/`app`.
 3.  It **removes** the port mapping (so the container is private).
 4.  It **injects** Traefik labels:
-    -   Host: `<app-name>.dracon.uk`
+    -   Host: `myapp.com` (from label) or `<repo>.dracon.uk` (fallback).
     -   CertResolver: `letsencrypt`
 5.  It adds the `traefik-public` network.
+6.  The `arcane.domain` label is removed from the container for a clean state.
 
 **Usage:**
 
