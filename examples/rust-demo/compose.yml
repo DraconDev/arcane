@@ -1,9 +1,11 @@
 services:
   web:
-    build: .
+    image: traefik/whoami
     ports:
-      - "3000:3000"
+      - "8080:80"
     restart: always
 
-# Note: No Traefik labels here!
-# Arcane Auto-Ingress should inject them automatically.
+# Auto-Ingress should:
+# 1. Remove port 8080 mapping
+# 2. Add Host(ingress-demo.dracon.uk)
+# 3. Add network traefik-public
