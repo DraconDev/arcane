@@ -1300,7 +1300,8 @@ impl App {
                 &image,
                 &env_name,
                 None,
-                false,
+                None,  // compose path
+                false, // auto-ingress
                 false, // dry-run
                 false, // parallel
             )
