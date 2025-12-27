@@ -674,9 +674,29 @@ impl ArcaneDeployer {
                             .any(|l| l.as_str().unwrap_or("").contains("traefik.enable=true"));
 
                         if !has_traefik {
+                            let mut domain = format!("{}.dracon.uk", repo_name);
+
+                            // Check for arcane.domain override
+                            let mut domain_label_idx = None;
+                            for (i, label) in seq.iter().enumerate() {
+                                if let Some(s) = label.as_str() {
+                                    if s.starts_with("arcane.domain=") {
+                                        if let Some((_, d)) = s.split_once('=') {
+                                            domain = d.trim().to_string();
+                                            domain_label_idx = Some(i);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Optional: Remove the arcane.domain label to keep it clean
+                            if let Some(idx) = domain_label_idx {
+                                seq.remove(idx);
+                            }
+
                             let host_rule = format!(
-                                "traefik.http.routers.{}.rule=Host(`{}.dracon.uk`)",
-                                repo_name, repo_name
+                                "traefik.http.routers.{}.rule=Host(`{}`)",
+                                repo_name, domain
                             );
                             let port_rule = format!(
                                 "traefik.http.services.{}.loadbalancer.server.port={}",
