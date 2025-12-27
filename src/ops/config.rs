@@ -15,6 +15,26 @@ pub struct ServerConfig {
     pub docker_socket: String,
 }
 
+impl ServerConfig {
+    pub fn ssh_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+        if self.port > 0 {
+            args.push("-p".to_string());
+            args.push(self.port.to_string());
+        }
+        if let Some(key) = &self.key_path {
+            args.push("-i".to_string());
+            args.push(key.clone());
+        }
+        // Strict host checking off for automation stability
+        args.push("-o".to_string());
+        args.push("StrictHostKeyChecking=no".to_string());
+        args.push("-o".to_string());
+        args.push("UserKnownHostsFile=/dev/null".to_string());
+        args
+    }
+}
+
 fn default_docker_socket() -> String {
     "/var/run/docker.sock".to_string()
 }
