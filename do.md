@@ -22,3 +22,5 @@
 - we need to expore github features more see if we have more synergies 
 
 - one tweak we can do that in most cases we are logged into github and have the keys to the server, so can we make the setup easier? Even if big company doing it they would still need the account that can setup the webhooks right?
+
+- add hundreds of tests at least 
