@@ -21,6 +21,7 @@ impl ArcaneDeployer {
         env_name: &str,
         ports: Option<Vec<u16>>,
         compose_path: Option<String>,
+        auto_ingress: bool, // New arg
         dry_run: bool,
         parallel: bool,
     ) -> Result<()> {
@@ -46,12 +47,12 @@ impl ArcaneDeployer {
 
                         async move {
                             // Prefix output with [server_name]
-                            Self::deploy_target(
                                 &server_name,
                                 &deployment_ref,
                                 &env_name,
                                 ports,
                                 compose_path,
+                                auto_ingress,
                                 dry_run,
                                 &format!("[{}]", server_name),
                             )
@@ -85,6 +86,7 @@ impl ArcaneDeployer {
                         env_name,
                         ports.clone(),
                         compose_path.clone(),
+                        auto_ingress,
                         dry_run,
                         "",
                     )
@@ -99,12 +101,14 @@ impl ArcaneDeployer {
         }
 
         // 2. Otherwise assume it's a single server
+        // 2. Otherwise assume it's a single server
         Self::deploy_target(
             target_name,
             deployment_ref,
             env_name,
             ports,
             compose_path,
+            auto_ingress,
             dry_run,
             "", // No prefix for direct target
         )
@@ -119,6 +123,7 @@ impl ArcaneDeployer {
         env_name: &str,
         ports: Option<Vec<u16>>,
         compose_path: Option<String>,
+        auto_ingress: bool,
         dry_run: bool,
         prefix: &str,
     ) -> Result<()> {
