@@ -4,7 +4,7 @@ version = "0.1.36"
 edition = "2021"
 
 [workspace]
-members = ["."]
+members = [".", "examples/rust-demo"]
 
 
 [dependencies]
