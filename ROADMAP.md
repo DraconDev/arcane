@@ -19,7 +19,7 @@
 
 ---
 
-## Current State (v0.1.37)
+## Current State (v0.1.38)
 
 ### ✅ Stable - Core
 
@@ -81,6 +81,7 @@
 | Traefik Setup Script           | Auto-discovery reverse proxy                    | ✅ Done |
 | Traefik Label Generation       | Auto-generate labels in compose                 | ✅ Done |
 | GitHub Status API              | Report deploy pass/fail to commit               | ✅ Done |
+| Context Pruning                | Honor `.dockerignore` / `.gitignore`            | ✅ Done |
 
 ### Priority 3: Networking
 
