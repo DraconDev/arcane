@@ -499,7 +499,7 @@ fn inject_traefik_labels(path: &std::path::Path, repo_name: &str) -> anyhow::Res
             let has_ports = config.get("ports").is_some();
 
             if is_web || has_ports {
-                let mut port = "80"; // Default
+                let mut port = "80".to_string(); // Default
 
                 // Extract port if configured and REMOVE explicit mapping to avoid conflict
                 if let Some(ports) = config.get_mut("ports").and_then(|p| p.as_sequence_mut()) {
@@ -511,9 +511,9 @@ fn inject_traefik_labels(path: &std::path::Path, repo_name: &str) -> anyhow::Res
                         };
                         // Parse "8080:80" -> internal port 80
                         if let Some((_, internal)) = p_str.split_once(':') {
-                            port = internal; // Use internal port
+                            port = internal.to_string(); // Use internal port
                         } else {
-                            port = &p_str; // "80" -> 80
+                            port = p_str; // "80" -> 80
                         }
                     }
                     // Remove ports section to prevent binding conflict
