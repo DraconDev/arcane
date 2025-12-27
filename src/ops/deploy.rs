@@ -3,7 +3,9 @@ use crate::ops::shell::Shell;
 use crate::security::ArcaneSecurity;
 use anyhow::{Context, Result};
 use futures::stream::{self, StreamExt};
+use serde_yaml::Value as YamlValue;
 use std::collections::HashMap;
+use std::fs;
 use std::io::Write;
 use std::process::{Command, Stdio};
 
@@ -186,6 +188,7 @@ impl ArcaneDeployer {
                 compose_file,
                 deployment_ref,
                 env.variables,
+                auto_ingress,
                 dry_run,
                 prefix,
             )
@@ -212,6 +215,7 @@ impl ArcaneDeployer {
         compose_path: String,
         app_name: &str, // used for folder name
         env_vars: HashMap<String, String>,
+        auto_ingress: bool,
         dry_run: bool,
         prefix: &str,
     ) -> Result<()> {
