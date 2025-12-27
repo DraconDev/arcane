@@ -49,6 +49,7 @@ This guide details every command available in the `arcane` CLI.
 ## 🚀 Deployment (Zero-Trust)
 
 -   `arcane deploy -t <server>`: Deploy current code to target server.
+-   `arcane deploy -t <server> --auto-ingress`: Automatically generate Traefik labels.
 -   `arcane deploy gen-key`: Generate a Machine Identity for a server.
 -   `arcane deploy allow <pub_key>`: Whitelist a machine key.
 
@@ -148,3 +149,13 @@ Higher-level team abstractions are available but `team add` is the preferred dir
 ### `arcane dashboard`
 
 **Purpose**: Launch the Sovereign Terminal (TUI) for managing repos, settings, and identity.
+
+### `arcane spark`
+
+**Usage**: `arcane spark`
+**Purpose**: Start the Push-to-Deploy Webhook Server.
+**Details**:
+
+-   Listens on port 7777.
+-   Triggers `arcane deploy` on GitHub Pushes.
+-   Requires `spark.toml`.
