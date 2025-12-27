@@ -7,6 +7,7 @@ use serde_yaml::Value as YamlValue;
 use std::collections::HashMap;
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 use std::process::{Command, Stdio};
 
 pub struct ArcaneDeployer;
