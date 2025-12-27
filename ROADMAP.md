@@ -88,8 +88,18 @@
 | Feature                  | Description                            | Status  |
 | ------------------------ | -------------------------------------- | ------- |
 | Custom domains in config | `arcane.domain` label in Compose       | ✅ Done |
-| Wildcard certs           | `*.app.com` via Traefik                | 🔄 Next |
+| Wildcard certs           | `*.app.com` via Traefik DNS-01         | ✅ Done |
 | Auto subdomain routing   | Project name → subdomain (if no label) | ✅ Done |
+
+### Priority 4: Coolify Parity (Future)
+
+| Feature                 | Description                            | Status     |
+| ----------------------- | -------------------------------------- | ---------- |
+| Database Backups        | Scheduled pg_dump via compose sidecar  | 🔲 Planned |
+| PR Preview Environments | Ephemeral deploys per PR               | 🔲 Planned |
+| Resource Monitoring     | CPU/RAM via Prometheus/Grafana sidecar | 🔲 Planned |
+| Health Check Rollback   | Auto-rollback on failed health check   | 🔲 Planned |
+| Deploy Notifications    | Slack/Discord/Email on deploy          | 🔲 Planned |
 
 ---
 

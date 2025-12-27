@@ -2,7 +2,8 @@ services:
   web:
     image: traefik/whoami
     labels:
-      - "arcane.domain=custom-whoami.dracon.uk"
+      - "arcane.domain=*.dracon.uk"
+      - "arcane.resolver=dns-resolver"
     ports:
       - "8080:80"
     restart: always

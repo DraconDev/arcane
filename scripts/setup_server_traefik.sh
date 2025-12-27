@@ -45,11 +45,12 @@ mkdir -p /opt/traefik
 mkdir -p /opt/traefik/acme
 
 # 5. Write Traefik static config
-cat > /opt/traefik/traefik.yml << 'EOF'
+# We support an optional 'dns-resolver' for Wildcard certs if Cloudflare keys are provided
+cat > /opt/traefik/traefik.yml << EOF
 # Traefik Static Configuration
 api:
   dashboard: true
-  insecure: true  # Dashboard on :8080 (disable in prod or secure it)
+  insecure: true
 
 entryPoints:
   web:
@@ -65,17 +66,33 @@ entryPoints:
 providers:
   docker:
     endpoint: "unix:///var/run/docker.sock"
-    exposedByDefault: false  # Only route containers with traefik.enable=true
+    exposedByDefault: false
     network: traefik-public
 
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: admin@dracon.uk  # Change this!
+      email: ${ADMIN_EMAIL:-admin@dracon.uk}
       storage: /acme/acme.json
       httpChallenge:
         entryPoint: web
 EOF
+
+# Add DNS-01 Resolver if Cloudflare is configured
+if [[ -n "$CF_API_KEY" ]]; then
+    echo "☁️  Configuring Cloudflare DNS-01 Resolver..."
+    cat >> /opt/traefik/traefik.yml << EOF
+  dns-resolver:
+    acme:
+      email: ${ADMIN_EMAIL:-admin@dracon.uk}
+      storage: /acme/acme.json
+      dnsChallenge:
+        provider: cloudflare
+        resolvers:
+          - "1.1.1.1:53"
+          - "8.8.8.8:53"
+EOF
+fi
 
 # 6. Create acme.json with correct permissions
 touch /opt/traefik/acme/acme.json
@@ -87,18 +104,32 @@ if docker ps -a --format '{{.Names}}' | grep -q '^traefik$'; then
     docker rm -f traefik
 fi
 
-echo "🚀 Starting Traefik..."
-docker run -d \
-    --name traefik \
-    --restart unless-stopped \
-    --network traefik-public \
-    -p 80:80 \
-    -p 443:443 \
-    -p 8080:8080 \
-    -v /var/run/docker.sock:/var/run/docker.sock:ro \
-    -v /opt/traefik/traefik.yml:/traefik.yml:ro \
-    -v /opt/traefik/acme:/acme \
-    traefik:v3.2
+# Build Docker Run command with optional DNS env vars
+TRAEFIK_OPTS=(
+    -d
+    --name traefik
+    --restart unless-stopped
+    --network traefik-public
+    -p 80:80
+    -p 443:443
+    -p 8080:8080
+    -v /var/run/docker.sock:/var/run/docker.sock:ro
+    -v /opt/traefik/traefik.yml:/traefik.yml:ro
+    -v /opt/traefik/acme:/acme
+)
+
+if [[ -n "$CF_API_EMAIL" ]]; then
+    TRAEFIK_OPTS+=(-e "CF_API_EMAIL=$CF_API_EMAIL")
+fi
+if [[ -n "$CF_API_KEY" ]]; then
+    TRAEFIK_OPTS+=(-e "CF_API_KEY=$CF_API_KEY")
+fi
+if [[ -n "$CF_DNS_API_TOKEN" ]]; then
+    TRAEFIK_OPTS+=(-e "CF_DNS_API_TOKEN=$CF_DNS_API_TOKEN")
+fi
+
+echo "🚀 Starting Traefik (v3)..."
+docker run "${TRAEFIK_OPTS[@]}" traefik:v3.2
 
 # 8. Configure Locking Directory
 mkdir -p /var/lock

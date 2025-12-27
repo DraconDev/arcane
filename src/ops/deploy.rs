@@ -690,22 +690,29 @@ impl ArcaneDeployer {
 
                         if !has_traefik {
                             let mut domain = format!("{}.dracon.uk", repo_name);
+                            let mut resolver = "letsencrypt".to_string();
 
-                            // Check for arcane.domain override
-                            let mut domain_label_idx = None;
+                            // Check for arcane.* overrides
+                            let mut to_remove = Vec::new();
                             for (i, label) in seq.iter().enumerate() {
                                 if let Some(s) = label.as_str() {
                                     if s.starts_with("arcane.domain=") {
                                         if let Some((_, d)) = s.split_once('=') {
                                             domain = d.trim().to_string();
-                                            domain_label_idx = Some(i);
+                                            to_remove.push(i);
+                                        }
+                                    } else if s.starts_with("arcane.resolver=") {
+                                        if let Some((_, r)) = s.split_once('=') {
+                                            resolver = r.trim().to_string();
+                                            to_remove.push(i);
                                         }
                                     }
                                 }
                             }
 
-                            // Optional: Remove the arcane.domain label to keep it clean
-                            if let Some(idx) = domain_label_idx {
+                            // Remove arcane labels to keep the container clean
+                            to_remove.sort_unstable_by(|a, b| b.cmp(a));
+                            for idx in to_remove {
                                 seq.remove(idx);
                             }
 
@@ -720,9 +727,10 @@ impl ArcaneDeployer {
 
                             seq.push(YamlValue::String("traefik.enable=true".to_string()));
                             seq.push(YamlValue::String(host_rule));
-                            seq.push(YamlValue::String(
-                                "traefik.http.routers.tls.certresolver=letsencrypt".to_string(),
-                            ));
+                            seq.push(YamlValue::String(format!(
+                                "traefik.http.routers.tls.certresolver={}",
+                                resolver
+                            )));
                             seq.push(YamlValue::String(port_rule));
 
                             let networks = config
