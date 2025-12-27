@@ -225,11 +225,13 @@ async fn handle_webhook(
 async fn deploy_worker(
     mut rx: mpsc::Receiver<DeployJob>,
     builds: Arc<RwLock<HashMap<String, BuildState>>>,
+    github_token: Option<String>,
 ) {
     // Create base repos directory
     let home = std::env::var("HOME").expect("HOME not set");
     let base_dir = std::path::Path::new(&home).join(".arcane/spark/repos");
     std::fs::create_dir_all(&base_dir).expect("Failed to create repos dir");
+    let client = Client::new();
 
     while let Some(job) = rx.recv().await {
         println!(
@@ -237,6 +239,18 @@ async fn deploy_worker(
             job.repo_name,
             &job.commit[..7.min(job.commit.len())]
         );
+
+        if let Some(token) = &github_token {
+            set_commit_status(
+                &client,
+                token,
+                &job.repo_url,
+                &job.commit,
+                "pending",
+                "Deploy started...",
+            )
+            .await;
+        }
 
         let repo_dir = base_dir.join(&job.repo_name);
 
