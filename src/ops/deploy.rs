@@ -251,32 +251,68 @@ impl ArcaneDeployer {
         } else {
             // We use tar to upload the whole directory
             // Note: We avoid uploading the .git directory and other large common noise
-            let tar_cmd = Command::new("tar")
+            let mut tar_cmd = Command::new("tar");
+            tar_cmd
                 .arg("-cz")
                 .arg("--exclude=.git")
                 .arg("--exclude=node_modules")
                 .arg("--exclude=target")
                 .arg("-C")
-                .arg(context_dir)
-                .arg(".")
+                .arg(context_dir);
+
+            // If auto-ingress is on, we need to generate a modified compose file
+            // and use THAT instead of the original file.
+            // Strategy:
+            // 1. Generate temp file local
+            // 2. Upload context normally
+            // 3. Upload modified compose file SEPARATELY and overwrite remote
+
+            let modified_compose = if auto_ingress {
+                Self::log(
+                    prefix,
+                    "✨ Auto-Ingress enabled: Injecting Traefik labels...",
+                );
+                Some(Self::generate_ingress_compose(&compose_path, app_name)?)
+            } else {
+                None
+            };
+
+            // ... Standard tar upload ...
+            let mut tar_process = tar_cmd
+                .arg(".") // Upload everything in context
                 .stdout(Stdio::piped())
-                .spawn()
-                .context("Failed to spawn local tar process")?;
+                .spawn()?;
 
-            let mut ssh_child = Command::new("ssh")
-                .arg(&server.host)
-                .arg(format!("tar -xz -C {}", remote_dir))
-                .stdin(Stdio::from(tar_cmd.stdout.unwrap()))
-                .spawn()
-                .context("Failed to spawn remote ssh/tar process")?;
+            let mut ssh_cmd = Command::new("ssh");
+            ssh_cmd
+                .args(&server.ssh_args())
+                .arg(format!("{}@{}", server.user, server.host))
+                .arg(format!(
+                    "mkdir -p {} && tar -xz -C {}",
+                    remote_dir, remote_dir
+                ))
+                .stdin(Stdio::from(tar_process.stdout.take().unwrap()));
 
-            let status = ssh_child
-                .wait()
-                .context("Failed to wait for ssh/tar upload")?;
+            let status = ssh_cmd.status()?;
             if !status.success() {
-                return Err(anyhow::anyhow!(
-                    "Failed to upload context directory via tar"
-                ));
+                anyhow::bail!("Failed to upload context via ssh");
+            }
+
+            // 4. If modified compose, upload it now to overwrite the one from context
+            if let Some(content) = modified_compose {
+                Self::upload_file_content(
+                    server,
+                    &content,
+                    &format!("{}/{}", remote_dir, "compose.yml"),
+                    dry_run,
+                )?;
+                Self::upload_file_content(
+                    server,
+                    &content,
+                    &format!("{}/{}", remote_dir, "docker-compose.yaml"),
+                    dry_run,
+                )?;
+                // We overwrite both to be safe
             }
         }
 
@@ -565,49 +601,116 @@ impl ArcaneDeployer {
         Ok(())
     }
 
-    fn copy_bytes_to_remote(
+    fn upload_file_content(
         server: &ServerConfig,
-        content: &[u8],
+        content: &str,
         remote_path: &str,
+        dry_run: bool,
     ) -> Result<()> {
-        let mut ssh = Command::new("ssh");
-        if server.port > 0 {
-            ssh.arg("-p").arg(server.port.to_string());
+        if dry_run {
+            return Ok(());
         }
-        if let Some(key) = &server.key_path {
-            ssh.arg("-i").arg(key);
-        }
-        ssh.arg(format!("{}@{}", server.user, server.host));
-        ssh.arg(format!("cat > {}", remote_path));
-
-        ssh.stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-
-        let mut child = ssh.spawn().context("Failed to spawn ssh for file copy")?;
+        let mut child = Command::new("ssh")
+            .args(&server.ssh_args())
+            .arg(format!("{}@{}", server.user, server.host))
+            .arg(format!("cat > {}", remote_path))
+            .stdin(Stdio::piped())
+            .spawn()?;
 
         if let Some(mut stdin) = child.stdin.take() {
-            stdin
-                .write_all(content)
-                .context("Failed to write content to ssh stdin")?;
+            stdin.write_all(content.as_bytes())?;
         }
-
-        let output = child.wait_with_output().context("Failed to wait on ssh")?;
-        if !output.status.success() {
-            return Err(anyhow::anyhow!(
-                "SCP (cat) failed: {}",
-                String::from_utf8_lossy(&output.stderr)
-            ));
-        }
+        child.wait()?;
         Ok(())
     }
 
-    fn log(prefix: &str, msg: &str) {
-        if prefix.is_empty() {
-            println!("{}", msg);
-        } else {
-            println!("{} {}", prefix, msg);
+    fn generate_ingress_compose(path: &str, repo_name: &str) -> Result<String> {
+        let content = fs::read_to_string(path)?;
+        let mut doc: YamlValue = serde_yaml::from_str(&content)?;
+
+        if let Some(services) = doc.get_mut("services").and_then(|v| v.as_mapping_mut()) {
+            for (service_name, config) in services.iter_mut() {
+                let service_name_str = service_name.as_str().unwrap_or_default();
+                let is_web = service_name_str == "web" || service_name_str == "app";
+                let has_ports = config.get("ports").is_some();
+
+                if is_web || has_ports {
+                    let mut port = "80".to_string();
+
+                    if let Some(ports) = config.get_mut("ports").and_then(|p| p.as_sequence_mut()) {
+                        if let Some(first) = ports.first() {
+                            let p_str = match first {
+                                YamlValue::String(s) => s.clone(),
+                                YamlValue::Number(n) => n.to_string(),
+                                _ => "80:80".to_string(),
+                            };
+                            if let Some((_, internal)) = p_str.split_once(':') {
+                                port = internal.to_string();
+                            } else {
+                                port = p_str;
+                            }
+                        }
+                        if let Some(mapping) = config.as_mapping_mut() {
+                            mapping.remove("ports");
+                        }
+                    }
+
+                    let labels = config
+                        .as_mapping_mut()
+                        .unwrap()
+                        .entry(YamlValue::String("labels".to_string()))
+                        .or_insert(YamlValue::Sequence(Vec::new()));
+
+                    if let YamlValue::Sequence(seq) = labels {
+                        let has_traefik = seq
+                            .iter()
+                            .any(|l| l.as_str().unwrap_or("").contains("traefik.enable=true"));
+
+                        if !has_traefik {
+                            let host_rule = format!(
+                                "traefik.http.routers.{}.rule=Host(`{}.dracon.uk`)",
+                                repo_name, repo_name
+                            );
+                            let port_rule = format!(
+                                "traefik.http.services.{}.loadbalancer.server.port={}",
+                                repo_name, port
+                            );
+
+                            seq.push(YamlValue::String("traefik.enable=true".to_string()));
+                            seq.push(YamlValue::String(host_rule));
+                            seq.push(YamlValue::String(
+                                "traefik.http.routers.tls.certresolver=letsencrypt".to_string(),
+                            ));
+                            seq.push(YamlValue::String(port_rule));
+
+                            let networks = config
+                                .as_mapping_mut()
+                                .unwrap()
+                                .entry(YamlValue::String("networks".to_string()))
+                                .or_insert(YamlValue::Sequence(Vec::new()));
+
+                            if let YamlValue::Sequence(net_seq) = networks {
+                                net_seq.push(YamlValue::String("traefik-public".to_string()));
+                            }
+                        }
+                    }
+
+                    if let Some(mapping) = doc.as_mapping_mut() {
+                        let networks = mapping
+                            .entry(YamlValue::String("networks".to_string()))
+                            .or_insert(YamlValue::Mapping(serde_yaml::Mapping::new()));
+
+                        if let YamlValue::Mapping(net_map) = networks {
+                            net_map
+                                .entry(YamlValue::String("traefik-public".to_string()))
+                                .or_insert(serde_yaml::from_str("external: true").unwrap());
+                        }
+                    }
+                    break;
+                }
+            }
         }
+        Ok(serde_yaml::to_string(&doc)?)
     }
 }
 
