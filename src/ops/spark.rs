@@ -13,7 +13,6 @@ use hmac::{Hmac, Mac};
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
-use serde_yaml::Value as YamlValue;
 use sha2::Sha256;
 use std::collections::HashMap;
 use std::fs;
