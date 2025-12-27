@@ -1,20 +1,22 @@
 # Arcane Project Status 🔮
 
-**Last Updated:** December 24, 2024
+**Last Updated:** December 27, 2024
 
 ## ✅ Production Ready
 
-| Feature                   | Status    | Description                                          |
-| ------------------------- | --------- | ---------------------------------------------------- |
-| **Git Filter Encryption** | ✅ Stable | `.env` auto-encrypts on commit, decrypts on checkout |
-| **Identity Management**   | ✅ Stable | `arcane identity show/new`                           |
-| **Team Sharing**          | ✅ Stable | `arcane team add <alias> <key>`                      |
-| **Server Authorization**  | ✅ Stable | `arcane deploy gen-key/allow`                        |
-| **Runtime Decryption**    | ✅ Stable | `arcane run -- <command>`                            |
-| **Secret Scanning**       | ✅ Stable | `arcane scan <path>`                                 |
-| **Dashboard (TUI)**       | ✅ Stable | `arcane dashboard`                                   |
-| **AI Commits**            | ✅ Beta   | `arcane start` with Ollama/OpenRouter                |
-| **Auto-Init Daemon**      | ✅ Stable | `arcane daemon` watches for new repos                |
+| Feature                      | Status    | Description                                          |
+| ---------------------------- | --------- | ---------------------------------------------------- |
+| **Git Filter Encryption**    | ✅ Stable | `.env` auto-encrypts on commit, decrypts on checkout |
+| **Identity Management**      | ✅ Stable | `arcane identity show/new`                           |
+| **Team Sharing**             | ✅ Stable | `arcane team add <alias> <key>`                      |
+| **Server Authorization**     | ✅ Stable | `arcane deploy gen-key/allow`                        |
+| **Runtime Decryption**       | ✅ Stable | `arcane run -- <command>`                            |
+| **Secret Scanning**          | ✅ Stable | `arcane scan <path>`                                 |
+| **Dashboard (TUI)**          | ✅ Stable | `arcane dashboard`                                   |
+| **AI Commits**               | ✅ Beta   | `arcane start` with Ollama/OpenRouter                |
+| **Auto-Init Daemon**         | ✅ Stable | `arcane daemon` watches for new repos                |
+| **Auto-Ingress (Traefik)**   | ✅ Stable | Automatic HTTPS & Subdomain routing via labels       |
+| **Standard Context Pruning** | ✅ Stable | Dynamic `.dockerignore` / `.gitignore` support       |
 
 ## 📚 Documentation
 
@@ -31,6 +33,7 @@
 
 ## 🎯 Roadmap
 
-1. **GitHub Release** — Pre-built binaries for easy install
-2. **Polish dashboard** — Stability and UX improvements
-3. **Expand AI providers** — More model options
+1. **GitHub Release** — Pre-built binaries for easy install (v0.1.38 ready)
+2. **Persistent Volume Management** — Data survival on redeploy
+3. **Remote Build Strategy** — Build on Spark, not locally
+4. **Wildcard Certs** — `*.app.com` via Traefik DNS-01
