@@ -42,6 +42,9 @@ For complex stacks (e.g. App + Redis + Sidecar).
 
 ```bash
 arcane deploy --target micro1 --compose docker-compose.yaml --env production
+
+# With Auto-Ingress (Traefik labels)
+arcane deploy --target micro1 --compose docker-compose.yaml --auto-ingress
 ```
 
 **Workflow:**
@@ -163,3 +166,25 @@ arcane exec micro1 --dry-run -- rm -rf /
 -   **"Upload is slow"**: Check `.dockerignore`. Exclude `target/`, `node_modules/`, and `.git/`.
 -   **"SSH Error"**: Ensure your SSH agent has the key loaded (`ssh-add ~/.ssh/id_ed25519`).
 -   **"Deployment Locked"**: Arcane places a lock directory on the server. If a deploy crashes, you may need to manually run `rmdir /var/lock/arcane.deploy` on the server.
+
+---
+
+## ⚡ Auto-Ingress (Traefik)
+
+Arcane can automatically make your services accessible via HTTPS subdomains using the `--auto-ingress` flag.
+
+**How it works:**
+
+1.  Arcane reads your `compose.yml`.
+2.  It detects services with `ports` or named `web`/`app`.
+3.  It **removes** the port mapping (so the container is private).
+4.  It **injects** Traefik labels:
+    -   Host: `<app-name>.dracon.uk`
+    -   CertResolver: `letsencrypt`
+5.  It adds the `traefik-public` network.
+
+**Usage:**
+
+```bash
+arcane deploy -t micro1 --compose compose.yml --auto-ingress
+```
