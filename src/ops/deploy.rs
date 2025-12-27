@@ -343,10 +343,11 @@ impl ArcaneDeployer {
 
         Self::log(prefix, "   🔑 Uploading .env...");
         if !dry_run {
-            Self::copy_bytes_to_remote(
+            Self::upload_file_content(
                 server,
-                env_content.as_bytes(),
+                &env_content,
                 &format!("{}/.env", remote_dir),
+                false,
             )?;
         }
 
