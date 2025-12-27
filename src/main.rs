@@ -162,6 +162,12 @@ async fn main() {
                         .action(clap::ArgAction::SetTrue)
                         .help("Deploy to group members in parallel"),
                 )
+                .arg(
+                    Arg::new("auto-ingress")
+                        .long("auto-ingress")
+                        .action(clap::ArgAction::SetTrue)
+                        .help("Automatically generate Traefik labels for routing"),
+                )
                 .subcommand(Command::new("gen-key").about("Generate Machine Identity"))
                 .subcommand(
                     Command::new("allow")
