@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    restart: always
+
+# Note: No Traefik labels here!
+# Arcane Auto-Ingress should inject them automatically.
