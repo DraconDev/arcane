@@ -296,10 +296,20 @@ async fn deploy_worker(
             .args(["deploy", "--target", &job.target, "--env", &job.env]);
 
         // Auto-detect compose file
+        let mut compose_file = None;
         if repo_dir.join("compose.yml").exists() {
-            cmd.args(["--compose", "compose.yml"]);
+            compose_file = Some("compose.yml");
         } else if repo_dir.join("docker-compose.yml").exists() {
-            cmd.args(["--compose", "docker-compose.yml"]);
+            compose_file = Some("docker-compose.yml");
+        }
+
+        if let Some(file) = compose_file {
+            cmd.args(["--compose", file]);
+
+            // Auto-inject Traefik labels
+            if let Err(e) = inject_traefik_labels(&repo_dir.join(file), &job.repo_name) {
+                eprintln!("⚠️ Failed to inject Traefik labels: {}", e);
+            }
         }
 
         let result = cmd.status();
@@ -474,4 +484,111 @@ fn parse_github_repo(url: &str) -> Option<(String, String)> {
         }
     }
     None
+}
+
+fn inject_traefik_labels(path: &std::path::Path, repo_name: &str) -> anyhow::Result<()> {
+    let content = fs::read_to_string(path)?;
+    let mut doc: YamlValue = serde_yaml::from_str(&content)?;
+
+    if let Some(services) = doc.get_mut("services").and_then(|v| v.as_mapping_mut()) {
+        for (service_name, config) in services.iter_mut() {
+            // Check if service should be exposed (has ports or is 'web'/'app')
+            let service_name_str = service_name.as_str().unwrap_or_default();
+            let is_web = service_name_str == "web" || service_name_str == "app";
+            let has_ports = config.get("ports").is_some();
+
+            if is_web || has_ports {
+                let mut port = "80"; // Default
+
+                // Extract port if configured and REMOVE explicit mapping to avoid conflict
+                if let Some(ports) = config.get_mut("ports").and_then(|p| p.as_sequence_mut()) {
+                    if let Some(first) = ports.first() {
+                        let p_str = match first {
+                            YamlValue::String(s) => s.clone(),
+                            YamlValue::Number(n) => n.to_string(),
+                            _ => "80:80".to_string(),
+                        };
+                        // Parse "8080:80" -> internal port 80
+                        if let Some((_, internal)) = p_str.split_once(':') {
+                            port = internal; // Use internal port
+                        } else {
+                            port = &p_str; // "80" -> 80
+                        }
+                    }
+                    // Remove ports section to prevent binding conflict
+                    if let Some(mapping) = config.as_mapping_mut() {
+                        mapping.remove("ports");
+                    }
+                }
+
+                // Add Labels
+                let labels = config
+                    .as_mapping_mut()
+                    .unwrap()
+                    .entry(YamlValue::String("labels".to_string()))
+                    .or_insert(YamlValue::Sequence(Vec::new()));
+
+                if let YamlValue::Sequence(seq) = labels {
+                    // Check if already enabled
+                    let has_traefik = seq
+                        .iter()
+                        .any(|l| l.as_str().unwrap_or("").contains("traefik.enable=true"));
+
+                    if !has_traefik {
+                        println!(
+                            "   🏷️  Injecting Traefik labels for service '{}' (port {})",
+                            service_name_str, port
+                        );
+                        let host_rule = format!(
+                            "traefik.http.routers.{}.rule=Host(`{}.dracon.uk`)",
+                            repo_name, repo_name
+                        );
+                        let port_rule = format!(
+                            "traefik.http.services.{}.loadbalancer.server.port={}",
+                            repo_name, port
+                        );
+
+                        seq.push(YamlValue::String("traefik.enable=true".to_string()));
+                        seq.push(YamlValue::String(host_rule));
+                        seq.push(YamlValue::String(
+                            "traefik.http.routers.tls.certresolver=letsencrypt".to_string(),
+                        ));
+                        seq.push(YamlValue::String(port_rule));
+
+                        // Add network
+                        let networks = config
+                            .as_mapping_mut()
+                            .unwrap()
+                            .entry(YamlValue::String("networks".to_string()))
+                            .or_insert(YamlValue::Sequence(Vec::new()));
+
+                        if let YamlValue::Sequence(net_seq) = networks {
+                            net_seq.push(YamlValue::String("traefik-public".to_string()));
+                        }
+                    }
+                }
+
+                // Ensure traefik-public network is defined at top level
+                if let Some(mapping) = doc.as_mapping_mut() {
+                    let networks = mapping
+                        .entry(YamlValue::String("networks".to_string()))
+                        .or_insert(YamlValue::Mapping(serde_yaml::Mapping::new()));
+
+                    if let YamlValue::Mapping(net_map) = networks {
+                        net_map
+                            .entry(YamlValue::String("traefik-public".to_string()))
+                            .or_insert(serde_yaml::from_str("external: true").unwrap());
+                    }
+                }
+
+                break; // Only inject for one service
+            }
+        }
+    }
+
+    // Save back
+    let new_content = serde_yaml::to_string(&doc)?;
+    fs::write(path, new_content)?;
+
+    Ok(())
 }
