@@ -262,21 +262,37 @@ impl ArcaneDeployer {
             tar_cmd.arg("-cz").arg("--exclude=.git");
 
             let ignore_file = if Path::new(context_dir).join(".dockerignore").exists() {
-                Some(".dockerignore")
+                Some(Path::new(context_dir).join(".dockerignore"))
             } else if Path::new(context_dir).join(".gitignore").exists() {
-                Some(".gitignore")
+                Some(Path::new(context_dir).join(".gitignore"))
             } else {
                 None
             };
 
-            if let Some(f) = ignore_file {
-                Self::log(prefix, &format!("   📦 Pruning context using {}...", f));
-                tar_cmd.arg(format!("--exclude-from={}", f));
-            } else {
-                // Fallback to sensible defaults
-                tar_cmd
-                    .arg("--exclude=node_modules")
-                    .arg("--exclude=target");
+            if let Some(f) = &ignore_file {
+                Self::log(
+                    prefix,
+                    &format!(
+                        "   📦 Pruning context using {}...",
+                        f.file_name().unwrap().to_string_lossy()
+                    ),
+                );
+                tar_cmd.arg(format!("--exclude-from={}", f.display()));
+            }
+
+            // Always exclude common large directories that shouldn't be uploaded
+            // These use shell-style wildcards which tar supports
+            tar_cmd
+                .arg("--exclude=*/target") // All Rust target dirs
+                .arg("--exclude=target") // Root target dir
+                .arg("--exclude=*/node_modules") // All node_modules
+                .arg("--exclude=node_modules"); // Root node_modules
+
+            if ignore_file.is_none() {
+                Self::log(
+                    prefix,
+                    "   📦 Using default exclusions (target, node_modules)...",
+                );
             }
 
             tar_cmd.arg("-C").arg(context_dir);
