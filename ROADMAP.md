@@ -63,6 +63,15 @@
 
 ## 🔲 Remaining Features
 
+### Priority 0: Remote Build & Registry (CRITICAL)
+
+| Feature                  | Description                                          | Status     |
+| ------------------------ | ---------------------------------------------------- | ---------- |
+| **GitHub Actions Build** | CI pipeline to build & push to `ghcr.io`             | 🔥 Next    |
+| **Image-Based Deploy**   | `arcane deploy --image <url>` (Skip build on target) | 🔥 Next    |
+| **Registry Auth**        | Manage credentials for private registries            | 🕒 Planned |
+| **Zero-Downtime**        | Pre-pull images before switching containers          | 🕒 Planned |
+
 ### Priority 1: Core Gaps (DONE ✅)
 
 | Feature           | Description                                | Status  |
