@@ -47,6 +47,7 @@ impl ArcaneDeployer {
 
                         async move {
                             // Prefix output with [server_name]
+                            Self::deploy_target(
                                 &server_name,
                                 &deployment_ref,
                                 &env_name,
