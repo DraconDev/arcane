@@ -706,82 +706,8 @@ impl ArcaneDeployer {
         }
     }
 
-                    if let Some(ports) = config.get_mut("ports").and_then(|p| p.as_sequence_mut()) {
-                        if let Some(first) = ports.first() {
-                            let p_str = match first {
-                                YamlValue::String(s) => s.clone(),
-                                YamlValue::Number(n) => n.to_string(),
-                                _ => "80:80".to_string(),
-                            };
-                            if let Some((_, internal)) = p_str.split_once(':') {
-                                port = internal.to_string();
-                            } else {
-                                port = p_str;
-                            }
-                        }
-                        if let Some(mapping) = config.as_mapping_mut() {
-                            mapping.remove("ports");
-                        }
-                    }
-
-                    let labels = config
-                        .as_mapping_mut()
-                        .unwrap()
-                        .entry(YamlValue::String("labels".to_string()))
-                        .or_insert(YamlValue::Sequence(Vec::new()));
-
-                    if let YamlValue::Sequence(seq) = labels {
-                        let has_traefik = seq
-                            .iter()
-                            .any(|l| l.as_str().unwrap_or("").contains("traefik.enable=true"));
-
-                        if !has_traefik {
-                            let host_rule = format!(
-                                "traefik.http.routers.{}.rule=Host(`{}.dracon.uk`)",
-                                repo_name, repo_name
-                            );
-                            let port_rule = format!(
-                                "traefik.http.services.{}.loadbalancer.server.port={}",
-                                repo_name, port
-                            );
-
-                            seq.push(YamlValue::String("traefik.enable=true".to_string()));
-                            seq.push(YamlValue::String(host_rule));
-                            seq.push(YamlValue::String(
-                                "traefik.http.routers.tls.certresolver=letsencrypt".to_string(),
-                            ));
-                            seq.push(YamlValue::String(port_rule));
-
-                            let networks = config
-                                .as_mapping_mut()
-                                .unwrap()
-                                .entry(YamlValue::String("networks".to_string()))
-                                .or_insert(YamlValue::Sequence(Vec::new()));
-
-                            if let YamlValue::Sequence(net_seq) = networks {
-                                net_seq.push(YamlValue::String("traefik-public".to_string()));
-                            }
-                        }
-                    }
-
-                    if let Some(mapping) = doc.as_mapping_mut() {
-                        let networks = mapping
-                            .entry(YamlValue::String("networks".to_string()))
-                            .or_insert(YamlValue::Mapping(serde_yaml::Mapping::new()));
-
-                        if let YamlValue::Mapping(net_map) = networks {
-                            net_map
-                                .entry(YamlValue::String("traefik-public".to_string()))
-                                .or_insert(serde_yaml::from_str("external: true").unwrap());
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-        Ok(serde_yaml::to_string(&doc)?)
     }
-
+}
     fn log(prefix: &str, msg: &str) {
         if prefix.is_empty() {
             println!("{}", msg);
