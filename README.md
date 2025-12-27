@@ -99,7 +99,16 @@ Set it and forget it.
 
 -   **Auto-Init** — Automatically enables encryption for new Git repos.
 -   **Secret Scanner** — Blocks commits with exposed API keys in source code.
+-   **Secret Scanner** — Blocks commits with exposed API keys in source code.
 -   **Desktop Notifications** — Alerts if secrets are about to leak.
+
+### 6. ⚡ Arcane Spark (Self-Hosted CI)
+
+Push-to-Deploy, solved.
+
+-   **Webhook Server**: Listens for GitHub/GitLab pushes.
+-   **Auto-Ingress**: Automatically adds host routing (`app.example.com`) and HTTPS.
+-   **Status Reporting**: Updates GitHub commit status (✅ Success / ❌ Fail).
 
 ---
 
@@ -137,6 +146,9 @@ git add .env && git commit -m "Add secrets"
 | `arcane run -- <cmd>`           | Run locally with decrypted secrets |
 | `arcane scan <file>`            | Scan for leaked secrets            |
 | `arcane daemon start`           | Start background Guardian          |
+| `arcane scan <file>`            | Scan for leaked secrets            |
+| `arcane daemon start`           | Start background Guardian          |
+| `arcane spark`                  | Start Webhook Build Server         |
 | `arcane dashboard`              | Launch TUI                         |
 
 ---
@@ -224,6 +236,8 @@ rm .git/arcane/keys/user:alice.age && git commit -am "Remove Alice"
 | [docs/CLI.md](docs/CLI.md)                                   | Full command reference                 |
 | [docs/KEY_ARCHITECTURE.md](docs/KEY_ARCHITECTURE.md)         | How envelope encryption works          |
 | [docs/DEPLOY.md](docs/DEPLOY.md)                             | Deployment guide (Docker, Compose)     |
+| [docs/DEPLOY.md](docs/DEPLOY.md)                             | Deployment guide (Docker, Compose)     |
+| [docs/SPARK.md](docs/SPARK.md)                               | Self-hosted webhook server guide       |
 | [docs/COMPETITIVE_ANALYSIS.md](docs/COMPETITIVE_ANALYSIS.md) | How we compare to Kamal, Coolify, etc. |
 
 ---
