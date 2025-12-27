@@ -74,13 +74,13 @@
 
 ### Priority 2: Build Automation
 
-| Feature                        | Description                                     | Status     |
-| ------------------------------ | ----------------------------------------------- | ---------- |
-| **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done    |
-| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done    |
-| Traefik Setup Script           | Auto-discovery reverse proxy                    | ✅ Done    |
-| Traefik Label Generation       | Auto-generate labels in compose                 | 🔄 Next    |
-| GitHub Status API              | Report deploy pass/fail to commit               | 🔲 Planned |
+| Feature                        | Description                                     | Status  |
+| ------------------------------ | ----------------------------------------------- | ------- |
+| **GitHub Actions Integration** | Document using GitHub as build server           | ✅ Done |
+| **Arcane Spark**               | Self-hosted webhook listener for push-to-deploy | ✅ Done |
+| Traefik Setup Script           | Auto-discovery reverse proxy                    | ✅ Done |
+| Traefik Label Generation       | Auto-generate labels in compose                 | ✅ Done |
+| GitHub Status API              | Report deploy pass/fail to commit               | ✅ Done |
 
 ### Priority 3: Networking
 
@@ -88,7 +88,7 @@
 | ------------------------ | ------------------------- | ---------- |
 | Custom domains in config | Map domains to containers | 🔄 Next    |
 | Wildcard certs           | `*.app.com` via Traefik   | 🔲 Planned |
-| Auto subdomain routing   | Project name → subdomain  | 🔄 Next    |
+| Auto subdomain routing   | Project name → subdomain  | ✅ Done    |
 
 ---
 
