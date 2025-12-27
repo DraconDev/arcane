@@ -256,15 +256,29 @@ impl ArcaneDeployer {
             );
         } else {
             // We use tar to upload the whole directory
-            // Note: We avoid uploading the .git directory and other large common noise
+            // Note: We honor .dockerignore or .gitignore if they exist.
             let mut tar_cmd = Command::new("tar");
-            tar_cmd
-                .arg("-cz")
-                .arg("--exclude=.git")
-                .arg("--exclude=node_modules")
-                .arg("--exclude=target")
-                .arg("-C")
-                .arg(context_dir);
+            tar_cmd.arg("-cz").arg("--exclude=.git");
+
+            let ignore_file = if Path::new(context_dir).join(".dockerignore").exists() {
+                Some(".dockerignore")
+            } else if Path::new(context_dir).join(".gitignore").exists() {
+                Some(".gitignore")
+            } else {
+                None
+            };
+
+            if let Some(f) = ignore_file {
+                Self::log(prefix, &format!("   📦 Pruning context using {}...", f));
+                tar_cmd.arg(format!("--exclude-from={}", f));
+            } else {
+                // Fallback to sensible defaults
+                tar_cmd
+                    .arg("--exclude=node_modules")
+                    .arg("--exclude=target");
+            }
+
+            tar_cmd.arg("-C").arg(context_dir);
 
             // If auto-ingress is on, we need to generate a modified compose file
             // and use THAT instead of the original file.
