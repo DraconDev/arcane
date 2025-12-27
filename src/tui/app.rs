@@ -1300,9 +1300,9 @@ impl App {
                 &image,
                 &env_name,
                 None,
-                None,
                 false,
-                false,
+                false, // dry-run
+                false, // parallel
             )
             .await
             {
