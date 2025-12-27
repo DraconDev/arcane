@@ -10,7 +10,9 @@ use axum::{
     Router,
 };
 use hmac::{Hmac, Mac};
+use reqwest::{header, Client};
 use serde::Deserialize;
+use serde_json::json;
 use sha2::Sha256;
 use std::collections::HashMap;
 use std::fs;
@@ -26,6 +28,7 @@ type HmacSha256 = Hmac<Sha256>;
 pub struct SparkConfig {
     pub port: u16,
     pub secret: String,
+    pub github_token: Option<String>,
     pub repos: HashMap<String, RepoConfig>,
 }
 
@@ -290,6 +293,17 @@ async fn deploy_worker(
         match result {
             Ok(status) if status.success() => {
                 println!("✅ Deploy successful for {}", job.repo_name);
+                if let Some(token) = &github_token {
+                    set_commit_status(
+                        &client,
+                        token,
+                        &job.repo_url,
+                        &job.commit,
+                        "success",
+                        "Deploy successful!",
+                    )
+                    .await;
+                }
             }
             Ok(status) => {
                 eprintln!(
@@ -297,9 +311,31 @@ async fn deploy_worker(
                     job.repo_name,
                     status.code()
                 );
+                if let Some(token) = &github_token {
+                    set_commit_status(
+                        &client,
+                        token,
+                        &job.repo_url,
+                        &job.commit,
+                        "failure",
+                        "Deploy failed",
+                    )
+                    .await;
+                }
             }
             Err(e) => {
                 eprintln!("❌ Deploy error for {}: {}", job.repo_name, e);
+                if let Some(token) = &github_token {
+                    set_commit_status(
+                        &client,
+                        token,
+                        &job.repo_url,
+                        &job.commit,
+                        "error",
+                        &format!("Error: {}", e),
+                    )
+                    .await;
+                }
             }
         }
 
@@ -351,6 +387,7 @@ pub async fn start_server(port: u16, secret: String) -> anyhow::Result<()> {
         config: SparkConfig {
             port,
             secret,
+            github_token: std::env::var("GITHUB_TOKEN").ok(),
             repos,
         },
         builds: builds.clone(),
@@ -358,7 +395,11 @@ pub async fn start_server(port: u16, secret: String) -> anyhow::Result<()> {
     };
 
     // Spawn deploy worker
-    tokio::spawn(deploy_worker(deploy_rx, builds));
+    tokio::spawn(deploy_worker(
+        deploy_rx,
+        builds,
+        state.config.github_token.clone(),
+    ));
 
     let app = Router::new()
         .route("/webhook", post(handle_webhook))
