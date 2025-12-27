@@ -781,6 +781,14 @@ impl ArcaneDeployer {
         }
         Ok(serde_yaml::to_string(&doc)?)
     }
+
+    fn log(prefix: &str, msg: &str) {
+        if prefix.is_empty() {
+            println!("{}", msg);
+        } else {
+            println!("{} {}", prefix, msg);
+        }
+    }
 }
 
 // Helper struct for RAII locking
